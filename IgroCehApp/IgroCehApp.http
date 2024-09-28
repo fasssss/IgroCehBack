@@ -1,0 +1,6 @@
+@IgroCehApp_HostAddress = http://localhost:5094
+
+GET {{IgroCehApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
