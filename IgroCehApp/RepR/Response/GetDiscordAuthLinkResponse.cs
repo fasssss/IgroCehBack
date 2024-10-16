@@ -2,5 +2,6 @@
 {
     public class GetDiscordAuthLinkResponse
     {
+        public string DiscordApiLink { get; set; }
     }
 }

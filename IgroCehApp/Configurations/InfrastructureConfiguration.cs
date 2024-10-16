@@ -1,4 +1,6 @@
-﻿using Infrastructure.ExternalInterfaces;
+﻿using Infrastructure.Configurations;
+using Infrastructure.ExternalInterfaces;
+using Microsoft.Extensions.Options;
 using Refit;
 
 namespace API.Configurations
@@ -7,8 +9,9 @@ namespace API.Configurations
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
+            DiscordApiOptions discordApiOptions = services.BuildServiceProvider().GetRequiredService<IOptions<DiscordApiOptions>>().Value;
             services.AddRefitClient<IDiscordApi>()
-                .ConfigureHttpClient(config => config.BaseAddress = new Uri(configuration["DiscordApi:Address"] ?? ""));
+                .ConfigureHttpClient(config => config.BaseAddress = new Uri(discordApiOptions.Address ?? ""));
 
             return services;
         }
