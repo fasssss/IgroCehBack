@@ -25,7 +25,7 @@ namespace API.Endpoints.Get
             var origin = HttpContext.Request.Headers.Origin;
             return new GetDiscordAuthLinkResponse()
             {
-                DiscordApiLink = $"{_discordApiOptions.Address}/oauth2/authorize?response_type=code&client_id={_discordApiOptions.ClientId}&scope=identify&redirect_uri={origin}&prompt=consent"
+                DiscordApiLink = $"{_discordApiOptions.Address}/oauth2/authorize?response_type=code&client_id={_discordApiOptions.ClientId}&scope=identify%20email&redirect_uri={origin}/redirectTo&prompt=consent"
             };
         }
     }

@@ -6,10 +6,8 @@ using System.Threading.Tasks;
 
 namespace Infrastructure.DTO
 {
-    public class TokenByAuthCodeRequest
+    public class DiscordUserObject
     {
-        public string grant_type = "authorization_code";
-        public string code;
-        public string redirect_uri;
+
     }
 }

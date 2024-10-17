@@ -13,6 +13,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 builder.Services.AddOptionsConfiguration(configuration);
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAutoMapper(typeof(AutoMapperConfiguration));
 builder.Services.AddPersistance();
 builder.Services.AddInfrastructure(configuration);
 builder.Services.AddFastEndpoints()
@@ -26,7 +28,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors(x => x
-        .AllowAnyOrigin());
+        .AllowAnyOrigin()
+        .AllowAnyHeader());
 }
 
 app.UseHttpsRedirection();
