@@ -15,7 +15,7 @@ builder.Services.AddCors();
 builder.Services.AddOptionsConfiguration(configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(AutoMapperConfiguration));
-builder.Services.AddPersistance();
+builder.Services.AddPersistance(configuration);
 builder.Services.AddInfrastructure(configuration);
 builder.Services.AddFastEndpoints()
     .AddSwaggerDocument();
