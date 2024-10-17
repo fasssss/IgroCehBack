@@ -1,7 +1,6 @@
 ﻿using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
-using Azure;
 using FastEndpoints;
 using Infrastructure.Configurations;
 using Microsoft.AspNetCore.Http.HttpResults;
