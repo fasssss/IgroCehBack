@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace API.Endpoints.Post
 {
-    public class PostAuthorizationCode: Endpoint<PostAuthorizationCodeRequest, Results<Ok, BadRequest>>
+    public class PostAuthorizationCode: Endpoint<PostAuthorizationCodeRequest, Results<Ok<AuthorizationResult>, BadRequest>>
     {
         private readonly DiscordApiOptions _discordApiOptions;
         private readonly IAuthorizationApplicationService _authorizationApplicationService;
@@ -28,11 +28,11 @@ namespace API.Endpoints.Post
             AllowAnonymous();
         }
 
-        public override async Task<Results<Ok, BadRequest>> ExecuteAsync(PostAuthorizationCodeRequest authCodeRequest, CancellationToken ct)
+        public override async Task<Results<Ok<AuthorizationResult>, BadRequest>> ExecuteAsync(PostAuthorizationCodeRequest authCodeRequest, CancellationToken ct)
         {
             var authCode = authCodeRequest.AuthorizationCode;
             var data = await _authorizationApplicationService.Authorize(authCode);
-            return TypedResults.Ok();
+            return TypedResults.Ok(data);
         }
     }
 }

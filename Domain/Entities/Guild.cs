@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿
 namespace Domain.Entities
 {
-    public class Guild
+    public class Guild: IBaseEntity
     {
-        public int Id { get; set; }
+        public long Id { get; set; }
         public string Name { get; set; }
-        public string AvatarHash { get; set; }
+        public string? AvatarHash { get; set; }
         public List<User> Users { get; set; }
+        public List<Event> Events { get; set; }
     }
 }

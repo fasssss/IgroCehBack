@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Application.ApplicationInterfaces
 {
+    public record AuthorizationResult(UserObject UserObject, AuthorizationTokens AuthorizationTokens);
     public interface IAuthorizationApplicationService
     {
         public Task<AuthorizationResult> Authorize(string authCode);

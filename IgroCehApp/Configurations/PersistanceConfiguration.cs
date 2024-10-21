@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Application.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
+using Persistence.Repository;
 
 namespace API.Configurations
 {
@@ -10,6 +12,7 @@ namespace API.Configurations
             var defaultConnectionString = configuration.GetConnectionString("Default");
             var mySqlVersion = configuration.GetValue<string>("MySQLVersion") ?? "8.0.27";
             services.AddMySql<IgroCehContext>(defaultConnectionString, new MySqlServerVersion(new Version(mySqlVersion)));
+            services.AddScoped<IUserRepository, UserRepository>();
             return services;
         }
     }

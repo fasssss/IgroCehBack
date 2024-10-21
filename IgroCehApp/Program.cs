@@ -1,8 +1,7 @@
 using API.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
-using Persistence.Context;
-using Refit;
+using Infrastructure.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -14,7 +13,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors();
 builder.Services.AddOptionsConfiguration(configuration);
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(typeof(AutoMapperConfiguration));
+builder.Services.AddAutoMapper(typeof(InfrastructureMapperProfile));
 builder.Services.AddPersistance(configuration);
 builder.Services.AddInfrastructure(configuration);
 builder.Services.AddFastEndpoints()

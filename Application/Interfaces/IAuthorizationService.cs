@@ -9,7 +9,8 @@ namespace Application.Interfaces
 {
     public interface IAuthorizationService
     {
-        public Task<AuthorizationResult> GetAuthorizationToken(string authCode);
+        public Task<AuthorizationTokens> GetAuthorizationToken(string authCode);
         public Task<UserObject> GetUserObject(string authToken);
+        public Task<List<GuildObject>> GetUsersGuilds(string authToken);
     }
 }

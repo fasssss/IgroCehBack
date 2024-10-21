@@ -23,7 +23,7 @@ namespace Infrastructure.Services
             _mapper = mapper;
         }
 
-        public async Task<AuthorizationResult> GetAuthorizationToken(string authCode)
+        public async Task<AuthorizationTokens> GetAuthorizationToken(string authCode)
         {
             var encodedClientIdAndSecret = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_discordApiOptions.ClientId}:{_discordApiOptions.ClientSecret}"));
             var authHeader = $"Basic {encodedClientIdAndSecret}";
@@ -36,14 +36,21 @@ namespace Infrastructure.Services
 
             var data = new FormUrlEncodedContent(dataKeyPairs);
             var authorizationResult = await _discordApi.GetTokens(authHeader, data);
-            return _mapper.Map<AuthorizationResult>(authorizationResult);
+            return _mapper.Map<AuthorizationTokens>(authorizationResult);
         }
 
         public async Task<UserObject> GetUserObject(string authToken)
         {
             var authHeader = $"Bearer {authToken}";
             var discordUserObject = await _discordApi.GetCurrentUser(authHeader);
-            return new UserObject();
+            return _mapper.Map<UserObject>(discordUserObject);
+        }
+
+        public async Task<List<GuildObject>> GetUsersGuilds(string authToken)
+        {
+            var authHeader = $"Bearer {authToken}";
+            var discordListOfGuildObject = await _discordApi.GetCurrentUsersGuilds(authHeader);
+            return _mapper.Map<List<GuildObject>>(discordListOfGuildObject);
         }
     }
 }
