@@ -27,8 +27,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors(x => x
-        .AllowAnyOrigin()
-        .AllowAnyHeader());
+        .WithOrigins(configuration.GetValue<string>("FrontendUrl") ?? "https://localhost:5173")
+        .AllowAnyHeader()
+        .AllowCredentials());
 }
 
 app.UseHttpsRedirection();
