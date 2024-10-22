@@ -1,3 +1,4 @@
+using API.Authentication;
 using API.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -16,7 +17,12 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(InfrastructureMapperProfile));
 builder.Services.AddPersistance(configuration);
 builder.Services.AddInfrastructure(configuration);
-builder.Services.AddFastEndpoints()
+builder.Services
+    .AddAuthentication(o =>
+        o.AddScheme<CustomAuthenticationHandler>("customAuthenticationScheme", null));
+builder.Services.AddAuthorization();
+builder.Services
+    .AddFastEndpoints()
     .AddSwaggerDocument();
 
 var app = builder.Build();
@@ -33,7 +39,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseFastEndpoints()
+app.UseAuthentication()
+    .UseAuthorization()
+    .UseFastEndpoints()
     .UseSwaggerGen();
 
 app.Run();

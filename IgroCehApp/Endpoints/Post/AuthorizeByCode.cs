@@ -11,12 +11,12 @@ using Microsoft.Net.Http.Headers;
 
 namespace API.Endpoints.Post
 {
-    public class PostAuthorizationCode: Endpoint<PostAuthorizationCodeRequest, Results<Ok<UserObject>, BadRequest>>
+    public class AuthorizeByCode: Endpoint<PostAuthorizationCodeRequest, Results<Ok<UserObject>, BadRequest>>
     {
         private readonly DiscordApiOptions _discordApiOptions;
         private readonly IAuthorizationApplicationService _authorizationApplicationService;
 
-        public PostAuthorizationCode(
+        public AuthorizeByCode(
             IOptions<DiscordApiOptions> discordApiOptions,
             IAuthorizationApplicationService authorizationApplicationService)
         {
@@ -26,7 +26,7 @@ namespace API.Endpoints.Post
 
         public override void Configure()
         {
-            Post("/api/postAuthorizationCode");
+            Get("/api/authorizeByCode");
             AllowAnonymous();
         }
 
@@ -46,6 +46,7 @@ namespace API.Endpoints.Post
                 HttpOnly = true,
                 Secure = true,
                 SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(_discordApiOptions.RefreshTokenLiveDays)
             });
             HttpContext.Response.Cookies.Append("id", data.UserObject.Id.ToString(), new CookieOptions
             {
