@@ -43,7 +43,9 @@ namespace Infrastructure.Services
         {
             var authHeader = $"Bearer {authToken}";
             var discordUserObject = await _discordApi.GetCurrentUser(authHeader);
-            return _mapper.Map<UserObject>(discordUserObject);
+            var userObject = _mapper.Map<UserObject>(discordUserObject);
+            userObject.AvatarUrl = $"{_discordApiOptions.ImagesBaseUrl}avatars/{userObject.Id}/{userObject.Avatar}" + (userObject.Avatar.StartsWith("a_") ? ".gif" : ".jpg");
+            return userObject;
         }
 
         public async Task<List<GuildObject>> GetUsersGuilds(string authToken)

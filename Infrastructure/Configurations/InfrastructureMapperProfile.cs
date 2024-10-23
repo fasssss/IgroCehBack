@@ -1,6 +1,7 @@
 ﻿using Application.DTO;
 using AutoMapper;
 using Infrastructure.DTO;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,7 @@ namespace Infrastructure.Configurations
 {
     public class InfrastructureMapperProfile: Profile
     {
-        public InfrastructureMapperProfile() 
+        public InfrastructureMapperProfile()
         {
             CreateMap<AuthorizationTokens, GetAuthorizationTokenResult>()
                 .ForMember(dest => dest.access_token, opt => opt.MapFrom(src => src.AccessToken))
@@ -38,9 +39,8 @@ namespace Infrastructure.Configurations
                 .ForMember(dest => dest.flags, opt => opt.MapFrom(src => src.Flags))
                 .ForMember(dest => dest.premium_type, opt => opt.MapFrom(src => src.PremiumType))
                 .ForMember(dest => dest.public_flags, opt => opt.MapFrom(src => src.PublicFlags))
-                .ReverseMap();
-            CreateMap<DiscordUserObject, UserObject>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
+                .ReverseMap()
+                .ForPath(s => s.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
 
             CreateMap<GuildObject, DiscordGuildObject>()
                 .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id))
@@ -52,9 +52,8 @@ namespace Infrastructure.Configurations
                 .ForMember(dest => dest.features, opt => opt.MapFrom(src => src.Features))
                 .ForMember(dest => dest.approximate_member_count, opt => opt.MapFrom(src => src.ApproximateMemberCount))
                 .ForMember(dest => dest.approximate_presence_count, opt => opt.MapFrom(src => src.ApproximatePresenceCount))
-                .ReverseMap();
-            CreateMap<DiscordGuildObject, GuildObject>()
-                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
+                .ReverseMap()
+                .ForPath(s => s.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
         }
     }
 }

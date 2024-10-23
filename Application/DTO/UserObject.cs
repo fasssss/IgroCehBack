@@ -14,6 +14,7 @@ namespace Application.DTO
         public string Discriminator { get; set; }
         public string GlobalName { get; set; }
         public string Avatar { get; set; }
+        public string AvatarUrl { get; set; }
         public bool? Bot { get; set; }
         public bool? System { get; set; }
         public bool? MfaEnabled { get; set; }
