@@ -1,6 +1,6 @@
 ﻿namespace API.RepR.Request
 {
-    public class PostAuthorizationCodeRequest
+    public class AuthorizeByCodeRequest
     {
         public string AuthorizationCode { get; set; }   
     }

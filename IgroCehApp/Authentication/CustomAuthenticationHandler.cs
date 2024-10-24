@@ -23,7 +23,12 @@ namespace API.Authentication
                 return AuthenticateResult.NoResult();
             }
 
-            return AuthenticatedUser();
+            if(Request.Cookies.TryGetValue("access_token", out string? accessToken))
+            {
+                return AuthenticatedUser();
+            }
+
+            return AuthenticateResult.Fail("User was not authorized");
         }
 
         private AuthenticateResult AuthenticatedUser()

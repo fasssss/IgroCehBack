@@ -11,7 +11,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace API.Endpoints.Post
 {
-    public class AuthorizeByCode: Endpoint<PostAuthorizationCodeRequest, Results<Ok<UserObject>, BadRequest>>
+    public class AuthorizeByCode: Endpoint<AuthorizeByCodeRequest, Results<Ok<UserObject>, BadRequest>>
     {
         private readonly DiscordApiOptions _discordApiOptions;
         private readonly IAuthorizationApplicationService _authorizationApplicationService;
@@ -30,10 +30,10 @@ namespace API.Endpoints.Post
             AllowAnonymous();
         }
 
-        public override async Task<Results<Ok<UserObject>, BadRequest>> ExecuteAsync(PostAuthorizationCodeRequest authCodeRequest, CancellationToken ct)
+        public override async Task<Results<Ok<UserObject>, BadRequest>> ExecuteAsync(AuthorizeByCodeRequest authCodeRequest, CancellationToken ct)
         {
             var authCode = authCodeRequest.AuthorizationCode;
-            var data = await _authorizationApplicationService.Authorize(authCode);
+            var data = await _authorizationApplicationService.AuthorizeAsync(authCode);
             HttpContext.Response.Cookies.Append("access_token", data.AuthorizationTokens.AccessToken, new CookieOptions
             {
                 HttpOnly = true,

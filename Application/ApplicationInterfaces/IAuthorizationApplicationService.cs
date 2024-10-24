@@ -10,6 +10,8 @@ namespace Application.ApplicationInterfaces
     public record AuthorizationResult(UserObject UserObject, AuthorizationTokens AuthorizationTokens);
     public interface IAuthorizationApplicationService
     {
-        public Task<AuthorizationResult> Authorize(string authCode);
+        public Task<AuthorizationResult> AuthorizeAsync(string authCode);
+
+        public Task<UserObject> GetUserObjectAsync(long userId);
     }
 }
