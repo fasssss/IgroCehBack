@@ -21,7 +21,7 @@ namespace Application.Services
         public async Task<ICollection<GuildObject>> GetFilteredGuildsAsync(long userId, GuildsFilter filter)
         {
             var guilds = await _guildRepository.GetGuildsByUserIdAsync(userId);
-            var filteredGuilds = guilds.Where(g => g.Name.Contains(filter.SearchString));
+            var filteredGuilds = guilds.Where(g => g.Name.Contains(filter.SearchString, StringComparison.OrdinalIgnoreCase));
             var guildObjects = new List<GuildObject>();
             foreach (var guild in filteredGuilds)
             {
