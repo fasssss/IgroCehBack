@@ -48,6 +48,7 @@ namespace Infrastructure.Configurations
                 .ForMember(dest => dest.icon, opt => opt.MapFrom(src => src.Icon))
                 .ForMember(dest => dest.banner, opt => opt.MapFrom(src => src.Banner))
                 .ForMember(dest => dest.owner, opt => opt.MapFrom(src => src.Owner))
+                .ForMember(dest => dest.owner_id, opt => opt.MapFrom(src => src.OwnerId))
                 .ForMember(dest => dest.permissions, opt => opt.MapFrom(src => src.Permissions))
                 .ForMember(dest => dest.features, opt => opt.MapFrom(src => src.Features))
                 .ForMember(dest => dest.approximate_member_count, opt => opt.MapFrom(src => src.ApproximateMemberCount))

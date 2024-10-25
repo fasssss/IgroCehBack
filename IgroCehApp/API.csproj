@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Folder Include="Endpoints\Post\" />
+    <Folder Include="Endpoints\Post\" />
   </ItemGroup>
 
 </Project>

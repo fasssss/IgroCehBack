@@ -16,6 +16,7 @@ builder.Services.AddOptionsConfiguration(configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(InfrastructureMapperProfile));
 builder.Services.AddPersistance(configuration);
+builder.Services.AddApplicationConfiguration();
 builder.Services.AddInfrastructure(configuration);
 builder.Services
     .AddAuthentication(o =>

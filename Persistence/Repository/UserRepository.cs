@@ -30,8 +30,17 @@ namespace Persistence.Repository
 
             foreach (var guild in guilds)
             {
-                if(!user.Guilds.Any(g => g.Id == guild.Id))
+                var existingGuild = user.Guilds.Find(g => g.Id == guild.Id);
+                if (existingGuild == null)
+                {
                     user.Guilds.Add(guild);
+                }
+                else
+                {
+                    existingGuild.Name = guild.Name;
+                    existingGuild.AvatarUrl = guild.AvatarUrl;
+                    existingGuild.OwnerId = guild.OwnerId;
+                }
             }
 
             return user.Guilds;

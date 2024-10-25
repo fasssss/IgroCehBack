@@ -44,7 +44,9 @@ namespace Infrastructure.Services
             var authHeader = $"Bearer {authToken}";
             var discordUserObject = await _discordApi.GetCurrentUser(authHeader);
             var userObject = _mapper.Map<UserObject>(discordUserObject);
-            userObject.AvatarUrl = $"{_discordApiOptions.ImagesBaseUrl}avatars/{userObject.Id}/{userObject.Avatar}" + (userObject.Avatar.StartsWith("a_") ? ".gif" : ".jpg");
+            if (userObject.Avatar != null)
+                userObject.AvatarUrl = $"{_discordApiOptions.ImagesBaseUrl}avatars/{userObject.Id}/{userObject.Avatar}" + (userObject.Avatar.StartsWith("a_") ? ".gif" : ".jpg");
+
             return userObject;
         }
 
@@ -52,7 +54,13 @@ namespace Infrastructure.Services
         {
             var authHeader = $"Bearer {authToken}";
             var discordListOfGuildObject = await _discordApi.GetCurrentUsersGuilds(authHeader);
-            return _mapper.Map<List<GuildObject>>(discordListOfGuildObject);
+            var userGuilds = _mapper.Map<List<GuildObject>>(discordListOfGuildObject);
+            foreach ( var guildObject in userGuilds)
+            {
+                if (guildObject.Icon != null)
+                    guildObject.IconUrl = $"{_discordApiOptions.ImagesBaseUrl}icons/{guildObject.Id}/{guildObject.Icon}" + (guildObject.Icon.StartsWith("a_") ? ".gif" : ".jpg");
+            }
+            return userGuilds;
         }
     }
 }

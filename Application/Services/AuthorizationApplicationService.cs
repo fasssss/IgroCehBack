@@ -41,7 +41,8 @@ namespace Application.Services
                 {
                     Id = guild.Id,
                     Name = guild.Name,
-                    AvatarHash = guild.Icon
+                    AvatarUrl = guild.IconUrl,
+                    OwnerId = guild.OwnerId,
                 });
             }
 

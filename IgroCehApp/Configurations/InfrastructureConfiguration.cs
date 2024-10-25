@@ -1,6 +1,4 @@
-﻿using Application.ApplicationInterfaces;
-using Application.Interfaces;
-using Application.Services;
+﻿using Application.Interfaces;
 using Infrastructure.Configurations;
 using Infrastructure.ExternalInterfaces;
 using Infrastructure.Services;
@@ -18,7 +16,6 @@ namespace API.Configurations
                 .ConfigureHttpClient(config => config.BaseAddress = new Uri(discordApiOptions.Address ?? ""));
 
             services.AddTransient<IAuthorizationService, DiscordAuthorizationService>();
-            services.AddTransient<IAuthorizationApplicationService, AuthorizationApplicationService>();
             return services;
         }
     }

@@ -13,6 +13,7 @@ namespace API.Configurations
             var mySqlVersion = configuration.GetValue<string>("MySQLVersion") ?? "8.0.27";
             services.AddMySql<IgroCehContext>(defaultConnectionString, new MySqlServerVersion(new Version(mySqlVersion)));
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IGuildRepository, GuildRepository>();
             return services;
         }
     }
