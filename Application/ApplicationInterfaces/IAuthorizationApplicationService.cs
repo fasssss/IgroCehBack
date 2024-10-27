@@ -12,6 +12,6 @@ namespace Application.ApplicationInterfaces
     {
         public Task<AuthorizationResult> AuthorizeAsync(string authCode);
 
-        public Task<UserObject> GetUserObjectAsync(long userId);
+        public Task<UserObject> GetUserObjectAsync(string userId);
     }
 }

@@ -42,7 +42,6 @@ namespace Application.Services
                     Id = guild.Id,
                     Name = guild.Name,
                     AvatarUrl = guild.IconUrl,
-                    OwnerId = guild.OwnerId,
                 });
             }
 
@@ -70,7 +69,7 @@ namespace Application.Services
             return new AuthorizationResult(userData, authResult);
         }
 
-        public async Task<UserObject> GetUserObjectAsync(long userId)
+        public async Task<UserObject> GetUserObjectAsync(string userId)
         {
             var existingUser = await _userRepository.GetByIdAsync(userId);
             if(existingUser != null)

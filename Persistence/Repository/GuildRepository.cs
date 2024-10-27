@@ -19,13 +19,13 @@ namespace Persistence.Repository
             _context = context;
         }
 
-        public async Task<ICollection<Guild>> GetGuildsByUserIdAsync(long id)
+        public async Task<ICollection<Guild>> GetGuildsByUserIdAsync(string id)
         {
             var guilds = await _context.Users.Where(u => u.Id == id).SelectMany(u => u.Guilds).ToListAsync();
             return guilds;
         }
 
-        public async Task<ICollection<Guild>> GetFilteredByUserIdAndNameAsync(long id, string searchString)
+        public async Task<ICollection<Guild>> GetFilteredByUserIdAndNameAsync(string id, string searchString)
         {
             var guilds = await _context.Users
                 .Where(u => u.Id == id)

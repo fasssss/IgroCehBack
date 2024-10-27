@@ -9,6 +9,7 @@ namespace Application.ApplicationInterfaces
 {
     public interface IGuildApplicationService
     {
-        public Task<ICollection<GuildObject>> GetFilteredGuildsAsync(long userId, GuildsFilter filter);
+        public Task<ICollection<GuildObject>> GetFilteredGuildsAsync(string userId, GuildsFilter filter);
+        public Task<GuildObject> GetGuildByIdAsync(string userId, string guildId);
     }
 }

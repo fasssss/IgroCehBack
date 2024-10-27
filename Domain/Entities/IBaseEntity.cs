@@ -8,6 +8,6 @@ namespace Domain.Entities
 {
     public interface IBaseEntity
     {
-        public long Id { get; set; }
+        public string Id { get; set; }
     }
 }

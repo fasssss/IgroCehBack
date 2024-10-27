@@ -24,9 +24,9 @@ namespace API.Endpoints.Get
         public override async Task<Results<Ok<GetSearchedGuildsResponse>, BadRequest<string>>> ExecuteAsync(GetSearchedGuildsRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.Request.Cookies["id"];
-            if (long.TryParse(stringId, out long id))
+            if (stringId != null)
             {
-                var guilds = await _guildApplicationService.GetFilteredGuildsAsync(id, new GuildsFilter()
+                var guilds = await _guildApplicationService.GetFilteredGuildsAsync(stringId, new GuildsFilter()
                 {
                     SearchString = request.SearchString
                 });

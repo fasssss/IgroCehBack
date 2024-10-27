@@ -14,7 +14,7 @@ namespace Persistence.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Guild>> UpdateUserGuildsAsync(long userId, IEnumerable<Guild> guilds)
+        public async Task<IEnumerable<Guild>> UpdateUserGuildsAsync(string userId, IEnumerable<Guild> guilds)
         {
             var user = await _context.Users
                 .Where(u => u.Id == userId)
@@ -39,7 +39,6 @@ namespace Persistence.Repository
                 {
                     existingGuild.Name = guild.Name;
                     existingGuild.AvatarUrl = guild.AvatarUrl;
-                    existingGuild.OwnerId = guild.OwnerId;
                 }
             }
 

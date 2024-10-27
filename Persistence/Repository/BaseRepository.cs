@@ -21,7 +21,7 @@ namespace Persistence.Repository
             _context = context;
         }
 
-        public async Task<T> GetByIdAsync(long id)
+        public async Task<T> GetByIdAsync(string id)
         {
             var entity = await _context.FindAsync<T>(id);
             return entity;
@@ -29,7 +29,7 @@ namespace Persistence.Repository
 
         public async Task<T> AddAsync(T entityModel)
         {
-            if (entityModel.Id != 0)
+            if (entityModel.Id != null && entityModel.Id != "")
             {
                 return (await _context.FindAsync<T>(entityModel.Id)) ?? (await _context.AddAsync(entityModel)).Entity;
             }
@@ -47,14 +47,14 @@ namespace Persistence.Repository
             return _context.Remove(entityModel).Entity;
         }
 
-        public async Task<T> FirstOrDefaultAsync(Expression<Func<IQueryable<T>>> expression)
+        public async Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> expression)
         {
-            return await _context.FromExpression(expression).FirstOrDefaultAsync();
+            return await _context.Set<T>().FirstOrDefaultAsync(expression);
         }
 
-        public IQueryable<T> Where(Expression<Func<IQueryable<T>>> expression)
+        public IEnumerable<T> Where(Func<T, bool> expression)
         {
-            return _context.FromExpression(expression);
+            return _context.Set<T>().Where(expression);
         }
 
         public async Task<int> SaveAsync()

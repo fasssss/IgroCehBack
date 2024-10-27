@@ -12,8 +12,8 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(IgroCehContext))]
-    [Migration("20241025013311_OwnerIdWasAddedToGuild")]
-    partial class OwnerIdWasAddedToGuild
+    [Migration("20241027010521_OwnerIdWasFuckedUpSoRemoved")]
+    partial class OwnerIdWasFuckedUpSoRemoved
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,20 +27,19 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Event", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("CreatorId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("CreatorId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTimeOffset>("EndDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<long>("GuildId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("GuildId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<DateTimeOffset>("StartDate")
                         .HasColumnType("datetime(6)");
@@ -56,23 +55,24 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.EventRecord", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
-                    b.Property<long>("EventId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("FromUserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
-                    b.Property<long>("FromUserId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("GameId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
-                    b.Property<long>("GameId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("ToUserId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("ToUserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 
@@ -89,11 +89,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Game", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -118,11 +115,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.Guild", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("AvatarUrl")
                         .HasColumnType("longtext");
@@ -131,9 +125,6 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<long>("OwnerId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("Id");
 
                     b.ToTable("Guilds");
@@ -141,11 +132,8 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<long>("Id"));
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
 
                     b.Property<string>("AvatarUrl")
                         .IsRequired()
@@ -166,11 +154,11 @@ namespace Persistence.Migrations
 
             modelBuilder.Entity("GuildUser", b =>
                 {
-                    b.Property<long>("GuildsId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("GuildsId")
+                        .HasColumnType("varchar(255)");
 
-                    b.Property<long>("UsersId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("UsersId")
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("GuildsId", "UsersId");
 

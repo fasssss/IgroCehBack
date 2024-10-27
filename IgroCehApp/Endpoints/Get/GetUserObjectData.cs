@@ -25,9 +25,9 @@ namespace API.Endpoints.Get
         public override async Task<Results<Ok<UserObject>, BadRequest<string>>> ExecuteAsync(CancellationToken ct)
         {
             var stringId = HttpContext.Request.Cookies["id"];
-            if(long.TryParse(stringId, out long id))
+            if(stringId != null)
             {
-                var userObject = await _authorizationApplicationService.GetUserObjectAsync(id);
+                var userObject = await _authorizationApplicationService.GetUserObjectAsync(stringId);
                 return TypedResults.Ok(userObject);
             }
 

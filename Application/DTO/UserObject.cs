@@ -9,7 +9,7 @@ namespace Application.DTO
 {
     public class UserObject
     {
-        public long Id { get; set; }
+        public string Id { get; set; }
         public string UserName { get; set; }
         public string Discriminator { get; set; }
         public string GlobalName { get; set; }

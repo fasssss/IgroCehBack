@@ -11,7 +11,7 @@ namespace Application.Interfaces
 {
     public interface IBaseRepository<T> where T: IBaseEntity
     {
-        public Task<T> GetByIdAsync(long id);
+        public Task<T> GetByIdAsync(string id);
 
         public Task<T> AddAsync(T entityModel);
 
@@ -19,9 +19,9 @@ namespace Application.Interfaces
 
         public T Delete(T entityModel);
 
-        public Task<T> FirstOrDefaultAsync(Expression<Func<IQueryable<T>>> expression);
+        public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> expression);
 
-        public IQueryable<T> Where(Expression<Func<IQueryable<T>>> expression);
+        public IEnumerable<T> Where(Func<T, bool> expression);
 
         public Task<int> SaveAsync();
 

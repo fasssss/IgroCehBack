@@ -5,7 +5,7 @@ namespace Application.Interfaces
 {
     public interface IGuildRepository: IBaseRepository<Guild>
     {
-        public Task<ICollection<Guild>> GetGuildsByUserIdAsync(long id);
-        public Task<ICollection<Guild>> GetFilteredByUserIdAndNameAsync(long id, string searchString);
+        public Task<ICollection<Guild>> GetGuildsByUserIdAsync(string id);
+        public Task<ICollection<Guild>> GetFilteredByUserIdAndNameAsync(string id, string searchString);
     }
 }

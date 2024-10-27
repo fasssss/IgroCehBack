@@ -5,24 +5,25 @@
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AvatarUrlInsteadOfAvatarHashInGuild : Migration
+    public partial class OwnerIdWasFuckedUpSoRemoved : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "AvatarHash",
-                table: "Guilds",
-                newName: "AvatarUrl");
+            migrationBuilder.DropColumn(
+                name: "OwnerId",
+                table: "Guilds");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "AvatarUrl",
+            migrationBuilder.AddColumn<string>(
+                name: "OwnerId",
                 table: "Guilds",
-                newName: "AvatarHash");
+                type: "longtext",
+                nullable: false)
+                .Annotation("MySql:CharSet", "utf8mb4");
         }
     }
 }

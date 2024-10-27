@@ -10,6 +10,6 @@ namespace Application.Interfaces
 {
     public interface IUserRepository: IBaseRepository<User>
     {
-        public Task<IEnumerable<Guild>> UpdateUserGuildsAsync(long userId, IEnumerable<Guild> guilds);
+        public Task<IEnumerable<Guild>> UpdateUserGuildsAsync(string userId, IEnumerable<Guild> guilds);
     }
 }

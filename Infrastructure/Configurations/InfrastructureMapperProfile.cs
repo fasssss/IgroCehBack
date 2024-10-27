@@ -39,8 +39,7 @@ namespace Infrastructure.Configurations
                 .ForMember(dest => dest.flags, opt => opt.MapFrom(src => src.Flags))
                 .ForMember(dest => dest.premium_type, opt => opt.MapFrom(src => src.PremiumType))
                 .ForMember(dest => dest.public_flags, opt => opt.MapFrom(src => src.PublicFlags))
-                .ReverseMap()
-                .ForPath(s => s.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
+                .ReverseMap();
 
             CreateMap<GuildObject, DiscordGuildObject>()
                 .ForMember(dest => dest.id, opt => opt.MapFrom(src => src.Id))
@@ -53,8 +52,7 @@ namespace Infrastructure.Configurations
                 .ForMember(dest => dest.features, opt => opt.MapFrom(src => src.Features))
                 .ForMember(dest => dest.approximate_member_count, opt => opt.MapFrom(src => src.ApproximateMemberCount))
                 .ForMember(dest => dest.approximate_presence_count, opt => opt.MapFrom(src => src.ApproximatePresenceCount))
-                .ReverseMap()
-                .ForPath(s => s.Id, opt => opt.MapFrom(src => long.Parse(src.id)));
+                .ReverseMap();
         }
     }
 }
