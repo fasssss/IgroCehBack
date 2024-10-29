@@ -21,9 +21,10 @@ namespace Application.Interfaces
 
         public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> expression);
 
-        public IEnumerable<T> Where(Func<T, bool> expression);
+        public IQueryable<T> Where(Expression<Func<T, bool>> expression);
 
         public Task<int> SaveAsync();
 
+        public Task<ICollection<T>> CustomToListAsync(IQueryable<T> query);
     }
 }

@@ -21,7 +21,11 @@ namespace Persistence.Repository
 
         public async Task<ICollection<Guild>> GetGuildsByUserIdAsync(string id)
         {
-            var guilds = await _context.Users.Where(u => u.Id == id).SelectMany(u => u.Guilds).ToListAsync();
+            var guilds = await _context.Users
+                .Where(u => u.Id == id)
+                .SelectMany(ug => ug.UserGuilds)
+                .Select(ug => ug.Guild)
+                .ToListAsync();
             return guilds;
         }
 
@@ -29,8 +33,9 @@ namespace Persistence.Repository
         {
             var guilds = await _context.Users
                 .Where(u => u.Id == id)
-                .SelectMany(u => u.Guilds)
-                .Where(g => g.Name.Contains(searchString))
+                .SelectMany(u => u.UserGuilds)
+                .Where(ug => ug.Guild.Name.Contains(searchString))
+                .Select(ug => ug.Guild)
                 .ToListAsync();
             return guilds;
         }

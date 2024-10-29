@@ -52,7 +52,7 @@ namespace Persistence.Repository
             return await _context.Set<T>().FirstOrDefaultAsync(expression);
         }
 
-        public IEnumerable<T> Where(Func<T, bool> expression)
+        public IQueryable<T> Where(Expression<Func<T, bool>> expression)
         {
             return _context.Set<T>().Where(expression);
         }
@@ -60,6 +60,11 @@ namespace Persistence.Repository
         public async Task<int> SaveAsync()
         {
             return await _context.SaveChangesAsync();
+        }
+
+        public async Task<ICollection<T>> CustomToListAsync(IQueryable<T> query)
+        {
+            return await query.ToListAsync();
         }
     }
 }

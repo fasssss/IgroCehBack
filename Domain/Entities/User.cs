@@ -7,7 +7,7 @@ namespace Domain.Entities
         public string UserName { get; set; }
         public string Email { get; set; }
         public string AvatarUrl { get; set; }
-        public List<Guild> Guilds { get; set; }
+        public List<UserGuild> UserGuilds { get; set; }
         public List<Event> CreatorOfEvents { get; set; }
     }
 }

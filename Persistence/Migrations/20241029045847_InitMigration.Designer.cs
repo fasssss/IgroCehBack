@@ -12,8 +12,8 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(IgroCehContext))]
-    [Migration("20241027010521_OwnerIdWasFuckedUpSoRemoved")]
-    partial class OwnerIdWasFuckedUpSoRemoved
+    [Migration("20241029045847_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -34,21 +34,26 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTimeOffset>("EndDate")
+                    b.Property<DateTimeOffset?>("EndDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("GuildId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<DateTimeOffset>("StartDate")
+                    b.Property<DateTimeOffset?>("StartDate")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<int>("StatusId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreatorId");
 
                     b.HasIndex("GuildId");
+
+                    b.HasIndex("StatusId");
 
                     b.ToTable("Events");
                 });
@@ -84,7 +89,51 @@ namespace Persistence.Migrations
 
                     b.HasIndex("ToUserId");
 
-                    b.ToTable("EventRecord");
+                    b.ToTable("EventRecords");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EventStatus", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("UserFriendlyName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("EventStatuses");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 0,
+                            Name = "PlayersRegistration",
+                            UserFriendlyName = "Players registration"
+                        },
+                        new
+                        {
+                            Id = 1,
+                            Name = "Auction",
+                            UserFriendlyName = "Auction"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Active",
+                            UserFriendlyName = "Active"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Finished",
+                            UserFriendlyName = "Finished"
+                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Game", b =>
@@ -152,19 +201,22 @@ namespace Persistence.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("GuildUser", b =>
+            modelBuilder.Entity("Domain.Entities.UserGuild", b =>
                 {
-                    b.Property<string>("GuildsId")
+                    b.Property<string>("UserId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("UsersId")
+                    b.Property<string>("GuildId")
                         .HasColumnType("varchar(255)");
 
-                    b.HasKey("GuildsId", "UsersId");
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("tinyint(1)");
 
-                    b.HasIndex("UsersId");
+                    b.HasKey("UserId", "GuildId");
 
-                    b.ToTable("GuildUser");
+                    b.HasIndex("GuildId");
+
+                    b.ToTable("UserGuilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.Event", b =>
@@ -181,9 +233,17 @@ namespace Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.EventStatus", "Status")
+                        .WithMany("Events")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("Creator");
 
                     b.Navigation("Guild");
+
+                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("Domain.Entities.EventRecord", b =>
@@ -221,24 +281,33 @@ namespace Persistence.Migrations
                     b.Navigation("ToUser");
                 });
 
-            modelBuilder.Entity("GuildUser", b =>
+            modelBuilder.Entity("Domain.Entities.UserGuild", b =>
                 {
-                    b.HasOne("Domain.Entities.Guild", null)
-                        .WithMany()
-                        .HasForeignKey("GuildsId")
+                    b.HasOne("Domain.Entities.Guild", "Guild")
+                        .WithMany("UserGuilds")
+                        .HasForeignKey("GuildId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany("UserGuilds")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Guild");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.Event", b =>
                 {
                     b.Navigation("EventRecords");
+                });
+
+            modelBuilder.Entity("Domain.Entities.EventStatus", b =>
+                {
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("Domain.Entities.Game", b =>
@@ -249,11 +318,15 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Guild", b =>
                 {
                     b.Navigation("Events");
+
+                    b.Navigation("UserGuilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("CreatorOfEvents");
+
+                    b.Navigation("UserGuilds");
                 });
 #pragma warning restore 612, 618
         }

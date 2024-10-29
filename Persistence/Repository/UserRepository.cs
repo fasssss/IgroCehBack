@@ -14,35 +14,28 @@ namespace Persistence.Repository
             _context = context;
         }
 
-        public async Task<IEnumerable<Guild>> UpdateUserGuildsAsync(string userId, IEnumerable<Guild> guilds)
+        public async Task<IEnumerable<UserGuild>> UpdateUserGuildsAsync(string userId, IEnumerable<UserGuild> userGuilds)
         {
-            var user = await _context.Users
-                .Where(u => u.Id == userId)
-                .Include(x => x.Guilds)
-                .FirstOrDefaultAsync();
-            if(user == null)
-            {
-                return Enumerable.Empty<Guild>();
-            }
+            var existingUserGuilds = await _context.UserGuilds
+                .Where(u => u.UserId == userId).ToListAsync();
 
-            var guildsToRemove = user.Guilds.Select(ug => ug.Id).Except(guilds.Select(g => g.Id));
-            user.Guilds.RemoveAll(g => guildsToRemove.Any(gtrId => gtrId == g.Id));
+            var userGuildsToRemove = existingUserGuilds.Select(ug => ug.GuildId).Except(userGuilds.Select(ug => ug.GuildId));
+            existingUserGuilds.RemoveAll(ug => userGuildsToRemove.Any(ugtrId => ugtrId == ug.Guild.Id));
 
-            foreach (var guild in guilds)
+            foreach (var userGuild in userGuilds)
             {
-                var existingGuild = user.Guilds.Find(g => g.Id == guild.Id);
-                if (existingGuild == null)
+                var existingUserGuild = existingUserGuilds.Find(ug => ug.GuildId == userGuild.GuildId);
+                if (existingUserGuild == null)
                 {
-                    user.Guilds.Add(guild);
+                    _context.UserGuilds.Add(userGuild);
                 }
                 else
                 {
-                    existingGuild.Name = guild.Name;
-                    existingGuild.AvatarUrl = guild.AvatarUrl;
+                    existingUserGuild.IsAdmin = userGuild.IsAdmin;
                 }
             }
 
-            return user.Guilds;
+            return existingUserGuilds;
         }
     }
 }

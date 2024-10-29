@@ -39,7 +39,7 @@ namespace Application.Services
 
         public async Task<GuildObject> GetGuildByIdAsync(string userId, string guildId)
         {
-            var guild = await _guildRepository.FirstOrDefaultAsync(g => g.Id == guildId);
+            var guild = await _guildRepository.FirstOrDefaultAsync(g => g.Id == guildId && g.UserGuilds.Any(u => u.UserId == userId));
             if(guild != null)
             {
                 var guildObject = new GuildObject()

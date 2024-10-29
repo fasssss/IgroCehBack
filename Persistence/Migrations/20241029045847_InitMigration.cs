@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Persistence.Migrations
 {
     /// <inheritdoc />
@@ -12,6 +14,22 @@ namespace Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterDatabase()
+                .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "EventStatuses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    UserFriendlyName = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EventStatuses", x => x.Id);
+                })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
@@ -44,8 +62,6 @@ namespace Persistence.Migrations
                     Name = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     AvatarUrl = table.Column<string>(type: "longtext", nullable: true)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    OwnerId = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -81,14 +97,21 @@ namespace Persistence.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatorId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    StartDate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false),
-                    EndDate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: false),
+                    StartDate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: true),
+                    EndDate = table.Column<DateTimeOffset>(type: "datetime(6)", nullable: true),
                     GuildId = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    StatusId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Events", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Events_EventStatuses_StatusId",
+                        column: x => x.StatusId,
+                        principalTable: "EventStatuses",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Events_Guilds_GuildId",
                         column: x => x.GuildId,
@@ -105,26 +128,27 @@ namespace Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "GuildUser",
+                name: "UserGuilds",
                 columns: table => new
                 {
-                    GuildsId = table.Column<string>(type: "varchar(255)", nullable: false)
+                    UserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    UsersId = table.Column<string>(type: "varchar(255)", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4")
+                    GuildId = table.Column<string>(type: "varchar(255)", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    IsAdmin = table.Column<bool>(type: "tinyint(1)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GuildUser", x => new { x.GuildsId, x.UsersId });
+                    table.PrimaryKey("PK_UserGuilds", x => new { x.UserId, x.GuildId });
                     table.ForeignKey(
-                        name: "FK_GuildUser_Guilds_GuildsId",
-                        column: x => x.GuildsId,
+                        name: "FK_UserGuilds_Guilds_GuildId",
+                        column: x => x.GuildId,
                         principalTable: "Guilds",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_GuildUser_Users_UsersId",
-                        column: x => x.UsersId,
+                        name: "FK_UserGuilds_Users_UserId",
+                        column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
@@ -132,7 +156,7 @@ namespace Persistence.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "EventRecord",
+                name: "EventRecords",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "varchar(255)", nullable: false)
@@ -148,27 +172,27 @@ namespace Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_EventRecord", x => x.Id);
+                    table.PrimaryKey("PK_EventRecords", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_EventRecord_Events_EventId",
+                        name: "FK_EventRecords_Events_EventId",
                         column: x => x.EventId,
                         principalTable: "Events",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventRecord_Games_GameId",
+                        name: "FK_EventRecords_Games_GameId",
                         column: x => x.GameId,
                         principalTable: "Games",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventRecord_Users_FromUserId",
+                        name: "FK_EventRecords_Users_FromUserId",
                         column: x => x.FromUserId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_EventRecord_Users_ToUserId",
+                        name: "FK_EventRecords_Users_ToUserId",
                         column: x => x.ToUserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -176,24 +200,35 @@ namespace Persistence.Migrations
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 
+            migrationBuilder.InsertData(
+                table: "EventStatuses",
+                columns: new[] { "Id", "Name", "UserFriendlyName" },
+                values: new object[,]
+                {
+                    { 0, "PlayersRegistration", "Players registration" },
+                    { 1, "Auction", "Auction" },
+                    { 2, "Active", "Active" },
+                    { 3, "Finished", "Finished" }
+                });
+
             migrationBuilder.CreateIndex(
-                name: "IX_EventRecord_EventId",
-                table: "EventRecord",
+                name: "IX_EventRecords_EventId",
+                table: "EventRecords",
                 column: "EventId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventRecord_FromUserId",
-                table: "EventRecord",
+                name: "IX_EventRecords_FromUserId",
+                table: "EventRecords",
                 column: "FromUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventRecord_GameId",
-                table: "EventRecord",
+                name: "IX_EventRecords_GameId",
+                table: "EventRecords",
                 column: "GameId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_EventRecord_ToUserId",
-                table: "EventRecord",
+                name: "IX_EventRecords_ToUserId",
+                table: "EventRecords",
                 column: "ToUserId");
 
             migrationBuilder.CreateIndex(
@@ -207,25 +242,33 @@ namespace Persistence.Migrations
                 column: "GuildId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GuildUser_UsersId",
-                table: "GuildUser",
-                column: "UsersId");
+                name: "IX_Events_StatusId",
+                table: "Events",
+                column: "StatusId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGuilds_GuildId",
+                table: "UserGuilds",
+                column: "GuildId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "EventRecord");
+                name: "EventRecords");
 
             migrationBuilder.DropTable(
-                name: "GuildUser");
+                name: "UserGuilds");
 
             migrationBuilder.DropTable(
                 name: "Events");
 
             migrationBuilder.DropTable(
                 name: "Games");
+
+            migrationBuilder.DropTable(
+                name: "EventStatuses");
 
             migrationBuilder.DropTable(
                 name: "Guilds");

@@ -1,8 +1,11 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,9 +15,11 @@ namespace Persistence.Context
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Guild> Guilds { get; set; }
+        public DbSet<UserGuild> UserGuilds { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Game> Games { get; set; }
-        public DbSet<EventRecord> EventRecord { get; set; }
+        public DbSet<EventRecord> EventRecords { get; set; }
+        public DbSet<EventStatus> EventStatuses { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -29,9 +34,6 @@ namespace Persistence.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Guilds)
-                .WithMany(g => g.Users);
             modelBuilder.Entity<Event>()
                 .HasOne(e => e.Guild)
                 .WithMany(g => g.Events)
@@ -56,6 +58,26 @@ namespace Persistence.Context
                 .HasOne(er => er.Game)
                 .WithMany(g => g.EventRecords)
                 .HasForeignKey(er => er.GameId);
+            modelBuilder.Entity<UserGuild>()
+                .HasKey(ug => new { ug.UserId, ug.GuildId });
+            modelBuilder.Entity<EventStatus>()
+                .Property(e => e.Id)
+                .HasConversion<int>();
+            modelBuilder.Entity<EventStatus>()
+                .HasMany(es => es.Events)
+                .WithOne(e => e.Status)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<EventStatus>()
+                .HasData(
+                    Enum.GetValues(typeof(EventStatusId))
+                    .Cast<EventStatusId>()
+                    .Select(esId => new EventStatus
+                    {
+                        Id = esId,
+                        Name = esId.ToString(),
+                        UserFriendlyName = esId.GetType().GetMember(esId.ToString()).First().GetCustomAttribute<DisplayAttribute>()?.GetName() ?? "",
+                    })
+                );
         }
     }
 }
