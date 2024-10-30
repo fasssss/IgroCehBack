@@ -56,10 +56,9 @@ namespace Application.Services
                 existingUser.UserName = userData.UserName;
             }
 
-            var existingCopyGuilds = await _guildRepository.CustomToListAsync(_guildRepository.Where(g => guildsData.Any(gd => g.Id == gd.Id)));
             foreach (var guild in guildsData)
             {
-                var existingGuild = existingCopyGuilds.FirstOrDefault(eg => eg.Id == guild.Id);
+                var existingGuild = await _guildRepository.GetByIdAsync(guild.Id);
                 if (existingGuild == null)
                 {
                     await _guildRepository.AddAsync(new Guild

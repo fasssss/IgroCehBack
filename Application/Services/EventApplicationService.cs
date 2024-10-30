@@ -34,7 +34,7 @@ namespace Application.Services
                     Name = eventObject.Name,
                     CreatorId = eventObject.CreatorId,
                     GuildId = eventObject.GuildId,
-                    //StatusId = EventStatusId.PlayersRegistration
+                    StatusId = EventStatusId.PlayersRegistration
                 });
 
                 var saveResult = await _eventRepository.SaveAsync();
@@ -47,7 +47,7 @@ namespace Application.Services
                         Name= createdEvent.Name,
                         CreatorId = createdEvent.CreatorId,
                         GuildId = createdEvent.GuildId,
-                        //StatusId = createdEvent.StatusId
+                        StatusId = createdEvent.StatusId
                     };
 
                     return createdEventObject;
