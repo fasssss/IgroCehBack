@@ -14,6 +14,7 @@ namespace API.Configurations
             services.AddMySql<IgroCehContext>(defaultConnectionString, new MySqlServerVersion(new Version(mySqlVersion)));
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGuildRepository, GuildRepository>();
+            services.AddScoped<IEventRepository, EventRepository>();
             return services;
         }
     }

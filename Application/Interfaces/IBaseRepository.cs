@@ -26,5 +26,6 @@ namespace Application.Interfaces
         public Task<int> SaveAsync();
 
         public Task<ICollection<T>> CustomToListAsync(IQueryable<T> query);
+        public Task<bool> CustomAnyAsync(IQueryable<T> query);
     }
 }

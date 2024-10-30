@@ -24,9 +24,4 @@
     <ProjectReference Include="..\Persistence\Persistence.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Endpoints\Post\" />
-    <Folder Include="Endpoints\Post\" />
-  </ItemGroup>
-
 </Project>

@@ -66,5 +66,10 @@ namespace Persistence.Repository
         {
             return await query.ToListAsync();
         }
+
+        public async Task<bool> CustomAnyAsync(IQueryable<T> query)
+        {
+            return await query.AnyAsync();
+        }
     }
 }

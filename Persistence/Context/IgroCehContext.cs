@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Persistence.Context
 {
@@ -19,7 +20,7 @@ namespace Persistence.Context
         public DbSet<Event> Events { get; set; }
         public DbSet<Game> Games { get; set; }
         public DbSet<EventRecord> EventRecords { get; set; }
-        public DbSet<EventStatus> EventStatuses { get; set; }
+        //public DbSet<EventStatus> EventStatuses { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -34,6 +35,7 @@ namespace Persistence.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Event>().Property(x => x.Id).HasDefaultValueSql("(uuid())");
             modelBuilder.Entity<Event>()
                 .HasOne(e => e.Guild)
                 .WithMany(g => g.Events)
