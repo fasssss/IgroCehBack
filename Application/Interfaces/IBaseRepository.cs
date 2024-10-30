@@ -14,6 +14,8 @@ namespace Application.Interfaces
         public Task<T> GetByIdAsync(string id);
 
         public Task<T> AddAsync(T entityModel);
+        public Task<T> TryAddAsync(T entityModel);
+        public Task<T> AddOrUpdateAsync(T entityModel);
 
         public T Update(T entityModel);
 

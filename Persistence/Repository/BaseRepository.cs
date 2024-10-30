@@ -29,9 +29,28 @@ namespace Persistence.Repository
 
         public async Task<T> AddAsync(T entityModel)
         {
+            return (await _context.AddAsync(entityModel)).Entity;
+        }
+
+        public async Task<T> TryAddAsync(T entityModel)
+        {
             if (entityModel.Id != null && entityModel.Id != "")
             {
                 return (await _context.FindAsync<T>(entityModel.Id)) ?? (await _context.AddAsync(entityModel)).Entity;
+            }
+
+            return (await _context.AddAsync(entityModel)).Entity;
+        }
+
+        public async Task<T> AddOrUpdateAsync(T entityModel)
+        {
+            if (entityModel.Id != null && entityModel.Id != "")
+            {
+                var existingEntity = await _context.FindAsync<T>(entityModel.Id);
+                if (existingEntity != null)
+                {
+                    _context.Remove(existingEntity);
+                }
             }
 
             return (await _context.AddAsync(entityModel)).Entity;

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Application.Services
 {
@@ -56,23 +57,16 @@ namespace Application.Services
                 existingUser.UserName = userData.UserName;
             }
 
+            await _guildRepository.CustomToListAsync(_guildRepository.Where(g => g.UserGuilds.Any(ug => ug.UserId == userData.Id))); // To load all guilds of current user into context by one query to DB
+
             foreach (var guild in guildsData)
             {
-                var existingGuild = await _guildRepository.GetByIdAsync(guild.Id);
-                if (existingGuild == null)
+                await _guildRepository.AddOrUpdateAsync(new Guild
                 {
-                    await _guildRepository.AddAsync(new Guild
-                    {
-                        Id = guild.Id,
-                        Name = guild.Name,
-                        AvatarUrl = guild.IconUrl,
-                    });
-                }
-                else
-                {
-                    existingGuild.Name = guild.Name;
-                    existingGuild.AvatarUrl = guild.IconUrl;
-                }
+                    Id = guild.Id,
+                    Name = guild.Name,
+                    AvatarUrl = guild.IconUrl,
+                });
 
                 userGuildEntities.Add(new UserGuild()
                 {
