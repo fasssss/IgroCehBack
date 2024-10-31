@@ -8,8 +8,8 @@ namespace Domain.Entities
         public string Name { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }
-        public DateTimeOffset? StartDate { get; set; }
-        public DateTimeOffset? EndDate { get; set;}
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set;}
         public List<EventRecord> EventRecords { get; set; }
         public string GuildId { get; set; }
         public Guild Guild { get; set; }

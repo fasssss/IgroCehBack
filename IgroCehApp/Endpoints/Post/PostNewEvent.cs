@@ -23,7 +23,7 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(PostNewEventRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.Request.Cookies["id"];
-            var newEvent = new EventObject()
+            var newEvent = new EventShortObject()
             {
                 GuildId = request.GuildId,
                 Name = request.EventName,
