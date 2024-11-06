@@ -10,6 +10,6 @@ namespace Application.ApplicationInterfaces
     public interface IEventApplicationService
     {
         public Task<EventShortObject> CreateEventAsync(EventShortObject eventObject);
-        public Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId);
+        public Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId, int startFrom);
     }
 }

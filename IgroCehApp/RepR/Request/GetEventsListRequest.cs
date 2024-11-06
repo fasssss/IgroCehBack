@@ -3,5 +3,6 @@
     public class GetEventsListRequest
     {
         public string GuildId { get; set;}
+        public int startFrom { get; set;}
     }
 }

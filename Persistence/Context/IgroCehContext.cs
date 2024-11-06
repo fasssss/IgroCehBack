@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Domain.Attributes;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -78,6 +79,7 @@ namespace Persistence.Context
                         Id = esId,
                         Name = esId.ToString(),
                         UserFriendlyName = esId.GetType().GetMember(esId.ToString()).First().GetCustomAttribute<DisplayAttribute>()?.GetName() ?? "",
+                        Order = esId.GetType().GetMember(esId.ToString()).First().GetCustomAttribute<OrderAttribute>()?.Order ?? 0,
                     })
                 );
         }

@@ -29,8 +29,10 @@ namespace Application.Services
                 .Where(u => u.Id == eventObject.CreatorId && u.UserGuilds.Any(ug => ug.GuildId == eventObject.GuildId)));
             var userAlreadyHasEvent = await _eventRepository
                 .CustomAnyAsync(_eventRepository
-                .Where(e => e.CreatorId == eventObject.CreatorId && e.StatusId != EventStatusId.Finished));
-            if (userHasRight && !userAlreadyHasEvent)
+                .Where(e => e.CreatorId == eventObject.CreatorId 
+                    && e.StatusId != EventStatusId.Finished 
+                    && e.GuildId == eventObject.GuildId));
+            if (userHasRight) // TODO use this statement instead "userHasRight && !userAlreadyHasEvent"
             {
                 var startSeasonDate = GetStartSeasonDate();
                 var createdEvent = await _eventRepository.AddAsync(new Event()
@@ -63,7 +65,7 @@ namespace Application.Services
             return null;
         }
 
-        public async Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId)
+        public async Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId, int startFrom)
         {
             var userIsInGuild = await _userRepository
                 .CustomAnyAsync(_userRepository
@@ -73,7 +75,10 @@ namespace Application.Services
             {
                 var eventList = await _eventRepository.CustomToListAsync(
                     _eventRepository.Where(e => e.GuildId == guildId)
-                    .OrderByDescending(e => e.StartDate)
+                    .OrderByDescending(u => u.Status.Order)
+                    .ThenByDescending(e => e.StartDate)
+                    .Skip(startFrom)
+                    .Take(10)
                     .Select(e => new Event
                     {
                         Id = e.Id,

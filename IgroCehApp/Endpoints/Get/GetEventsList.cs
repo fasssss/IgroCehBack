@@ -25,9 +25,11 @@ namespace API.Endpoints.Get
         {
             var stringId = HttpContext.Request.Cookies["id"];
 
+
+
             if (stringId != null)
             {
-                var eventsList = await _eventApplicationService.GetEventsByGuildIdAsync(stringId, request.GuildId);
+                var eventsList = await _eventApplicationService.GetEventsByGuildIdAsync(stringId, request.GuildId, request.startFrom);
                 if (eventsList != null)
                 {
                     return TypedResults.Ok(new GetEventsListResponse
