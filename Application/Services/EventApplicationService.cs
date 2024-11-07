@@ -77,6 +77,7 @@ namespace Application.Services
                     _eventRepository.Where(e => e.GuildId == guildId)
                     .OrderByDescending(u => u.Status.Order)
                     .ThenByDescending(e => e.StartDate)
+                    .ThenBy(e => e.Id)
                     .Skip(startFrom)
                     .Take(10)
                     .Select(e => new Event
