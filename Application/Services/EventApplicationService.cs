@@ -37,6 +37,7 @@ namespace Application.Services
                 var startSeasonDate = GetStartSeasonDate();
                 var createdEvent = await _eventRepository.AddAsync(new Event()
                 {
+                    Id = Guid.NewGuid().ToString(),
                     Name = eventObject.Name,
                     CreatorId = eventObject.CreatorId,
                     StartDate = startSeasonDate,
@@ -45,9 +46,11 @@ namespace Application.Services
                     StatusId = EventStatusId.PlayersRegistration
                 });
 
+                var addedEventRecord = await _eventRepository.AddEventRecord(eventObject.CreatorId, createdEvent.Id);
+
                 var saveResult = await _eventRepository.SaveAsync();
 
-                if(createdEvent != null && saveResult > 0)
+                if(createdEvent != null && addedEventRecord != null && saveResult >= 2)
                 {
                     var createdEventObject = new EventShortObject()
                     {
@@ -56,6 +59,7 @@ namespace Application.Services
                         CreatorId = createdEvent.CreatorId,
                         GuildId = createdEvent.GuildId,
                         StatusId = createdEvent.StatusId,
+                        ParticipantsIds = new List<string>() { addedEventRecord.ParticipantId }
                     };
 
                     return createdEventObject;
@@ -103,7 +107,8 @@ namespace Application.Services
                         {
                             Id = e.StatusId,
                             UserFriendlyName = e.Status.UserFriendlyName
-                        }
+                        },
+                        EventRecords = e.EventRecords,
                     }));
 
                 var eventListObject = new List<EventShortObject>();
@@ -121,10 +126,13 @@ namespace Application.Services
                         GuildId = eventEntity.GuildId,
                         GuildName = eventEntity.Guild.Name,
                         StatusId = eventEntity.StatusId,
-                        StatusDisplayName = eventEntity.Status.UserFriendlyName
+                        StatusDisplayName = eventEntity.Status.UserFriendlyName,
+                        ParticipantsIds = eventEntity.EventRecords.Select(x => x.ParticipantId).ToList(),
                     });
                 }
 
+                await Task.Delay(1000);
+                Task.Delay(1000);
                 return eventListObject;
             }
 

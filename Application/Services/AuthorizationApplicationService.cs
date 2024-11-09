@@ -93,6 +93,7 @@ namespace Application.Services
                     AvatarUrl = existingUser.AvatarUrl,
                     UserName = existingUser.UserName,
                     Email = existingUser.Email,
+                    Id = existingUser.Id,
                 };
             }
 

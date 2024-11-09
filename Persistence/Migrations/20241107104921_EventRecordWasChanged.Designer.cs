@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Context;
 
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(IgroCehContext))]
-    partial class IgroCehContextModelSnapshot : ModelSnapshot
+    [Migration("20241107104921_EventRecordWasChanged")]
+    partial class EventRecordWasChanged
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -57,7 +60,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Entities.EventRecord", b =>
@@ -89,7 +92,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("ToUserId");
 
-                    b.ToTable("EventRecords", (string)null);
+                    b.ToTable("EventRecords");
                 });
 
             modelBuilder.Entity("Domain.Entities.EventStatus", b =>
@@ -110,7 +113,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventStatuses", (string)null);
+                    b.ToTable("EventStatuses");
 
                     b.HasData(
                         new
@@ -166,7 +169,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Games", (string)null);
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("Domain.Entities.Guild", b =>
@@ -183,7 +186,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Guilds", (string)null);
+                    b.ToTable("Guilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -205,7 +208,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
@@ -223,7 +226,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.ToTable("UserGuilds", (string)null);
+                    b.ToTable("UserGuilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.Event", b =>

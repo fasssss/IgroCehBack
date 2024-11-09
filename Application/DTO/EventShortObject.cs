@@ -20,5 +20,6 @@ namespace Application.DTO
         public string GuildName { get; set; }
         public EventStatusId StatusId { get; set; }
         public string StatusDisplayName { get; set; }
+        public List<string> ParticipantsIds { get; set; }
     }
 }

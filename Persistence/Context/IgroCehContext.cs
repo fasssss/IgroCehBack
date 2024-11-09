@@ -45,14 +45,15 @@ namespace Persistence.Context
                 .HasOne(e => e.Creator)
                 .WithMany(c => c.CreatorOfEvents)
                 .HasForeignKey(e => e.CreatorId);
+            modelBuilder.Entity<EventRecord>().Property(x => x.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<EventRecord>()
                 .HasOne(er => er.Event)
                 .WithMany(e => e.EventRecords)
                 .HasForeignKey(er => er.EventId);
             modelBuilder.Entity<EventRecord>()
-                .HasOne(er => er.FromUser)
+                .HasOne(er => er.Participant)
                 .WithMany()
-                .HasForeignKey(er => er.FromUserId);
+                .HasForeignKey(er => er.ParticipantId);
             modelBuilder.Entity<EventRecord>()
                 .HasOne(er => er.ToUser)
                 .WithMany()

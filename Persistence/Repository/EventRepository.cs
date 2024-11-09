@@ -17,5 +17,17 @@ namespace Persistence.Repository
         {
             _igroCehContext = igroCehContext;
         }
+
+        public async Task<EventRecord> AddEventRecord(string userId, string eventId)
+        {
+            var addedRecordWithParticipant = _igroCehContext.EventRecords.Add(new EventRecord()
+            {
+                ParticipantId = userId,
+                EventId = eventId
+            });
+
+
+            return addedRecordWithParticipant.Entity;
+        }
     }
 }
