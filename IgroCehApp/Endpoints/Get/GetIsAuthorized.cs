@@ -13,13 +13,7 @@ namespace API.Endpoints.Get
 
         public override async Task<Ok<bool>> ExecuteAsync(CancellationToken ct)
         {
-            var accessToken = HttpContext.Request.Cookies["access_token"];
-            if (accessToken != null)
-            {
-                return TypedResults.Ok(true);
-            }
-
-            return TypedResults.Ok(false);
+            throw new NotImplementedException();
         }
     }
 }

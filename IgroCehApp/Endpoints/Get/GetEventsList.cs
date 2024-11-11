@@ -4,6 +4,7 @@ using Application.ApplicationInterfaces;
 using Application.DTO;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Security.Claims;
 
 namespace API.Endpoints.Get
 {
@@ -23,8 +24,7 @@ namespace API.Endpoints.Get
 
         public override async Task<Results<Ok<GetEventsListResponse>, BadRequest<string>>> ExecuteAsync(GetEventsListRequest request, CancellationToken ct)
         {
-            var stringId = HttpContext.Request.Cookies["id"];
-
+            var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
 
             if (stringId != null)

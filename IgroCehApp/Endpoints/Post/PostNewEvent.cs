@@ -3,6 +3,7 @@ using Application.ApplicationInterfaces;
 using Application.DTO;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http.HttpResults;
+using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
@@ -22,7 +23,7 @@ namespace API.Endpoints.Post
 
         public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(PostNewEventRequest request, CancellationToken ct)
         {
-            var stringId = HttpContext.Request.Cookies["id"];
+            var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var newEvent = new EventShortObject()
             {
                 GuildId = request.GuildId,
