@@ -1,6 +1,7 @@
 ﻿using Application.ApplicationInterfaces;
 using Application.DTO;
 using Application.Interfaces;
+using AutoMapper;
 using Domain.Entities;
 using Domain.Enums;
 using System;
@@ -15,11 +16,13 @@ namespace Application.Services
     {
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
 
-        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository) 
+        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository, IMapper mapper) 
         {
             _eventRepository = eventRepository;
             _userRepository = userRepository;
+            _mapper = mapper;
         }
 
         public async Task<EventShortObject> CreateEventAsync(EventShortObject eventObject)
@@ -67,6 +70,34 @@ namespace Application.Services
             }
 
             return null;
+        }
+
+        public async Task<EventObject> GetEventByIdAsync(string userId, string eventId)
+        {
+            var eventEntity = (await _eventRepository.CustomToListAsync(_eventRepository
+                .Where(e => e.Id == eventId && e.Guild.UserGuilds.Any(ug => ug.UserId == userId)).Select(e => new Event
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    CreatorId = e.CreatorId,
+                    GuildId = e.GuildId,
+                    StatusId = e.StatusId,
+                    StartDate = e.StartDate,
+                    EndDate = e.EndDate,
+                    EventRecords = e.EventRecords.Select(er => new EventRecord
+                    {
+                        Id = er.Id,
+                        Participant = er.Participant,
+                        ParticipantId = er.ParticipantId,
+                        ToUser = er.ToUser,
+                        ToUserId = er.ToUserId,
+                        Game = er.Game,
+                        GameId = er.GameId,
+                    }).ToList(),
+                }))).FirstOrDefault();
+            var eventObject = _mapper.Map<EventObject>(eventEntity);
+
+            return eventObject;
         }
 
         public async Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId, int startFrom)

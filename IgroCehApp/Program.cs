@@ -1,5 +1,6 @@
 using API.Authentication;
 using API.Configurations;
+using Application.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Infrastructure.Configurations;
@@ -15,6 +16,7 @@ builder.Services.AddCors();
 builder.Services.AddOptionsConfiguration(configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(InfrastructureMapperProfile));
+builder.Services.AddAutoMapper(typeof(ApplicationMapperProfile));
 builder.Services.AddPersistance(configuration);
 builder.Services.AddApplicationConfiguration();
 builder.Services.AddInfrastructure(configuration);

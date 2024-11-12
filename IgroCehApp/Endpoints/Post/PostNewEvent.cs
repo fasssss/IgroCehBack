@@ -1,4 +1,5 @@
 ﻿using API.RepR.Request;
+using API.RepR.Response;
 using Application.ApplicationInterfaces;
 using Application.DTO;
 using FastEndpoints;
@@ -7,7 +8,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    public class PostNewEvent: Endpoint<PostNewEventRequest, Results<Ok, BadRequest<string>>>
+    public class PostNewEvent: Endpoint<PostNewEventRequest, Results<Ok<PostNewEventResponse>, BadRequest<string>>>
     {
         private readonly IEventApplicationService _eventApplicationService;
 
@@ -21,7 +22,7 @@ namespace API.Endpoints.Post
             Post("/api/postNewEvent");
         }
 
-        public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(PostNewEventRequest request, CancellationToken ct)
+        public override async Task<Results<Ok<PostNewEventResponse>, BadRequest<string>>> ExecuteAsync(PostNewEventRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var newEvent = new EventShortObject()
@@ -36,7 +37,10 @@ namespace API.Endpoints.Post
                 var userObject = await _eventApplicationService.CreateEventAsync(newEvent);
                 if(userObject != null)
                 {
-                    return TypedResults.Ok();
+                    return TypedResults.Ok(new PostNewEventResponse
+                    {
+                        EventId = userObject.Id,
+                    });
                 }
             }
 
