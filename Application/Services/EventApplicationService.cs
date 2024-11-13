@@ -170,6 +170,27 @@ namespace Application.Services
             return new List<EventShortObject>();
         }
 
+        public async Task<EventRecordObject> JoinEventAsync(string userId, string eventId)
+        {
+            var guildId = (await _eventRepository.GetByIdAsync(eventId)).GuildId;
+            var userHasRight = await _userRepository
+                .CustomAnyAsync(_userRepository
+                .Where(u => u.UserGuilds.Any(ug => ug.GuildId == guildId)));
+
+            if (userHasRight)
+            {
+                var addedEventRecord = await _eventRepository.AddEventRecord(userId, eventId);
+                var saveResult = await _eventRepository.SaveAsync();
+
+                if (saveResult >= 1)
+                {
+                    return _mapper.Map<EventRecordObject>(addedEventRecord);
+                }
+            }
+
+            return null;
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;
