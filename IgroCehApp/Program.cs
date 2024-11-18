@@ -47,10 +47,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication()
     .UseAuthorization()
     .UseFastEndpoints()
+    .UseWebSockets(new WebSocketOptions
+    {
+        KeepAliveInterval = TimeSpan.FromSeconds(15)
+    })
     .UseSwaggerGen();
-app.UseWebSockets(new WebSocketOptions
-{
-    KeepAliveInterval = TimeSpan.FromSeconds(5)
-});
 
 app.Run();

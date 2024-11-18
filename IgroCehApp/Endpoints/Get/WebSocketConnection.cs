@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 namespace API.Endpoints.Get
 {
-    public class WebSocketConnection: EndpointWithoutRequest<Results<Ok, BadRequest<string>>>
+    public class WebSocketConnection: Endpoint<string, Results<Ok, BadRequest<string>>>
     {
         private WebSocketHelper _websocketHelper;
 
@@ -23,7 +23,7 @@ namespace API.Endpoints.Get
             Get("/api/ws");
         }
 
-        public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(CancellationToken ct)
+        public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(string s, CancellationToken ct)
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
