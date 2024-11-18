@@ -11,9 +11,10 @@ namespace API.Helpers
             _webSocketConnections = new List<WebSocketsConnection>();
         }
 
-        public async Task<int> AddWebSocketConnection(WebSocket socket, params string[] rooms)
+        public async Task<int> AddWebSocketRoom(WebSocket socket, params string[] rooms)
         {
             var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
+
             if (connection == null && rooms != null) 
             {
                 connection = new WebSocketsConnection { WebSocket = socket };
@@ -28,7 +29,7 @@ namespace API.Helpers
             return connection?.Rooms?.Count ?? 0;
         }
 
-        public async Task<int> RemoveWebSocketConnection(WebSocket socket, params string[] rooms)
+        public async Task<int> RemoveWebSocketRoom(WebSocket socket, params string[] rooms)
         {
             var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
             if (connection == null)
@@ -47,6 +48,17 @@ namespace API.Helpers
             }
 
             return connection.Rooms.Count;
+        }
+
+        public async Task<bool> RemoveWebSocketEntirely(WebSocket socket)
+        {
+            var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
+            if(_webSocketConnections.Remove(connection))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
