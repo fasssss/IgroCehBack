@@ -1,5 +1,6 @@
 using API.Authentication;
 using API.Configurations;
+using API.Helpers;
 using Application.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
@@ -20,6 +21,7 @@ builder.Services.AddAutoMapper(typeof(ApplicationMapperProfile));
 builder.Services.AddPersistance(configuration);
 builder.Services.AddApplicationConfiguration();
 builder.Services.AddInfrastructure(configuration);
+builder.Services.AddSingleton<WebSocketHelper>();
 builder.Services
     .AddAuthentication(o =>
         o.AddScheme<CustomAuthenticationHandler>("customAuthenticationScheme", null));
@@ -46,5 +48,9 @@ app.UseAuthentication()
     .UseAuthorization()
     .UseFastEndpoints()
     .UseSwaggerGen();
+app.UseWebSockets(new WebSocketOptions
+{
+    KeepAliveInterval = TimeSpan.FromSeconds(5)
+});
 
 app.Run();
