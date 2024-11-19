@@ -18,6 +18,7 @@ builder.Services.AddOptionsConfiguration(configuration);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(InfrastructureMapperProfile));
 builder.Services.AddAutoMapper(typeof(ApplicationMapperProfile));
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddPersistance(configuration);
 builder.Services.AddApplicationConfiguration();
 builder.Services.AddInfrastructure(configuration);

@@ -49,7 +49,7 @@ namespace Application.Services
                     StatusId = EventStatusId.PlayersRegistration
                 });
 
-                var addedEventRecord = await _eventRepository.AddEventRecord(eventObject.CreatorId, createdEvent.Id);
+                var addedEventRecord = await _eventRepository.AddEventRecordAsync(eventObject.CreatorId, createdEvent.Id);
 
                 var saveResult = await _eventRepository.SaveAsync();
 
@@ -179,11 +179,12 @@ namespace Application.Services
 
             if (userHasRight)
             {
-                var addedEventRecord = await _eventRepository.AddEventRecord(userId, eventId);
+                var addedEventRecord = await _eventRepository.AddEventRecordAsync(userId, eventId);
                 var saveResult = await _eventRepository.SaveAsync();
 
                 if (saveResult >= 1)
                 {
+                    var addedEventRecordWithNavProps = await _eventRepository.GetEventRecordAsync(addedEventRecord.Id);
                     return _mapper.Map<EventRecordObject>(addedEventRecord);
                 }
             }

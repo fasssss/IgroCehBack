@@ -1,23 +1,30 @@
-﻿using System.Net.WebSockets;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using System.Net.WebSockets;
+using System.Security.Claims;
+using System.Text;
 
 namespace API.Helpers
 {
     public class WebSocketHelper
     {
         private List<WebSocketsConnection> _webSocketConnections;
-        
-        public WebSocketHelper() 
+        private IHttpContextAccessor _httpContextAccessor;
+
+        public WebSocketHelper(IHttpContextAccessor httpContextAccessor) 
         {
             _webSocketConnections = new List<WebSocketsConnection>();
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<int> AddWebSocketRoom(WebSocket socket, params string[] rooms)
         {
             var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
+            var applicationCookieAsId = _httpContextAccessor.HttpContext?.Request.Cookies["application_token"];
 
             if (connection == null && rooms != null) 
             {
-                connection = new WebSocketsConnection { WebSocket = socket };
+                connection = new WebSocketsConnection { UniqueIdentifier = applicationCookieAsId, WebSocket = socket };
                 _webSocketConnections.Add(connection);
             }
 
@@ -48,6 +55,27 @@ namespace API.Helpers
             }
 
             return connection.Rooms.Count;
+        }
+
+        public async Task SendToRoomAsync<T>(string room, T message, bool sendSelf = false)
+        {
+            var applicationCookieAsId = _httpContextAccessor.HttpContext?.Request.Cookies["application_token"];
+            var connections = _webSocketConnections.Where(x => x.Rooms.Contains(room));
+            if (!sendSelf)
+            {
+                connections = connections.Where(x => x.UniqueIdentifier != applicationCookieAsId);
+            }
+
+            string jsonString = JsonConvert.SerializeObject(message, new JsonSerializerSettings 
+            { 
+                ContractResolver = new CamelCasePropertyNamesContractResolver() 
+            });
+            byte[] requestBuffer = Encoding.UTF8.GetBytes(jsonString);
+            var buffer = new ArraySegment<byte>(requestBuffer);
+            foreach (var connection in connections)
+            {
+                await connection.WebSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+            }
         }
 
         public async Task<bool> RemoveWebSocketEntirely(WebSocket socket)

@@ -9,6 +9,7 @@ namespace Application.Interfaces
 {
     public interface IEventRepository: IBaseRepository<Event>
     {
-        public Task<EventRecord> AddEventRecord(string userId, string eventId);
+        public Task<EventRecord> AddEventRecordAsync(string userId, string eventId);
+        public Task<EventRecord> GetEventRecordAsync(string eventRecordId);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace Persistence.Repository
             _igroCehContext = igroCehContext;
         }
 
-        public async Task<EventRecord> AddEventRecord(string userId, string eventId)
+        public async Task<EventRecord> AddEventRecordAsync(string userId, string eventId)
         {
             var addedRecordWithParticipant = _igroCehContext.EventRecords.Add(new EventRecord()
             {
@@ -28,6 +29,27 @@ namespace Persistence.Repository
 
 
             return addedRecordWithParticipant.Entity;
+        }
+
+        public async Task<EventRecord> GetEventRecordAsync(string eventRecordId)
+        {
+            var eventRecordEmpty = await _igroCehContext.EventRecords.FindAsync(eventRecordId);
+            if(eventRecordEmpty != null)
+            {
+                var participant = await _igroCehContext.Users.FindAsync(eventRecordEmpty.ParticipantId);
+                var toUser =  await _igroCehContext.Users.FindAsync(eventRecordEmpty.ToUserId);
+                var game = await _igroCehContext.Games.FindAsync(eventRecordEmpty.GameId);
+
+                return new EventRecord
+                {
+                    Id = eventRecordEmpty.Id,
+                    ToUser = toUser ?? new User(),
+                    Participant = participant ?? new User(),
+                    Game = game ?? new Game(),
+                };
+            }
+
+            return null;
         }
     }
 }
