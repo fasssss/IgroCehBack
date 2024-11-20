@@ -31,6 +31,7 @@ namespace API.Endpoints.Get
             {
                 Id = eventObject.Id,
                 EventName = eventObject.EventName,
+                EventCreatorId = eventObject.EventCreatorId,
                 StatusId = eventObject.StatusId,
                 EventRecords = eventObject.EventRecordObjects
             };

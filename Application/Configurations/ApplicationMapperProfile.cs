@@ -18,6 +18,7 @@ namespace Application.Configurations
                 .ForMember(dest => dest.EventName, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.StatusId, opt => opt.MapFrom(src => src.StatusId))
                 .ForMember(dest => dest.EventRecordObjects, opt => opt.MapFrom(src => src.EventRecords))
+                .ForMember(dest => dest.EventCreatorId, opt => opt.MapFrom(src => src.CreatorId))
                 .ReverseMap();
 
             CreateMap<EventRecord, EventRecordObject>()

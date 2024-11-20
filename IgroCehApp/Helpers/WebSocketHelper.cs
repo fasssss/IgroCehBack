@@ -57,7 +57,7 @@ namespace API.Helpers
             return connection.Rooms.Count;
         }
 
-        public async Task SendToRoomAsync<T>(string room, T message, bool sendSelf = false)
+        public async Task SendToRoomAsync<T>(string room, T message, string messageType = "", bool sendSelf = false)
         {
             var applicationCookieAsId = _httpContextAccessor.HttpContext?.Request.Cookies["application_token"];
             var connections = _webSocketConnections.Where(x => x.Rooms.Contains(room));
@@ -66,7 +66,7 @@ namespace API.Helpers
                 connections = connections.Where(x => x.UniqueIdentifier != applicationCookieAsId);
             }
 
-            string jsonString = JsonConvert.SerializeObject(message, new JsonSerializerSettings 
+            string jsonString = JsonConvert.SerializeObject(new { Type = messageType, Payload = message }, new JsonSerializerSettings 
             { 
                 ContractResolver = new CamelCasePropertyNamesContractResolver() 
             });

@@ -7,6 +7,7 @@ namespace API.RepR.Response
     {
         public string Id { get; set; }
         public string EventName { get; set; }
+        public string EventCreatorId { get; set; }
         public EventStatusId StatusId { get; set; }
         public List<EventRecordObject> EventRecords { get; set; }
     }

@@ -29,7 +29,7 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecord = await _eventApplicationService.JoinEventAsync(stringId, request.EventId);
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", eventRecord);
+            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", eventRecord, "addUserToEvent");
             return TypedResults.Ok(new JoinEventResponse { EventRecordObject = eventRecord });
         }
     }
