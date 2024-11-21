@@ -51,5 +51,18 @@ namespace Persistence.Repository
 
             return null;
         }
+
+        public async Task<EventRecord> RemoveEventRecordAsync(string eventRecordId)
+        {
+            var eventRecord = await _igroCehContext.EventRecords.FindAsync(eventRecordId);
+            if(eventRecord != null)
+            {
+                 _igroCehContext.EventRecords.Remove(eventRecord);
+
+                return eventRecord;
+            }
+
+            return null;
+        }
     }
 }

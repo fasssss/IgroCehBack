@@ -81,7 +81,7 @@ namespace Persistence.Repository
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<ICollection<T>> CustomToListAsync(IQueryable<T> query)
+        public async Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class, IBaseEntity
         {
             return await query.ToListAsync();
         }

@@ -11,5 +11,6 @@ namespace Application.Interfaces
     {
         public Task<EventRecord> AddEventRecordAsync(string userId, string eventId);
         public Task<EventRecord> GetEventRecordAsync(string eventRecordId);
+        public Task<EventRecord> RemoveEventRecordAsync(string eventRecordId);
     }
 }

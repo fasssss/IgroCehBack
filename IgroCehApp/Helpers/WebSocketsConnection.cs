@@ -4,7 +4,7 @@ namespace API.Helpers
 {
     public class WebSocketsConnection
     {
-        public string? UniqueIdentifier { get; set; }
+        public string? UniqueIdentifier { get; set; }  // need only for excluding sender from recievers of this message
 
         public WebSocket WebSocket { get; set; }
 

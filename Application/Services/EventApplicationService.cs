@@ -192,6 +192,41 @@ namespace Application.Services
             return null;
         }
 
+        public async Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string eventRecordId)
+        {
+            var userHasRight = (await _eventRepository.FirstOrDefaultAsync(e => e.EventRecords.Any(er => er.Id == eventRecordId))).CreatorId == userIdOperator;
+            if (userHasRight)
+            {
+                var removedEventRecord = await _eventRepository.RemoveEventRecordAsync(eventRecordId);
+                var removedEventRecordObject = _mapper.Map<EventRecordObject>(removedEventRecord);
+                await _eventRepository.SaveAsync();
+
+                return removedEventRecordObject;
+            }
+
+            return null;
+        }
+
+        public async Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string userIdToRemove, string eventId)
+        {
+            var eventRecord = (await _eventRepository.CustomToListAsync(_eventRepository
+                .Where(e => e.Id == eventId)
+                .Select(e => e.EventRecords.FirstOrDefault(er => er.ParticipantId == userIdToRemove))))
+                .FirstOrDefault();
+
+            var userHasRight = (await _eventRepository.GetByIdAsync(eventId)).CreatorId == userIdOperator || userIdOperator == userIdToRemove;
+            if (userHasRight)
+            {
+                var removedEventRecord = await _eventRepository.RemoveEventRecordAsync(eventRecord.Id);
+                var removedEventRecordObject = _mapper.Map<EventRecordObject>(removedEventRecord);
+                await _eventRepository.SaveAsync();
+
+                return removedEventRecordObject;
+            }
+
+            return null;
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;

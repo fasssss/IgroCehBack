@@ -27,7 +27,7 @@ namespace Application.Interfaces
 
         public Task<int> SaveAsync();
 
-        public Task<ICollection<T>> CustomToListAsync(IQueryable<T> query);
+        public Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class, IBaseEntity;
         public Task<bool> CustomAnyAsync(IQueryable<T> query);
     }
 }
