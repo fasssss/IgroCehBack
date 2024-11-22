@@ -11,16 +11,22 @@ namespace Domain.Enums
     public enum EventStatusId
     {
         [Display(Name = "Players registration")]
-        [Order(3)]
+        [Order(5)]
         PlayersRegistration,
-        [Display(Name = "Auction")]
+        [Display(Name = "Players shuffle")]
+        [Order(4)]
+        PlayersShuffle,
+        [Display(Name = "Guessing games")]
+        [Order(3)]
+        GamesGuessing,
+        [Display(Name = "Revealing games")]
         [Order(2)]
-        Auction,
+        RevealingGames,
         [Display(Name = "Active")]
         [Order(1)]
         Active,
         [Display(Name = "Finished")]
-        [Order(4)]
+        [Order(6)]
         Finished,
     }
 }

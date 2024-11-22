@@ -227,6 +227,22 @@ namespace Application.Services
             return null;
         }
 
+        public async Task<int> MoveEventToNextStageAsync(string userId, string eventId)
+        {
+            var eventEntity = await _eventRepository.GetByIdAsync(eventId);
+            var userHasRight = eventEntity.CreatorId == userId;
+            if (userHasRight)
+            {
+                eventEntity.StatusId += 1;
+                var saveResult = await _eventRepository.SaveAsync();
+                if (saveResult >= 1)
+                {
+                    return (int)eventEntity.StatusId;
+                }
+            }
+            return -1;
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;
