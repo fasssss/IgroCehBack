@@ -16,5 +16,6 @@ namespace Application.ApplicationInterfaces
         public Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string eventRecordId);
         public Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string userIdToRemove, string eventId);
         public Task<int> MoveEventToNextStageAsync(string userId, string eventId);
+        public Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId);
     }
 }

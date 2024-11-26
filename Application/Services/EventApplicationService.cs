@@ -14,6 +14,7 @@ namespace Application.Services
 {
     public class EventApplicationService: IEventApplicationService
     {
+        private static Random randomGenerator = new Random();
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
@@ -241,6 +242,39 @@ namespace Application.Services
                 }
             }
             return -1;
+        }
+
+        public async Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId)
+        {
+            var userIsCreator = await _eventRepository.CustomAnyAsync(_eventRepository.Where(e => e.Id == eventId && e.CreatorId == userId));
+            if (userIsCreator)
+            {
+                var eventRecords = await _eventRepository.GetEventRecordsAsync(eventId);
+                int n = eventRecords.Count;
+                while (n > 0)
+                {
+                    n--;
+                    int k = randomGenerator.Next(n + 1);
+                    var value = eventRecords[k];
+                    eventRecords[k] = eventRecords[n];
+                    eventRecords[n] = value;
+                    if (n != eventRecords.Count - 1)
+                    {
+                        eventRecords[n].ToUserId = eventRecords[n + 1].ParticipantId;
+                        eventRecords[n].ToUser = eventRecords[n + 1].Participant;
+                    }
+
+                    if(n == 0)
+                    {
+                        eventRecords[eventRecords.Count - 1].ToUserId = eventRecords[n].ParticipantId;
+                        eventRecords[eventRecords.Count - 1].ToUser = eventRecords[n].Participant;
+                    }
+                }
+
+                return _mapper.Map<List<EventRecordObject>>(eventRecords);
+            }
+
+            return new List<EventRecordObject>();
         }
 
         private DateTime GetStartSeasonDate()

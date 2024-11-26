@@ -52,6 +52,18 @@ namespace Persistence.Repository
             return null;
         }
 
+        public async Task<List<EventRecord>> GetEventRecordsAsync(string eventId)
+        {
+            var eventRecords = await _igroCehContext.EventRecords
+                .Where(er => er.EventId == eventId)
+                .Include(er => er.Participant)
+                .Include(er => er.ToUser)
+                .Include(er => er.Game)
+                .ToListAsync();
+
+            return eventRecords;
+        }
+
         public async Task<EventRecord> RemoveEventRecordAsync(string eventRecordId)
         {
             var eventRecord = await _igroCehContext.EventRecords.FindAsync(eventRecordId);
