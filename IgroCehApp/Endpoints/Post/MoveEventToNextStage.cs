@@ -29,7 +29,7 @@ namespace API.Endpoints.Post
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var newEventStage = await _eventApplicationService.MoveEventToNextStageAsync(stringId, request.EventId);
             var response = new MoveEventToNextStageResponse { MoveToStage = newEventStage };
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", response, "updateEventStage");
+            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}updateEventStage", response);
             return TypedResults.Ok(response);
         }
     }

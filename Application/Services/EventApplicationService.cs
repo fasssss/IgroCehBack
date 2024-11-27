@@ -271,6 +271,8 @@ namespace Application.Services
                     }
                 }
 
+                await _eventRepository.SaveAsync();
+
                 return _mapper.Map<List<EventRecordObject>>(eventRecords);
             }
 
