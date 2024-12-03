@@ -228,13 +228,13 @@ namespace Application.Services
             return null;
         }
 
-        public async Task<int> MoveEventToNextStageAsync(string userId, string eventId)
+        public async Task<int> MoveEventToNextStageAsync(string userId, string eventId, int statusId)
         {
             var eventEntity = await _eventRepository.GetByIdAsync(eventId);
             var userHasRight = eventEntity.CreatorId == userId;
             if (userHasRight)
             {
-                eventEntity.StatusId += 1;
+                eventEntity.StatusId = (EventStatusId)statusId;
                 var saveResult = await _eventRepository.SaveAsync();
                 if (saveResult >= 1)
                 {

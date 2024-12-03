@@ -27,7 +27,7 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok<MoveEventToNextStageResponse>, BadRequest<string>>> ExecuteAsync(MoveEventToNextStageRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var newEventStage = await _eventApplicationService.MoveEventToNextStageAsync(stringId, request.EventId);
+            var newEventStage = await _eventApplicationService.MoveEventToNextStageAsync(stringId, request.EventId, request.StatusId);
             var response = new MoveEventToNextStageResponse { MoveToStage = newEventStage };
             await _webSocketHelper.SendToRoomAsync($"event{request.EventId}updateEventStage", response);
             return TypedResults.Ok(response);
