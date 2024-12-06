@@ -236,7 +236,7 @@ namespace Application.Services
             {
                 eventEntity.StatusId = (EventStatusId)statusId;
                 var saveResult = await _eventRepository.SaveAsync();
-                if (saveResult >= 1)
+                if (saveResult >= 0)
                 {
                     return (int)eventEntity.StatusId;
                 }
