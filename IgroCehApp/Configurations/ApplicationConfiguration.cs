@@ -10,6 +10,7 @@ namespace API.Configurations
             services.AddTransient<IAuthorizationApplicationService, AuthorizationApplicationService>();
             services.AddTransient<IGuildApplicationService, GuildApplicationService>();
             services.AddTransient<IEventApplicationService, EventApplicationService>();
+            services.AddTransient<IGameApplicationService, GameApplicationService>();
             return services;
         }
     }

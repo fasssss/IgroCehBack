@@ -279,6 +279,11 @@ namespace Application.Services
             return new List<EventRecordObject>();
         }
 
+        public async Task<EventRecordObject> SuggestGameAsync(string userId, string eventId)
+        {
+            return new EventRecordObject();
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;

@@ -19,6 +19,7 @@ namespace API.Configurations
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IGuildRepository, GuildRepository>();
             services.AddScoped<IEventRepository, EventRepository>();
+            services.AddScoped<IGameRepository, GameRepository>();
             return services;
         }
     }
