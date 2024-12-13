@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence.Context;
 
@@ -11,9 +12,11 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(IgroCehContext))]
-    partial class IgroCehContextModelSnapshot : ModelSnapshot
+    [Migration("20241213023812_GameDescriptionIsNullable")]
+    partial class GameDescriptionIsNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -172,9 +175,11 @@ namespace Persistence.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<byte[]>("ImageContent")
+                        .IsRequired()
                         .HasColumnType("longblob");
 
                     b.Property<string>("ImageType")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("Name")
@@ -182,6 +187,7 @@ namespace Persistence.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("SteamUrl")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");

@@ -2,6 +2,7 @@
 using Application.DTO;
 using Application.Interfaces;
 using AutoMapper;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,13 +29,38 @@ namespace Application.Services
 
         public async Task<GameObject> FindGameByNameAsync(string name)
         {
-            return new GameObject();
+            var game = await _gameRepository.FirstOrDefaultAsync(g => g.Name == name);
+            if(game != null)
+            return new GameObject 
+            { 
+                Id = game.Id,
+                Name = game.Name,
+                ImageContent = game.ImageContent,
+                ImageType = game.ImageType,
+            };
+
+            return null;
         }
 
         public async Task<GameObject> CreateGameAsync(GameObject gameObject)
         {
+            var addedGame = await _gameRepository.AddAsync(new Game 
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = gameObject.Name,
+                ImageContent = gameObject.ImageContent,
+                ImageType = gameObject.ImageType,
+                CreatorId = gameObject.CreatorId,
+            });
 
-            return new GameObject();
+            var result = await _gameRepository.SaveAsync();
+            if (result > 0)
+            {
+                gameObject.Id = addedGame.Id;
+                return gameObject;
+            }
+
+            return null;
         }
 
         public async Task SuggestGameAsync(int gameId)

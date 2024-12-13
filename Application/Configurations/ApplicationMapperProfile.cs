@@ -34,13 +34,14 @@ namespace Application.Configurations
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
                 .ReverseMap();
             
-            CreateMap<Game, GameObject>()
+            CreateMap<GameObject, Game>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.SteamUrl, opt => opt.MapFrom(src => src.SteamUrl))
                 .ForMember(dest => dest.ImageContent, opt => opt.MapFrom(src => src.ImageContent))
                 .ForMember(dest => dest.ImageType, opt => opt.MapFrom(src => src.ImageType))
+                .ForMember(dest => dest.CreatorId, opt => opt.Ignore())
                 .ReverseMap();
         }
     }

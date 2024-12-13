@@ -15,5 +15,6 @@ namespace Application.DTO
         public string ImageType { get; set; }
         public string SteamUrl { get; set; }
         public string EventRecordId { get; set; }
+        public string CreatorId { get; set; }
     }
 }

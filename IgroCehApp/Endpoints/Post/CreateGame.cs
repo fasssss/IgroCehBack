@@ -1,5 +1,6 @@
 ﻿using API.Helpers;
 using API.RepR.Request;
+using API.RepR.Response;
 using Application.ApplicationInterfaces;
 using Application.DTO;
 using FastEndpoints;
@@ -8,15 +9,13 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    public class CreateGame: Endpoint<CreateGameRequest, Results<Ok, BadRequest<string>>>
+    public class CreateGame: Endpoint<CreateGameRequest, Results<Ok<CreateGameResponse>, BadRequest<string>>>
     {
         private readonly IGameApplicationService _gameApplicationService;
-        private readonly WebSocketHelper _webSocketHelper;
 
-        public CreateGame(IGameApplicationService gameApplicationService, WebSocketHelper webSocketHelper)
+        public CreateGame(IGameApplicationService gameApplicationService)
         {
             _gameApplicationService = gameApplicationService;
-            _webSocketHelper = webSocketHelper;
         }
 
         public override void Configure()
@@ -25,7 +24,7 @@ namespace API.Endpoints.Post
             AllowFileUploads();
         }
 
-        public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(CreateGameRequest request, CancellationToken ct)
+        public override async Task<Results<Ok<CreateGameResponse>, BadRequest<string>>> ExecuteAsync(CreateGameRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             using (var memoryStream = new MemoryStream())
@@ -37,10 +36,11 @@ namespace API.Endpoints.Post
                     Name = request.GameName,
                     ImageContent = imageBytes,
                     ImageType = request.Image.ContentType,
+                    CreatorId = stringId,
                 });
-            }
 
-            return TypedResults.Ok();
+                return TypedResults.Ok(new CreateGameResponse { GameId = createdGame.Id });
+            }
         }
     }
 }
