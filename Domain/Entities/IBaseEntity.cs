@@ -9,5 +9,6 @@ namespace Domain.Entities
     public interface IBaseEntity
     {
         public string Id { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

@@ -22,7 +22,6 @@ namespace API.Endpoints.Post
         public override void Configure()
         {
             Post("/api/suggestGame");
-            AllowFileUploads();
         }
 
         public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(SuggestGameRequest request, CancellationToken ct)

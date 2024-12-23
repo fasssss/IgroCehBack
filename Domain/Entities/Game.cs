@@ -13,5 +13,6 @@ namespace Domain.Entities
         public List<EventRecord> EventRecords { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

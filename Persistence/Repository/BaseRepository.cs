@@ -29,11 +29,13 @@ namespace Persistence.Repository
 
         public async Task<T> AddAsync(T entityModel)
         {
+            entityModel.CreatedAt = DateTimeOffset.UtcNow;
             return (await _context.AddAsync(entityModel)).Entity;
         }
 
         public async Task<T> TryAddAsync(T entityModel)
         {
+            entityModel.CreatedAt = DateTimeOffset.UtcNow;
             if (entityModel.Id != null && entityModel.Id != "")
             {
                 return (await _context.FindAsync<T>(entityModel.Id)) ?? (await _context.AddAsync(entityModel)).Entity;
@@ -50,6 +52,10 @@ namespace Persistence.Repository
                 if (existingEntity != null)
                 {
                     _context.Remove(existingEntity);
+                }
+                else
+                {
+                    entityModel.CreatedAt = DateTimeOffset.UtcNow;
                 }
             }
 
@@ -74,6 +80,16 @@ namespace Persistence.Repository
         public IQueryable<T> Where(Expression<Func<T, bool>> expression)
         {
             return _context.Set<T>().Where(expression);
+        }
+
+        public IQueryable<T> OrderBy(Expression<Func<T, bool>> expression)
+        {
+            return _context.Set<T>().OrderBy(expression);
+        }
+
+        public IQueryable<T> OrderByCreationDate()
+        {
+            return _context.Set<T>().OrderBy(x => x.CreatedAt);
         }
 
         public async Task<int> SaveAsync()

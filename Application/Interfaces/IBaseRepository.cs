@@ -24,6 +24,8 @@ namespace Application.Interfaces
         public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> expression);
 
         public IQueryable<T> Where(Expression<Func<T, bool>> expression);
+        public IQueryable<T> OrderBy(Expression<Func<T, bool>> expression);
+        public IQueryable<T> OrderByCreationDate();
 
         public Task<int> SaveAsync();
 

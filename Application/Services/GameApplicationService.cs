@@ -29,7 +29,7 @@ namespace Application.Services
 
         public async Task<GameObject> FindGameByNameAsync(string name)
         {
-            var game = await _gameRepository.FirstOrDefaultAsync(g => g.Name == name);
+            var game = (await _gameRepository.CustomToListAsync(_gameRepository.OrderByCreationDate().Where(g => g.Name == name))).LastOrDefault();
             if(game != null)
             return new GameObject 
             { 

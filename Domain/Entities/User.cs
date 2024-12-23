@@ -9,5 +9,6 @@ namespace Domain.Entities
         public string AvatarUrl { get; set; }
         public List<UserGuild> UserGuilds { get; set; }
         public List<Event> CreatorOfEvents { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

@@ -15,5 +15,6 @@ namespace Domain.Entities
         public Guild Guild { get; set; }
         public Enums.EventStatusId StatusId { get; set; }
         public EventStatus Status { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }

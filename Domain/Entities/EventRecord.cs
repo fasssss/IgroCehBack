@@ -13,5 +13,6 @@ namespace Domain.Entities
         public Game Game { get; set; }
         public string EventId { get; set; }
         public Event Event { get; set; }
+        public DateTimeOffset? CreatedAt { get; set; }
     }
 }
