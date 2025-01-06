@@ -17,12 +17,14 @@ namespace Application.Services
         private static Random randomGenerator = new Random();
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IGameRepository _gameRepository;
         private readonly IMapper _mapper;
 
-        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository, IMapper mapper) 
+        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository, IGameRepository gameRepository, IMapper mapper) 
         {
             _eventRepository = eventRepository;
             _userRepository = userRepository;
+            _gameRepository = gameRepository;
             _mapper = mapper;
         }
 
@@ -279,9 +281,14 @@ namespace Application.Services
             return new List<EventRecordObject>();
         }
 
-        public async Task<EventRecordObject> SuggestGameAsync(string userId, string eventId)
+        public async Task<EventRecordObject> SuggestGameAsync(string eventRecordId, string gameId)
         {
-            return new EventRecordObject();
+            var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
+            var suggestedGame = await _gameRepository.GetByIdAsync(gameId);
+            eventRecord.GameId = gameId;
+            eventRecord.Game = suggestedGame;
+            await _eventRepository.SaveAsync();
+            return _mapper.Map<EventRecordObject>(eventRecord);
         }
 
         private DateTime GetStartSeasonDate()

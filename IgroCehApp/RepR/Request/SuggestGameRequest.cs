@@ -4,6 +4,8 @@ namespace API.RepR.Request
 {
     public class SuggestGameRequest
     {
-        public string Id { get; set; }
+        public string GameId { get; set; }
+        public string EventRecordId { get; set; }
+        public string EventId { get; set; }
     }
 }

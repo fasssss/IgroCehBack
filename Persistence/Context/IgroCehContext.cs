@@ -36,7 +36,6 @@ namespace Persistence.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Game>().Property(x => x.Id).ValueGeneratedOnAdd();
             modelBuilder.Entity<Game>()
                 .HasOne(g => g.Creator)
                 .WithMany()
