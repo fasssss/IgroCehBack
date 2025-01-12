@@ -7,8 +7,7 @@ namespace Domain.Entities
         public string Id { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }
-        public byte[]? ImageContent { get; set; }
-        public string? ImageType { get; set; }
+        public string? ImageUrl { get; set; }
         public string? SteamUrl { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public string CreatorId { get; set; }

@@ -35,8 +35,7 @@ namespace Application.Services
             { 
                 Id = game.Id,
                 Name = game.Name,
-                ImageContent = game.ImageContent,
-                ImageType = game.ImageType,
+                ImageUrl = game.ImageUrl,
             };
 
             return null;
@@ -48,8 +47,7 @@ namespace Application.Services
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = gameObject.Name,
-                ImageContent = gameObject.ImageContent,
-                ImageType = gameObject.ImageType,
+                ImageUrl = gameObject.ImageUrl,
                 CreatorId = gameObject.CreatorId,
             });
 

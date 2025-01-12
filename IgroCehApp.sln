@@ -8,13 +8,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "API", "IgroCehApp\API.cspro
 		{781DF0D1-CBA8-4E47-9715-9AC6D67FB927} = {781DF0D1-CBA8-4E47-9715-9AC6D67FB927}
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\Application.csproj", "{781DF0D1-CBA8-4E47-9715-9AC6D67FB927}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Application", "Application\Application.csproj", "{781DF0D1-CBA8-4E47-9715-9AC6D67FB927}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{7A75994A-E117-4991-AC33-B7111C518568}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{7A75994A-E117-4991-AC33-B7111C518568}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{C2F4E47D-84D8-4839-A446-214BE51205DE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{C2F4E47D-84D8-4839-A446-214BE51205DE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{9723365F-35AE-42A6-9B04-1E24769030F3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "Persistence\Persistence.csproj", "{9723365F-35AE-42A6-9B04-1E24769030F3}"
+EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{2C66B424-0F45-4ACC-9E73-FE2CB6EB657C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -42,6 +44,10 @@ Global
 		{9723365F-35AE-42A6-9B04-1E24769030F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9723365F-35AE-42A6-9B04-1E24769030F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9723365F-35AE-42A6-9B04-1E24769030F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C66B424-0F45-4ACC-9E73-FE2CB6EB657C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C66B424-0F45-4ACC-9E73-FE2CB6EB657C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C66B424-0F45-4ACC-9E73-FE2CB6EB657C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C66B424-0F45-4ACC-9E73-FE2CB6EB657C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

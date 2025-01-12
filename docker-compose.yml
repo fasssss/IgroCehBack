@@ -1,0 +1,34 @@
+version: '3.4'
+
+services:
+  api:
+    image: ${DOCKER_REGISTRY-}api
+    container_name: api
+    ports:
+      - 60443:8080
+      - 60444:8081
+    build:
+      context: .
+      dockerfile: IgroCehApp/Dockerfile
+  mysql:
+    image: ${DOCKER_REGISTRY-}mysql/mysql-server
+    container_name: my_sql_server
+    ports:
+      - 3306:3306
+    volumes:
+      - type: volume
+        source: my_sql_volume
+        target: /var/lib/mysql
+  frontend:
+    image: ${DOCKER_REGISTRY-}web
+    build:
+      context: ../IgroCehFrontend
+      dockerfile: ../IgroCehFrontend/Dockerfile
+    container_name: frontend
+    ports:
+      - 5173:5173
+      - 6436:6436
+
+volumes:
+  my_sql_volume:
+    external: true

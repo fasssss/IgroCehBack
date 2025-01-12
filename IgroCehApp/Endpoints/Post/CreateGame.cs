@@ -12,10 +12,12 @@ namespace API.Endpoints.Post
     public class CreateGame: Endpoint<CreateGameRequest, Results<Ok<CreateGameResponse>, BadRequest<string>>>
     {
         private readonly IGameApplicationService _gameApplicationService;
+        private readonly IHostEnvironment _hostingEnvironment;
 
-        public CreateGame(IGameApplicationService gameApplicationService)
+        public CreateGame(IGameApplicationService gameApplicationService, IHostEnvironment hostingEnvironment)
         {
             _gameApplicationService = gameApplicationService;
+            _hostingEnvironment = hostingEnvironment;
         }
 
         public override void Configure()
@@ -27,20 +29,27 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok<CreateGameResponse>, BadRequest<string>>> ExecuteAsync(CreateGameRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            using (var memoryStream = new MemoryStream())
+            string imageUrl = null;
+            if(request.Image != null)
             {
-                await request.Image.CopyToAsync(memoryStream);
-                var imageBytes = memoryStream.ToArray();
-                var createdGame = await _gameApplicationService.CreateGameAsync(new GameObject
+                string uploadFolder = Path.Combine(_hostingEnvironment.ContentRootPath, $"Upload/{stringId}/Images/Games");
+                Directory.CreateDirectory(uploadFolder);
+                var safeGameName = request.Image.FileName.Replace("../", "");
+                imageUrl = Path.Combine(uploadFolder, safeGameName);
+                using (var memoryStream = new FileStream(imageUrl, FileMode.Create))
                 {
-                    Name = request.GameName,
-                    ImageContent = imageBytes,
-                    ImageType = request.Image.ContentType,
-                    CreatorId = stringId,
-                });
-
-                return TypedResults.Ok(new CreateGameResponse { GameId = createdGame.Id });
+                    await request.Image.CopyToAsync(memoryStream);
+                }
             }
+
+            var createdGame = await _gameApplicationService.CreateGameAsync(new GameObject
+            {
+                Name = request.GameName,
+                ImageUrl = imageUrl,
+                CreatorId = stringId,
+            });
+
+            return TypedResults.Ok(new CreateGameResponse { GameId = createdGame.Id });
         }
     }
 }

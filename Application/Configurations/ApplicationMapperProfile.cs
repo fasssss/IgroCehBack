@@ -39,8 +39,7 @@ namespace Application.Configurations
                 .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.SteamUrl, opt => opt.MapFrom(src => src.SteamUrl))
-                .ForMember(dest => dest.ImageContent, opt => opt.MapFrom(src => src.ImageContent))
-                .ForMember(dest => dest.ImageType, opt => opt.MapFrom(src => src.ImageType))
+                .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
                 .ForMember(dest => dest.CreatorId, opt => opt.Ignore())
                 .ReverseMap();
         }
