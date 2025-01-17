@@ -5,6 +5,7 @@ using Application.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Infrastructure.Configurations;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -45,6 +46,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Upload")),
+    RequestPath = "/Upload",
+    
+});
+
 app.UseAuthentication()
     .UseAuthorization()
     .UseFastEndpoints()
