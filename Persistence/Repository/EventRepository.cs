@@ -39,9 +39,11 @@ namespace Persistence.Repository
                 var participant = await _igroCehContext.Users.FindAsync(eventRecordEmpty.ParticipantId);
                 var toUser =  await _igroCehContext.Users.FindAsync(eventRecordEmpty.ToUserId);
                 var game = await _igroCehContext.Games.FindAsync(eventRecordEmpty.GameId);
+                var itsEvent = await _igroCehContext.Events.FindAsync(eventRecordEmpty.EventId);
                 eventRecordEmpty.ToUser = toUser ?? new User();
                 eventRecordEmpty.Participant = participant ?? new User();
                 eventRecordEmpty.Game = game ?? new Game();
+                eventRecordEmpty.Event = itsEvent ?? new Event();
 
                 return eventRecordEmpty;
             }

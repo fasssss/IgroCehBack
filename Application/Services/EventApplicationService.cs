@@ -291,6 +291,25 @@ namespace Application.Services
             return _mapper.Map<EventRecordObject>(eventRecord);
         }
 
+        public async Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId)
+        {
+            var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
+            var monthesFromStart = (DateTimeOffset.UtcNow.Month - eventRecord.Event.StartDate.Month) + 
+                12 * (DateTimeOffset.UtcNow.Month - eventRecord.Event.StartDate.Month);
+            eventRecord.SucceededAt = DateTimeOffset.UtcNow;
+            eventRecord.Reward = monthesFromStart switch
+            {
+                0 => 3,
+                1 => 2,
+                2 => 1,
+                _ => 0
+            };
+
+            await _eventRepository.SaveAsync();
+
+            return _mapper.Map<EventRecordObject>(eventRecord);
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;

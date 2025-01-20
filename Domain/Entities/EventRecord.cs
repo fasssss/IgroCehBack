@@ -14,5 +14,7 @@ namespace Domain.Entities
         public string EventId { get; set; }
         public Event Event { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
+        public DateTimeOffset? SucceededAt { get; set; }
+        public int? Reward { get; set; }
     }
 }

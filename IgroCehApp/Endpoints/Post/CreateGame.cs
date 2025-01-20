@@ -29,14 +29,16 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok<CreateGameResponse>, BadRequest<string>>> ExecuteAsync(CreateGameRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            string imageUrl = null;
+            string fullPathImageUrl = null;
+            string imageUrlToSave = null;
             if(request.Image != null)
             {
                 string uploadFolder = Path.Combine(_hostingEnvironment.ContentRootPath, $"Upload/{stringId}/Images/Games");
                 Directory.CreateDirectory(uploadFolder);
                 var safeGameName = request.Image.FileName.Replace("../", "");
-                imageUrl = Path.Combine(uploadFolder, safeGameName);
-                using (var memoryStream = new FileStream(imageUrl, FileMode.Create))
+                fullPathImageUrl = Path.Combine(uploadFolder, safeGameName);
+                imageUrlToSave = Path.Combine($"/Upload/{stringId}/Images/Games", safeGameName);
+                using (var memoryStream = new FileStream(fullPathImageUrl, FileMode.Create))
                 {
                     await request.Image.CopyToAsync(memoryStream);
                 }
@@ -45,7 +47,7 @@ namespace API.Endpoints.Post
             var createdGame = await _gameApplicationService.CreateGameAsync(new GameObject
             {
                 Name = request.GameName,
-                ImageUrl = imageUrl,
+                ImageUrl = imageUrlToSave,
                 CreatorId = stringId,
             });
 

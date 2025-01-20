@@ -18,5 +18,6 @@ namespace Application.ApplicationInterfaces
         public Task<int> MoveEventToNextStageAsync(string userId, string eventId, int statusId);
         public Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId);
         public Task<EventRecordObject> SuggestGameAsync(string eventRecordId, string gameId);
+        public Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId);
     }
 }
