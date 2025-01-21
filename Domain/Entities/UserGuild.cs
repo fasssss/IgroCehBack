@@ -13,5 +13,6 @@ namespace Domain.Entities
         public string GuildId { get; set; }
         public Guild Guild { get; set; }
         public bool IsAdmin { get; set; }
+        public bool IsDeleted { get; set; }
     }
 }

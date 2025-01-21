@@ -19,8 +19,28 @@ namespace Persistence.Repository
             var existingUserGuilds = await _context.UserGuilds
                 .Where(u => u.UserId == userId).ToListAsync();
 
-            var userGuildsToRemove = existingUserGuilds.Select(ug => ug.GuildId).Except(userGuilds.Select(ug => ug.GuildId));
-            existingUserGuilds.RemoveAll(ug => userGuildsToRemove.Any(ugtrId => ugtrId == ug.Guild.Id));
+            var userGuildsToRemove = existingUserGuilds.Where(ug => !ug.IsDeleted).Select(ug => ug.GuildId).Except(userGuilds.Select(ug => ug.GuildId));
+            foreach(var existingUserGuild in existingUserGuilds)
+            {
+                if(userGuildsToRemove.Any(ugtrId => ugtrId == existingUserGuild.GuildId))
+                {
+                    existingUserGuild.IsDeleted = true;
+                }
+            }
+
+            foreach (var userGuild in userGuilds)
+            {
+                var existingUserGuild = existingUserGuilds.Find(ug => ug.GuildId == userGuild.GuildId);
+                if (existingUserGuild == null)
+                {
+                    _context.UserGuilds.Add(userGuild);
+                }
+                else
+                {
+                    existingUserGuild.IsAdmin = userGuild.IsAdmin;
+                    existingUserGuild.IsDeleted = false;
+                }
+            }
 
             foreach (var userGuild in userGuilds)
             {

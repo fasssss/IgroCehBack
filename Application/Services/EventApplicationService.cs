@@ -311,6 +311,19 @@ namespace Application.Services
             return _mapper.Map<EventRecordObject>(eventRecord);
         }
 
+        public async Task<EventObject> SummarizeEventAsync(string userId, string eventRecordId)
+        {
+            var hasRights = await _eventRepository
+                .CustomAnyAsync(_eventRepository
+                .Where(e => e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin)));
+            if (hasRights)
+            {
+
+            }
+
+            return new EventObject();
+        }
+
         private DateTime GetStartSeasonDate()
         {
             DateTime currentDate = DateTime.UtcNow.Date;
