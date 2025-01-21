@@ -96,6 +96,7 @@ namespace Application.Services
                         ToUserId = er.ToUserId,
                         Game = er.Game,
                         GameId = er.GameId,
+                        Reward = er.Reward,
                     }).ToList(),
                 }))).FirstOrDefault();
             var eventObject = _mapper.Map<EventObject>(eventEntity);
@@ -295,7 +296,7 @@ namespace Application.Services
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
             var monthesFromStart = (DateTimeOffset.UtcNow.Month - eventRecord.Event.StartDate.Month) + 
-                12 * (DateTimeOffset.UtcNow.Month - eventRecord.Event.StartDate.Month);
+                12 * (DateTimeOffset.UtcNow.Year - eventRecord.Event.StartDate.Year);
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
             eventRecord.Reward = monthesFromStart switch
             {
@@ -315,29 +316,31 @@ namespace Application.Services
             DateTime currentDate = DateTime.UtcNow.Date;
             DateTime startDate;
 
-            if (currentDate.Month >= 11 || currentDate.Month == 1)  //if Now last month of autmn or any of two first months of winter - set "winter season" start date
+            if(currentDate.Month == 1) //exceptional if because it has to be winter of previous year
+            {
+                startDate = new DateTime(currentDate.Year - 1, 12, 1);
+                return startDate;
+            }
+
+            if (currentDate.Month >= 11)  //if Now last month of autmn or any of two first months of winter - set "winter season" start date
             {
                 startDate = new DateTime(currentDate.Year, 12, 1);
-                startDate = startDate.AddDays(-1).Date;
                 return startDate;
             }
 
             if(currentDate.Month >= 8) //if Now at least last month of summer - set "autumn season" start date
             {
                 startDate = new DateTime(currentDate.Year, 9, 1);
-                startDate = startDate.AddDays(-1).Date;
                 return startDate;
             }
 
             if (currentDate.Month >= 5) //if Now at least last month of spring - set "summer season" start date
             {
                 startDate = new DateTime(currentDate.Year, 6, 1);
-                startDate = startDate.AddDays(-1).Date;
                 return startDate;
             }
 
             startDate = new DateTime(currentDate.Year, 3, 1);
-            startDate = startDate.AddDays(-1).Date;
             return startDate;
         }
     }

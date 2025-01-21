@@ -25,6 +25,8 @@ namespace Application.Configurations
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Participant, opt => opt.MapFrom(src => src.Participant))
                 .ForMember(dest => dest.ToUser, opt => opt.MapFrom(src => src.ToUser))
+                .ForMember(dest => dest.Game, opt => opt.MapFrom(src => src.Game))
+                .ForMember(dest => dest.Reward, opt => opt.MapFrom(src => src.Reward))
                 .ReverseMap();
 
             CreateMap<User, UserObject>()

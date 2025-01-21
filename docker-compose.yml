@@ -7,6 +7,10 @@ services:
     ports:
       - 60443:8080
       - 60444:8081
+    volumes:
+      - type: volume
+        source: static_files
+        target: /app/
     build:
       context: .
       dockerfile: IgroCehApp/Dockerfile
@@ -31,4 +35,6 @@ services:
 
 volumes:
   my_sql_volume:
+    external: true
+  static_files:
     external: true

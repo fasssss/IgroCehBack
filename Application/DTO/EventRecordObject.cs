@@ -13,5 +13,6 @@ namespace Application.DTO
         public UserObject Participant { get; set; }
         public UserObject ToUser { get; set; }
         public GameObject Game { get; set; }
+        public int? Reward { get; set; }
     }
 }
