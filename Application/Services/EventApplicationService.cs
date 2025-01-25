@@ -311,14 +311,28 @@ namespace Application.Services
             return _mapper.Map<EventRecordObject>(eventRecord);
         }
 
-        public async Task<EventObject> SummarizeEventAsync(string userId, string eventRecordId)
+        public async Task<EventObject> SummarizeEventAsync(string userId, string eventId)
         {
             var hasRights = await _eventRepository
                 .CustomAnyAsync(_eventRepository
-                .Where(e => e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin)));
+                .Where(e => e.Id == eventId && (e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin))));
             if (hasRights)
             {
+                var eventRecords = await _eventRepository.CustomToListAsync(
+                    _eventRepository.Where(x => x.Id == eventId).SelectMany(x => x.EventRecords));
+                var userGuilds = await _userRepository.GetUserGuildsByEventIdAsync(eventId);
+                foreach (var eventRecord in eventRecords)
+                {
+                    var userGuild = userGuilds.FirstOrDefault(x => x.UserId == eventRecord.ToUserId);
+                    if(userGuild != null)
+                    {
+                        userGuild.Score += eventRecord.Reward ?? 0;
+                    }
+                }
 
+                var completedEvent = await _eventRepository.GetByIdAsync(eventId);
+                completedEvent.StatusId = EventStatusId.Finished;
+                await _eventRepository.SaveAsync();
             }
 
             return new EventObject();

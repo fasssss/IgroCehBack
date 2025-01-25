@@ -19,6 +19,6 @@ namespace Application.ApplicationInterfaces
         public Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId);
         public Task<EventRecordObject> SuggestGameAsync(string eventRecordId, string gameId);
         public Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId);
-        public Task<EventObject> SummarizeEventAsync(string userId, string eventRecordId);
+        public Task<EventObject> SummarizeEventAsync(string userId, string eventId);
     }
 }

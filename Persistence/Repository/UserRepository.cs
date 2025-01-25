@@ -57,5 +57,17 @@ namespace Persistence.Repository
 
             return existingUserGuilds;
         }
+
+        public async Task<IEnumerable<UserGuild>> GetUserGuildsByEventIdAsync(string eventId)
+        {
+            var guildId = (await _context.Events.FirstOrDefaultAsync(x => x.Id == eventId))?.GuildId;
+            if (guildId != null)
+            {
+                var userGuilds = await _context.UserGuilds.Where(x => x.GuildId == guildId).ToListAsync();
+                return userGuilds;
+            }
+
+            return new List<UserGuild>();
+        }
     }
 }

@@ -24,7 +24,7 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok<SummarizeEventResponse>, BadRequest<string>>> ExecuteAsync(SummarizeEventRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var eventRecordObject = await _eventApplicationService.SubmitPassingAsync(stringId, request.EventRecordId);
+            var eventRecordObject = await _eventApplicationService.SummarizeEventAsync(stringId, request.EventId);
 
             return TypedResults.Ok(new SummarizeEventResponse { });
         }

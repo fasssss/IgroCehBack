@@ -2,6 +2,6 @@
 {
     public class SummarizeEventRequest
     {
-        public string EventRecordId { get; set; }
+        public string EventId { get; set; }
     }
 }
