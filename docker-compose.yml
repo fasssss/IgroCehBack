@@ -6,7 +6,6 @@ services:
     container_name: api
     ports:
       - 60443:8080
-      - 60444:8081
     volumes:
       - type: volume
         source: static_files
