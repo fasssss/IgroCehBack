@@ -10,7 +10,7 @@ services:
     volumes:
       - type: volume
         source: static_files
-        target: /app/
+        target: /app/Upload
     build:
       context: .
       dockerfile: IgroCehApp/Dockerfile
