@@ -45,7 +45,7 @@ if (app.Environment.IsDevelopment())
         .AllowCredentials());
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles(new StaticFileOptions
 {
