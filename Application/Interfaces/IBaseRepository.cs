@@ -23,13 +23,13 @@ namespace Application.Interfaces
 
         public Task<T> FirstOrDefaultAsync(Expression<Func<T, bool>> expression);
 
-        public IQueryable<T> Where(Expression<Func<T, bool>> expression);
+        public IQueryable<T> Where(Expression<Func<T, bool>> expression, bool eagerLoading = false);
         public IQueryable<T> OrderBy(Expression<Func<T, bool>> expression);
         public IQueryable<T> OrderByCreationDate();
 
         public Task<int> SaveAsync();
 
-        public Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class, IBaseEntity;
+        public Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class;
         public Task<bool> CustomAnyAsync(IQueryable<T> query);
     }
 }

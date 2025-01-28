@@ -10,6 +10,7 @@ using System.Linq.Expressions;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Persistence.Repository
 {
@@ -77,9 +78,19 @@ namespace Persistence.Repository
             return await _context.Set<T>().FirstOrDefaultAsync(expression);
         }
 
-        public IQueryable<T> Where(Expression<Func<T, bool>> expression)
+        public IQueryable<T> Where(Expression<Func<T, bool>> expression, bool eagerLoading = false)
         {
-            return _context.Set<T>().Where(expression);
+            var query = _context.Set<T>().Where(expression);
+
+            var navigations = _context.Model.FindEntityType(typeof(T))
+            .GetDerivedTypesInclusive()
+            .SelectMany(type => type.GetNavigations())
+            .Distinct();
+
+            foreach (var property in navigations)
+                query = query.Include(property.Name);
+
+            return query;
         }
 
         public IQueryable<T> OrderBy(Expression<Func<T, bool>> expression)
@@ -97,7 +108,7 @@ namespace Persistence.Repository
             return await _context.SaveChangesAsync();
         }
 
-        public async Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class, IBaseEntity
+        public async Task<ICollection<T2>> CustomToListAsync<T2>(IQueryable<T2> query) where T2: class
         {
             return await query.ToListAsync();
         }

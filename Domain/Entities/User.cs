@@ -8,6 +8,7 @@ namespace Domain.Entities
         public string Email { get; set; }
         public string AvatarUrl { get; set; }
         public List<UserGuild> UserGuilds { get; set; }
+        public List<EventRecord> EventRecords { get; set; }
         public List<Event> CreatorOfEvents { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
     }

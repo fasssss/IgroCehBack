@@ -13,11 +13,13 @@ namespace Application.Services
 {
     public class GuildApplicationService : IGuildApplicationService
     {
+        private readonly IUserRepository _userRepository;
         private readonly IGuildRepository _guildRepository;
 
-        public GuildApplicationService(IGuildRepository guildRepository) 
+        public GuildApplicationService(IGuildRepository guildRepository, IUserRepository userRepository) 
         {
             _guildRepository = guildRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<ICollection<GuildObject>> GetFilteredGuildsAsync(string userId, GuildsFilter filter)
@@ -53,6 +55,25 @@ namespace Application.Services
             }
 
             return null;
+        }
+
+        public async Task<ICollection<ScoreObject>> GetScoreByGuildIdAsync(string guildId)
+        {
+            var userGuildsForCertainGuild = await _userRepository.GetUserGuildsByGuildIdAsync(guildId);
+    
+            var userEventsStatistic = await _userRepository.CustomToListAsync(
+                _userRepository
+                .Where(user => user.UserGuilds.Any(ug => ug.GuildId == guildId), true)
+                .Select(user => new ScoreObject()
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName, 
+                    AvatarUrl = user.AvatarUrl,
+                    Score = user.UserGuilds.FirstOrDefault(ug => ug.GuildId == guildId).Score,
+                    EventsPlayed = user.EventRecords.Where(evr => evr.Event.GuildId == guildId).Count()
+                }));
+
+            return userEventsStatistic;
         }
     }
 }
