@@ -16,7 +16,7 @@ COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 COPY ["Persistence/Persistence.csproj", "Persistence/"]
 RUN dotnet restore "./IgroCehApp/./API.csproj"
 COPY . .
-COPY ["cacert.crt", "/usr/local/share/ca-certificates/cacert.crt"]
+COPY ["localhost.crt", "/usr/local/share/ca-certificates/localhost.crt"]
 RUN update-ca-certificates
 WORKDIR "/src/IgroCehApp"
 RUN dotnet build "./API.csproj" -c $BUILD_CONFIGURATION -o /app/build
