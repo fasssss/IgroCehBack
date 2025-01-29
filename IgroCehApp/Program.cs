@@ -63,14 +63,4 @@ app.UseAuthentication()
     })
     .UseSwaggerGen();
 
-/*app.MapGet("/api/ws", async (HttpContext context) =>
-{
-    if (context.WebSockets.IsWebSocketRequest)
-    {
-        var socket = await context.WebSockets.AcceptWebSocketAsync();
-    }
-
-    return Results.NoContent();
-});*/
-
 app.Run();

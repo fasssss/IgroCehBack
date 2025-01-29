@@ -6,6 +6,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_HTTPS_PORTS=8081
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/localhost.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=SuperDuperPassword
     ports:
       - "8080"
       - "8081"
