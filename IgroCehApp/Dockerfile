@@ -27,7 +27,7 @@ FROM base AS final
 WORKDIR /app
 COPY ["IgroCehApp/localhost.pfx", "/app/localhost.pfx"]
 COPY ["IgroCehApp/localhost.crt", "/usr/local/share/ca-certificates/localhost.crt"]
-RUN update-ca-certificates
+RUN sudo update-ca-certificates
 RUN mkdir -p /app/Upload
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "API.dll"]
