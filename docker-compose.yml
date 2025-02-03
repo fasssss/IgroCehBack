@@ -31,7 +31,7 @@ services:
     container_name: frontend
     ports:
       - 443:5173
-      - 445:4173
+      - 443:4173
       - 6436:6436
 
 volumes:
