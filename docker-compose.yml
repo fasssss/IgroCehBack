@@ -31,7 +31,8 @@ services:
     container_name: frontend
     ports:
       - 443:5173
-      - 80:6436
+      - 445:4173
+      - 6436:6436
 
 volumes:
   my_sql_volume:
