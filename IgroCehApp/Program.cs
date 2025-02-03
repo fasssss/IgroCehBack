@@ -44,6 +44,13 @@ if (app.Environment.IsDevelopment())
         .AllowAnyHeader()
         .AllowCredentials());
 }
+else
+{
+    app.UseCors(x => x
+        .WithOrigins(configuration.GetValue<string>("FrontendUrl") ?? "https://localhost:5173")
+        .AllowAnyHeader()
+        .AllowCredentials());
+}
 
 //app.UseHttpsRedirection();
 
