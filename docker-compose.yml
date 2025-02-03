@@ -30,7 +30,6 @@ services:
       dockerfile: ../IgroCehFrontend/Dockerfile
     container_name: frontend
     ports:
-      - 443:5173
       - 443:4173
       - 6436:6436
 
