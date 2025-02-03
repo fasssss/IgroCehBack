@@ -30,8 +30,8 @@ services:
       dockerfile: ../IgroCehFrontend/Dockerfile
     container_name: frontend
     ports:
-      - 5173:5173
-      - 6436:6436
+      - 443:5173
+      - 80:6436
 
 volumes:
   my_sql_volume:
