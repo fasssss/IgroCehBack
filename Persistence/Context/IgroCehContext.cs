@@ -33,7 +33,7 @@ namespace Persistence.Context
             base.OnConfiguring(optionsBuilder);
             if((await Database.GetPendingMigrationsAsync()) != null)
             {
-                await Database.MigrateAsync();
+                Database.Migrate();
             }
         }
 
