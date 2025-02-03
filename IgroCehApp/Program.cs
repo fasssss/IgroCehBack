@@ -59,7 +59,7 @@ app.UseAuthentication()
     .UseFastEndpoints()
     .UseWebSockets(new WebSocketOptions
     {
-        KeepAliveInterval = TimeSpan.FromSeconds(15)
+        KeepAliveInterval = TimeSpan.FromSeconds(300)
     })
     .UseSwaggerGen();
 
