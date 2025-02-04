@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using System.Text;
 using Newtonsoft.Json;
 using System.Net.WebSockets;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Endpoints.Get
 {
-    public class WebSocketConnection: Endpoint<string, Results<Ok, BadRequest<string>>>
+    public class WebSocketConnection: Endpoint<string, EmptyResult>
     {
         private WebSocketHelper _websocketHelper;
 
@@ -22,7 +23,7 @@ namespace API.Endpoints.Get
             Get("/api/ws");
         }
 
-        public override async Task<Results<Ok, BadRequest<string>>> ExecuteAsync(string s, CancellationToken ct)
+        public override async Task<EmptyResult> ExecuteAsync(string s, CancellationToken ct)
         {
             if (HttpContext.WebSockets.IsWebSocketRequest)
             {
@@ -45,24 +46,19 @@ namespace API.Endpoints.Get
                         if (roomsCount == 0)
                         {
                             await socket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
-                            return TypedResults.Ok();
+                            return new EmptyResult();
                         }
                     }
                 }
 
-                if(socket.State == WebSocketState.CloseReceived)
-                {
-                    await socket.CloseOutputAsync(
-                    WebSocketCloseStatus.EndpointUnavailable,
-                    null,
-                    CancellationToken.None);
-                    await _websocketHelper.RemoveWebSocketEntirely(socket);
-                }
-
-                return TypedResults.Ok();
+                await socket.CloseOutputAsync(
+                WebSocketCloseStatus.EndpointUnavailable,
+                null,
+                CancellationToken.None);
+                await _websocketHelper.RemoveWebSocketEntirely(socket);
             }
 
-            return TypedResults.BadRequest("Something went wrong during request to websocket endpoint");
+            return new EmptyResult();
         }
     }
 }
