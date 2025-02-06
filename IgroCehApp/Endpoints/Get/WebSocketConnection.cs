@@ -51,10 +51,18 @@ namespace API.Endpoints.Get
                     }
                 }
 
-                await socket.CloseOutputAsync(
-                WebSocketCloseStatus.EndpointUnavailable,
-                null,
-                CancellationToken.None);
+                Console.WriteLine(socket.State);
+
+                if(socket.State == WebSocketState.CloseReceived)
+                {
+                    await socket.CloseOutputAsync(
+                    WebSocketCloseStatus.EndpointUnavailable,
+                    null,
+                    CancellationToken.None);
+                    await _websocketHelper.RemoveWebSocketEntirely(socket);
+                }
+
+                socket.Abort();
                 await _websocketHelper.RemoveWebSocketEntirely(socket);
             }
 
