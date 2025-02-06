@@ -300,7 +300,7 @@ namespace Application.Services
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
             eventRecord.Reward = monthesFromStart switch
             {
-                0 => 3,
+                int month when month <= 0  => 3,
                 1 => 2,
                 2 => 1,
                 _ => 0
