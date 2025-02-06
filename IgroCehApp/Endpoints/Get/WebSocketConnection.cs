@@ -56,7 +56,7 @@ namespace API.Endpoints.Get
                 if(socket.State == WebSocketState.CloseReceived)
                 {
                     await socket.CloseOutputAsync(
-                    WebSocketCloseStatus.EndpointUnavailable,
+                    WebSocketCloseStatus.NormalClosure,
                     null,
                     CancellationToken.None);
                     await _websocketHelper.RemoveWebSocketEntirely(socket);
