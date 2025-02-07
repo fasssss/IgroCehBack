@@ -28,7 +28,7 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecords = await _eventApplicationService.ShuffleUsersAsync(stringId, request.EventId);
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", eventRecords, "shuffleUsers");
+            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}ShuffleUsers", eventRecords, "shuffleUsers");
             return TypedResults.Ok(new ShuffleUsersResponse { EventRecordObjects = eventRecords });
         }
     }
