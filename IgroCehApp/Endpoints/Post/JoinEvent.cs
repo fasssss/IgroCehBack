@@ -1,8 +1,7 @@
-﻿using API.Helpers;
+using API.Helpers;
 using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
-using Application.DTO;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Claims;
@@ -29,7 +28,12 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecord = await _eventApplicationService.JoinEventAsync(stringId, request.EventId);
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", eventRecord, "addUserToEvent");
+            if (eventRecord == null)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.AddUserToEvent, eventRecord);
             return TypedResults.Ok(new JoinEventResponse { EventRecordObject = eventRecord });
         }
     }

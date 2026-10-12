@@ -1,4 +1,5 @@
-﻿using API.RepR.Request;
+using API.Helpers;
+using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
 using FastEndpoints;
@@ -10,10 +11,12 @@ namespace API.Endpoints.Post
     public class SubmitPassing: Endpoint<SubmitPassingRequest, Results<Ok<SubmitPassingResponse>, BadRequest<string>>>
     {
         private readonly IEventApplicationService _eventApplicationService;
+        private readonly WebSocketHelper _webSocketHelper;
 
-        public SubmitPassing(IEventApplicationService eventApplicationService, IHostEnvironment hostingEnvironment)
+        public SubmitPassing(IEventApplicationService eventApplicationService, WebSocketHelper webSocketHelper)
         {
             _eventApplicationService = eventApplicationService;
+            _webSocketHelper = webSocketHelper;
         }
 
         public override void Configure()
@@ -25,6 +28,10 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecordObject = await _eventApplicationService.SubmitPassingAsync(stringId, request.EventRecordId);
+            await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.SubmitPassing, new {
+                Id = eventRecordObject.Id,
+                Reward = eventRecordObject.Reward
+            });
 
             return TypedResults.Ok(new SubmitPassingResponse { EventRecordObject = eventRecordObject });
         }

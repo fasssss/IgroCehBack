@@ -1,4 +1,4 @@
-﻿using API.Helpers;
+using API.Helpers;
 using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
@@ -28,7 +28,12 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecords = await _eventApplicationService.ShuffleUsersAsync(stringId, request.EventId);
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}ShuffleUsers", eventRecords, "shuffleUsers");
+            if (eventRecords.Count == 0)
+            {
+                return TypedResults.BadRequest();
+            }
+
+            await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.ShuffleUsers, eventRecords);
             return TypedResults.Ok(new ShuffleUsersResponse { EventRecordObjects = eventRecords });
         }
     }

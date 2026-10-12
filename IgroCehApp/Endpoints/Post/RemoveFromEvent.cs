@@ -1,4 +1,4 @@
-﻿using API.Helpers;
+using API.Helpers;
 using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
@@ -28,7 +28,12 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var eventRecord = await _eventApplicationService.RemoveFromEventAsync(stringId, request.UserId, request.EventId);
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}", eventRecord, "removeUserFromEvent");
+            if (eventRecord == null)
+            {
+                return TypedResults.BadRequest("User can't be removed from this event");
+            }
+
+            await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.RemoveUserFromEvent, eventRecord);
             return TypedResults.Ok(new RemoveFromEventResponse { EventRecordObject = eventRecord });
         }
     }

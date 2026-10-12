@@ -1,92 +1,95 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using System.Net.WebSockets;
-using System.Security.Claims;
 using System.Text;
 
 namespace API.Helpers
 {
+    // Keeps websocket connections grouped by rooms. Every connection belongs to exactly one room
+    // (client opens a separate socket per room), so rooms live and fail independently of each other.
     public class WebSocketHelper
     {
-        private List<WebSocketsConnection> _webSocketConnections;
-        private IHttpContextAccessor _httpContextAccessor;
-
-        public WebSocketHelper(IHttpContextAccessor httpContextAccessor) 
+        private static readonly JsonSerializerSettings _serializerSettings = new JsonSerializerSettings
         {
-            _webSocketConnections = new List<WebSocketsConnection>();
-            _httpContextAccessor = httpContextAccessor;
-        }
+            ContractResolver = new CamelCasePropertyNamesContractResolver()
+        };
 
-        public async Task<int> AddWebSocketRoom(WebSocket socket, params string[] rooms)
+        private readonly Dictionary<string, HashSet<WebSocketRoomConnection>> _rooms = new();
+        private readonly object _roomsLock = new();
+
+        public async Task ListenRoomAsync(string room, WebSocket socket, CancellationToken ct)
         {
-            var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
-            var applicationCookieAsId = _httpContextAccessor.HttpContext?.Request.Cookies["application_token"];
+            var connection = new WebSocketRoomConnection(socket);
+            AddConnection(room, connection);
 
-            if (connection == null && rooms != null) 
+            try
             {
-                connection = new WebSocketsConnection { UniqueIdentifier = applicationCookieAsId, WebSocket = socket };
-                _webSocketConnections.Add(connection);
+                var buffer = new ArraySegment<byte>(new byte[1024]);
+                while (socket.State == WebSocketState.Open)
+                {
+                    // room is defined by the url, so incoming data is only drained until the close frame arrives
+                    var result = await socket.ReceiveAsync(buffer, ct);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await connection.CloseAsync();
+                    }
+                }
             }
-
-            foreach (var room in rooms)
+            catch (WebSocketException)
             {
-                connection.Rooms.Add(room);
+                // client disappeared without close handshake
             }
-
-            return connection?.Rooms?.Count ?? 0;
-        }
-
-        public async Task<int> RemoveWebSocketRoom(WebSocket socket, params string[] rooms)
-        {
-            var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
-            if (connection == null)
+            catch (OperationCanceledException)
             {
-                return 0;
+                // request was aborted or server is shutting down
             }
-
-            foreach (var room in rooms)
+            finally
             {
-                connection.Rooms.Remove(room);
-            }
-
-            if (connection.Rooms.Count == 0)
-            {
-                _webSocketConnections.Remove(connection);
-            }
-
-            return connection.Rooms.Count;
-        }
-
-        public async Task SendToRoomAsync<T>(string room, T message, string messageType = "", bool sendSelf = false)
-        {
-            var applicationCookieAsId = _httpContextAccessor.HttpContext?.Request.Cookies["application_token"];
-            var connections = _webSocketConnections.Where(x => x.Rooms.Contains(room));
-            if (!sendSelf)
-            {
-                connections = connections.Where(x => x.UniqueIdentifier != applicationCookieAsId);
-            }
-
-            string jsonString = JsonConvert.SerializeObject(new { Type = messageType, Payload = message }, new JsonSerializerSettings 
-            { 
-                ContractResolver = new CamelCasePropertyNamesContractResolver() 
-            });
-            byte[] requestBuffer = Encoding.UTF8.GetBytes(jsonString);
-            var buffer = new ArraySegment<byte>(requestBuffer);
-            foreach (var connection in connections)
-            {
-                await connection.WebSocket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
+                RemoveConnection(room, connection);
             }
         }
 
-        public async Task<bool> RemoveWebSocketEntirely(WebSocket socket)
+        public async Task SendToRoomAsync<T>(string room, string messageType, T payload)
         {
-            var connection = _webSocketConnections.FirstOrDefault(wc => wc.WebSocket == socket);
-            if(_webSocketConnections.Remove(connection))
+            WebSocketRoomConnection[] receivers;
+            lock (_roomsLock)
             {
-                return true;
+                if (!_rooms.TryGetValue(room, out var connections))
+                {
+                    return;
+                }
+
+                receivers = connections.ToArray();
             }
 
-            return false;
+            var jsonString = JsonConvert.SerializeObject(new { Type = messageType, Payload = payload }, _serializerSettings);
+            var message = Encoding.UTF8.GetBytes(jsonString);
+            await Task.WhenAll(receivers.Select(receiver => receiver.SendAsync(message)));
+        }
+
+        private void AddConnection(string room, WebSocketRoomConnection connection)
+        {
+            lock (_roomsLock)
+            {
+                if (!_rooms.TryGetValue(room, out var connections))
+                {
+                    connections = new HashSet<WebSocketRoomConnection>();
+                    _rooms[room] = connections;
+                }
+
+                connections.Add(connection);
+            }
+        }
+
+        private void RemoveConnection(string room, WebSocketRoomConnection connection)
+        {
+            lock (_roomsLock)
+            {
+                if (_rooms.TryGetValue(room, out var connections) && connections.Remove(connection) && connections.Count == 0)
+                {
+                    _rooms.Remove(room);
+                }
+            }
         }
     }
 }

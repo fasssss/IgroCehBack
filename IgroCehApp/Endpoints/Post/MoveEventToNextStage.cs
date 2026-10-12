@@ -1,4 +1,4 @@
-﻿using API.Helpers;
+using API.Helpers;
 using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
@@ -28,8 +28,13 @@ namespace API.Endpoints.Post
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var newEventStage = await _eventApplicationService.MoveEventToNextStageAsync(stringId, request.EventId, request.StatusId);
+            if (newEventStage < 0)
+            {
+                return TypedResults.BadRequest("Only event creator can change event stage");
+            }
+
             var response = new MoveEventToNextStageResponse { MoveToStage = newEventStage };
-            await _webSocketHelper.SendToRoomAsync($"event{request.EventId}updateEventStage", response);
+            await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.UpdateEventStage, response);
             return TypedResults.Ok(response);
         }
     }

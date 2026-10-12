@@ -26,8 +26,8 @@ services:
   frontend:
     image: ${DOCKER_REGISTRY-}web
     build:
-      context: ../IgroCehFrontend
-      dockerfile: ../IgroCehFrontend/Dockerfile
+      context: ../Front
+      dockerfile: ../Front/Dockerfile
     container_name: frontend
     ports:
       - 443:5173

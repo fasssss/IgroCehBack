@@ -34,6 +34,7 @@ builder.Services
 
 var app = builder.Build();
 
+await app.ApplyMigrationsAsync();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -61,13 +62,14 @@ app.UseStaticFiles(new StaticFileOptions
     
 });
 
-app.UseAuthentication()
-    .UseAuthorization()
-    .UseFastEndpoints()
-    .UseWebSockets(new WebSocketOptions
+// websockets middleware has to be registered before endpoints that accept websocket requests
+app.UseWebSockets(new WebSocketOptions
     {
         KeepAliveInterval = TimeSpan.FromSeconds(5)
     })
+    .UseAuthentication()
+    .UseAuthorization()
+    .UseFastEndpoints()
     .UseSwaggerGen();
 
 app.Run();

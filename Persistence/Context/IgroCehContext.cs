@@ -28,13 +28,13 @@ namespace Persistence.Context
 
         }
 
-        protected override async void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            /*if((await Database.GetPendingMigrationsAsync()) != null)
-            {
-                Database.Migrate();
-            }*/
+            //if((await Database.GetPendingMigrationsAsync()) != null)
+            //{
+            //    Database.Migrate();
+            //}
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
