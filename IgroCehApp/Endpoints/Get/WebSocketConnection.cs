@@ -18,6 +18,8 @@ namespace API.Endpoints.Get
             // a GET-only route answers it with 405
             Verbs("GET", "CONNECT");
             Routes("/api/ws/{room}");
+            // OpenAPI has no CONNECT operation, swagger generation fails on it; websocket isn't a REST method anyway
+            Description(b => b.ExcludeFromDescription());
         }
 
         public override async Task HandleAsync(CancellationToken ct)
