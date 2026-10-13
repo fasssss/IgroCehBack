@@ -295,16 +295,10 @@ namespace Application.Services
         public async Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
-            var monthesFromStart = (DateTimeOffset.UtcNow.Month - eventRecord.Event.StartDate.Month) + 
-                12 * (DateTimeOffset.UtcNow.Year - eventRecord.Event.StartDate.Year);
+            // months are counted from the event creation, events created before CreatedAt was tracked fall back to the season start
+            var countFrom = new DateTimeOffset(eventRecord.Event.StartDate, TimeSpan.Zero);
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
-            eventRecord.Reward = monthesFromStart switch
-            {
-                int month when month <= 0  => 3,
-                1 => 2,
-                2 => 1,
-                _ => 0
-            };
+            eventRecord.Reward = CalculatePassingReward(countFrom, eventRecord.SucceededAt.Value);
 
             await _eventRepository.SaveAsync();
 
@@ -336,6 +330,27 @@ namespace Application.Services
             }
 
             return new EventObject();
+        }
+
+        // 3 points for passing within the first full month after countFrom, 2 within the second, 1 within the third, 0 later
+        public static int CalculatePassingReward(DateTimeOffset countFrom, DateTimeOffset passedAt)
+        {
+            countFrom = countFrom.ToUniversalTime();
+            passedAt = passedAt.ToUniversalTime();
+
+            var fullMonths = (passedAt.Year - countFrom.Year) * 12 + passedAt.Month - countFrom.Month;
+            if (countFrom.AddMonths(fullMonths) > passedAt)
+            {
+                fullMonths--;
+            }
+
+            return fullMonths switch
+            {
+                int month when month <= 0 => 3,
+                1 => 2,
+                2 => 1,
+                _ => 0
+            };
         }
 
         private DateTime GetStartSeasonDate()
