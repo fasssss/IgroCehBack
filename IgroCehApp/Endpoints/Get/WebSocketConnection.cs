@@ -14,7 +14,10 @@ namespace API.Endpoints.Get
 
         public override void Configure()
         {
-            Get("/api/ws/{room}");
+            // over HTTP/2 browsers open websocket with extended CONNECT request instead of GET (RFC 8441),
+            // a GET-only route answers it with 405
+            Verbs("GET", "CONNECT");
+            Routes("/api/ws/{room}");
         }
 
         public override async Task HandleAsync(CancellationToken ct)
