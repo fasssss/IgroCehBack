@@ -9,6 +9,8 @@ namespace Domain.Entities
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
         public string? SteamUrl { get; set; }
+        // id of the game in VideoGamesCritic catalog, set for games picked from the catalog search
+        public int? VgcId { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }

@@ -44,6 +44,9 @@ namespace Persistence.Context
                 .HasOne(g => g.Creator)
                 .WithMany()
                 .HasForeignKey(g => g.CreatorId);
+            modelBuilder.Entity<Game>()
+                .HasIndex(g => g.VgcId)
+                .IsUnique();
             modelBuilder.Entity<User>()
                 .HasMany(u => u.EventRecords)
                 .WithOne(er => er.Participant)

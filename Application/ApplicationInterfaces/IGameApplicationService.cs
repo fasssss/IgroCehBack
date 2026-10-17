@@ -11,6 +11,7 @@ namespace Application.ApplicationInterfaces
     {
         public Task<GameObject> FindGameByNameAsync(string name);
         public Task<GameObject> CreateGameAsync(GameObject gameObject);
-        public Task SuggestGameAsync(int gameId);
+        public Task<List<CatalogGameObject>> SearchCatalogGamesAsync(string query, CancellationToken ct = default);
+        public Task<string> CreateGameFromCatalogAsync(string userId, int vgcId, CancellationToken ct = default);
     }
 }

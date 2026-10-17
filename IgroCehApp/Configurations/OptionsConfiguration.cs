@@ -8,6 +8,7 @@ namespace API.Configurations
         {
             services.Configure<DiscordApiOptions>(config.GetSection(nameof(DiscordApiOptions)));
             services.Configure<ApplicationJwtOptions>(config.GetSection(nameof(ApplicationJwtOptions)));
+            services.Configure<VideoGamesCriticOptions>(config.GetSection(nameof(VideoGamesCriticOptions)));
             return services;
         }
     }

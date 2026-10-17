@@ -14,17 +14,20 @@ namespace Application.Services
     public class GameApplicationService: IGameApplicationService
     {
         private readonly IGameRepository _gameRepository;
+        private readonly IGameCatalogService _gameCatalogService;
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
 
         public GameApplicationService(
             IUserRepository userRepository, 
             IMapper mapper,
-            IGameRepository gameRepository) 
+            IGameRepository gameRepository,
+            IGameCatalogService gameCatalogService) 
         {
             _userRepository = userRepository;
             _mapper = mapper;
             _gameRepository = gameRepository;
+            _gameCatalogService = gameCatalogService;
         }
 
         public async Task<GameObject> FindGameByNameAsync(string name)
@@ -61,9 +64,53 @@ namespace Application.Services
             return null;
         }
 
-        public async Task SuggestGameAsync(int gameId)
+        public Task<List<CatalogGameObject>> SearchCatalogGamesAsync(string query, CancellationToken ct = default)
         {
-            return;
+            return _gameCatalogService.SearchGamesAsync(query, ct);
+        }
+
+        // returns id of the game in our database, a catalog game is saved on its first pick and reused after that
+        public async Task<string> CreateGameFromCatalogAsync(string userId, int vgcId, CancellationToken ct = default)
+        {
+            var existingGame = await _gameRepository.FirstOrDefaultAsync(g => g.VgcId == vgcId);
+            if (existingGame != null)
+            {
+                return existingGame.Id;
+            }
+
+            var catalogGame = await _gameCatalogService.GetGameAsync(vgcId, ct);
+            if (catalogGame == null)
+            {
+                return null;
+            }
+
+            var addedGame = await _gameRepository.AddAsync(new Game
+            {
+                Id = Guid.NewGuid().ToString(),
+                Name = catalogGame.Name,
+                ImageUrl = catalogGame.CoverUrl,
+                SteamUrl = catalogGame.SteamUrl,
+                VgcId = vgcId,
+                CreatorId = userId,
+            });
+
+            try
+            {
+                await _gameRepository.SaveAsync();
+            }
+            catch
+            {
+                // another user could save the same catalog game at the same moment, VgcId is unique
+                var concurrentlyAddedGame = await _gameRepository.FirstOrDefaultAsync(g => g.VgcId == vgcId);
+                if (concurrentlyAddedGame == null)
+                {
+                    throw;
+                }
+
+                return concurrentlyAddedGame.Id;
+            }
+
+            return addedGame.Id;
         }
     }
 }

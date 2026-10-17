@@ -60,7 +60,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Domain.Entities.EventRecord", b =>
@@ -102,7 +102,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("ToUserId");
 
-                    b.ToTable("EventRecords", (string)null);
+                    b.ToTable("EventRecords");
                 });
 
             modelBuilder.Entity("Domain.Entities.EventStatus", b =>
@@ -123,7 +123,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EventStatuses", (string)null);
+                    b.ToTable("EventStatuses");
 
                     b.HasData(
                         new
@@ -195,11 +195,17 @@ namespace Persistence.Migrations
                     b.Property<string>("SteamUrl")
                         .HasColumnType("longtext");
 
+                    b.Property<int?>("VgcId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatorId");
 
-                    b.ToTable("Games", (string)null);
+                    b.HasIndex("VgcId")
+                        .IsUnique();
+
+                    b.ToTable("Games");
                 });
 
             modelBuilder.Entity("Domain.Entities.Guild", b =>
@@ -219,7 +225,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Guilds", (string)null);
+                    b.ToTable("Guilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -244,7 +250,7 @@ namespace Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
@@ -268,7 +274,7 @@ namespace Persistence.Migrations
 
                     b.HasIndex("GuildId");
 
-                    b.ToTable("UserGuilds", (string)null);
+                    b.ToTable("UserGuilds");
                 });
 
             modelBuilder.Entity("Domain.Entities.Event", b =>
@@ -311,7 +317,7 @@ namespace Persistence.Migrations
                         .HasForeignKey("GameId");
 
                     b.HasOne("Domain.Entities.User", "Participant")
-                        .WithMany()
+                        .WithMany("EventRecords")
                         .HasForeignKey("ParticipantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -384,6 +390,8 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("CreatorOfEvents");
+
+                    b.Navigation("EventRecords");
 
                     b.Navigation("UserGuilds");
                 });
