@@ -295,7 +295,7 @@ namespace Application.Services
         public async Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
-            // months are counted from the event creation, events created before CreatedAt was tracked fall back to the season start
+            // months are counted from the start of the season the event belongs to (Event.StartDate)
             var countFrom = new DateTimeOffset(eventRecord.Event.StartDate, TimeSpan.Zero);
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
             eventRecord.Reward = CalculatePassingReward(countFrom, eventRecord.SucceededAt.Value);

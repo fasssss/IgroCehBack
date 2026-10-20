@@ -11,6 +11,7 @@ namespace API.Configurations
             services.AddTransient<IGuildApplicationService, GuildApplicationService>();
             services.AddTransient<IEventApplicationService, EventApplicationService>();
             services.AddTransient<IGameApplicationService, GameApplicationService>();
+            services.AddTransient<IPlayerApplicationService, PlayerApplicationService>();
             return services;
         }
     }

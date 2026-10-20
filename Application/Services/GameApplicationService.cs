@@ -1,5 +1,6 @@
 ﻿using Application.ApplicationInterfaces;
 using Application.DTO;
+using Application.Exceptions;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
@@ -75,6 +76,7 @@ namespace Application.Services
             var existingGame = await _gameRepository.FirstOrDefaultAsync(g => g.VgcId == vgcId);
             if (existingGame != null)
             {
+                await FillMissingPlatformsAsync(existingGame, ct);
                 return existingGame.Id;
             }
 
@@ -91,6 +93,7 @@ namespace Application.Services
                 ImageUrl = catalogGame.CoverUrl,
                 SteamUrl = catalogGame.SteamUrl,
                 VgcId = vgcId,
+                Platforms = catalogGame.Platforms,
                 CreatorId = userId,
             });
 
@@ -111,6 +114,30 @@ namespace Application.Services
             }
 
             return addedGame.Id;
+        }
+
+        // games saved before platforms were stored get them on the next pick,
+        // the game was just found by search, so the catalog answers from its cache
+        private async Task FillMissingPlatformsAsync(Game game, CancellationToken ct)
+        {
+            if (game.Platforms.Count > 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var catalogGame = await _gameCatalogService.GetGameAsync(game.VgcId.Value, ct);
+                if (catalogGame?.Platforms.Count > 0)
+                {
+                    game.Platforms = catalogGame.Platforms;
+                    await _gameRepository.SaveAsync();
+                }
+            }
+            catch (GameCatalogUnavailableException)
+            {
+                // platforms are optional, the game can be suggested without them
+            }
         }
     }
 }

@@ -11,6 +11,8 @@ namespace Domain.Entities
         public string? SteamUrl { get; set; }
         // id of the game in VideoGamesCritic catalog, set for games picked from the catalog search
         public int? VgcId { get; set; }
+        // platforms from VideoGamesCritic catalog, empty for games added by hand
+        public List<string> Platforms { get; set; } = new List<string>();
         public List<EventRecord> EventRecords { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }

@@ -192,6 +192,11 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Platforms")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("SteamUrl")
                         .HasColumnType("longtext");
 

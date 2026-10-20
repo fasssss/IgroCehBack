@@ -2,12 +2,14 @@
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -47,6 +49,16 @@ namespace Persistence.Context
             modelBuilder.Entity<Game>()
                 .HasIndex(g => g.VgcId)
                 .IsUnique();
+            modelBuilder.Entity<Game>()
+                .Property(g => g.Platforms)
+                .HasConversion(
+                    platforms => PlatformsToJson(platforms),
+                    json => PlatformsFromJson(json),
+                    new ValueComparer<List<string>>(
+                        (first, second) => first.SequenceEqual(second),
+                        platforms => platforms.Aggregate(0, (hash, platform) => HashCode.Combine(hash, platform.GetHashCode())),
+                        platforms => platforms.ToList()))
+                .HasMaxLength(255);
             modelBuilder.Entity<User>()
                 .HasMany(u => u.EventRecords)
                 .WithOne(er => er.Participant)
@@ -99,5 +111,11 @@ namespace Persistence.Context
                     })
                 );
         }
+
+        // platforms are a short list that is only read together with its game, so it is kept as json in a single column
+        private static string PlatformsToJson(List<string> platforms) => JsonSerializer.Serialize(platforms ?? new List<string>());
+
+        private static List<string> PlatformsFromJson(string json) =>
+            string.IsNullOrEmpty(json) ? new List<string>() : JsonSerializer.Deserialize<List<string>>(json) ?? new List<string>();
     }
 }
