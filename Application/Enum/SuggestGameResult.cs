@@ -7,7 +7,7 @@ namespace Application.Enum
         NotFound,
         // only the participant of the record guesses its game
         Forbidden,
-        // games are guessed only while the event is at the guessing stage
+        // games are guessed and changed only while the event is at the guessing stage, before the creator activates it
         Unavailable,
     }
 }

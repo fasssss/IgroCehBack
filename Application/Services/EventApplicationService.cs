@@ -284,40 +284,57 @@ namespace Application.Services
             return new List<EventRecordObject>();
         }
 
-        // the participant guesses a game for the player they were shuffled to and can change it until the event starts;
-        // guessing ends when every participant has guessed a game, then the event becomes active
-        public async Task<(SuggestGameResult Result, EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string userId, string eventRecordId, string gameId)
+        // the participant guesses a game for the player they were shuffled to and can change it until the creator activates the event
+        public async Task<(SuggestGameResult Result, EventRecordObject EventRecord)> SuggestGameAsync(string userId, string eventRecordId, string gameId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
             var suggestedGame = await _gameRepository.GetByIdAsync(gameId);
             if (eventRecord == null || suggestedGame == null)
             {
-                return (SuggestGameResult.NotFound, null, false);
+                return (SuggestGameResult.NotFound, null);
             }
 
             if (eventRecord.ParticipantId != userId)
             {
-                return (SuggestGameResult.Forbidden, null, false);
+                return (SuggestGameResult.Forbidden, null);
             }
 
             if (eventRecord.Event.StatusId != EventStatusId.GamesGuessing)
             {
-                return (SuggestGameResult.Unavailable, null, false);
+                return (SuggestGameResult.Unavailable, null);
             }
 
             eventRecord.GameId = gameId;
             eventRecord.Game = suggestedGame;
+            await _eventRepository.SaveAsync();
 
-            // the changed record is already tracked, so it comes with the new game
-            var eventRecords = await _eventRepository.GetEventRecordsAsync(eventRecord.EventId);
-            var eventStarted = eventRecords.All(er => er.GameId != null);
-            if (eventStarted)
+            return (SuggestGameResult.Suggested, _mapper.Map<EventRecordObject>(eventRecord));
+        }
+
+        // the creator starts the event once every participant has guessed a game, after that the games can't be changed
+        public async Task<ActivateEventResult> ActivateEventAsync(string userId, string eventId)
+        {
+            var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null)
             {
-                eventRecord.Event.StatusId = EventStatusId.Active;
+                return ActivateEventResult.NotFound;
             }
 
+            if (eventEntity.CreatorId != userId)
+            {
+                return ActivateEventResult.Forbidden;
+            }
+
+            var eventRecords = await _eventRepository.GetEventRecordsAsync(eventId);
+            if (eventEntity.StatusId != EventStatusId.GamesGuessing || eventRecords.Count == 0 || eventRecords.Any(er => er.GameId == null))
+            {
+                return ActivateEventResult.Unavailable;
+            }
+
+            eventEntity.StatusId = EventStatusId.Active;
             await _eventRepository.SaveAsync();
-            return (SuggestGameResult.Suggested, _mapper.Map<EventRecordObject>(eventRecord), eventStarted);
+
+            return ActivateEventResult.Activated;
         }
 
         // the one who guessed the game confirms that it is passed, once and while the event is active
