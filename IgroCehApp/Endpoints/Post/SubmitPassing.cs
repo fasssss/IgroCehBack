@@ -2,7 +2,7 @@ using API.Helpers;
 using API.RepR.Request;
 using API.RepR.Response;
 using Application.ApplicationInterfaces;
-using Application.DTO;
+using Application.Enum;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http.HttpResults;
 using System.Security.Claims;

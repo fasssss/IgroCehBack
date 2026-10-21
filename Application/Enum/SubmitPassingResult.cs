@@ -1,4 +1,4 @@
-namespace Application.DTO
+namespace Application.Enum
 {
     public enum SubmitPassingResult
     {

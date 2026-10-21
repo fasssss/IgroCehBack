@@ -1,4 +1,5 @@
 ﻿using Application.DTO;
+using Application.Enum;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace Application.ApplicationInterfaces
         public Task<int> MoveEventToNextStageAsync(string userId, string eventId, int statusId);
         public Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId);
         // EventStarted: the game was the last one to guess, so the event became active
-        public Task<(EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string eventRecordId, string gameId);
+        public Task<(SuggestGameResult Result, EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string userId, string eventRecordId, string gameId);
         public Task<(SubmitPassingResult Result, EventRecordObject EventRecord)> SubmitPassingAsync(string userId, string eventRecordId);
         public Task<EventObject> SummarizeEventAsync(string userId, string eventId);
         public Task<DeleteEventResult> DeleteEventAsync(string userId, string eventId);

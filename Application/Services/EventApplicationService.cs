@@ -1,5 +1,6 @@
 ﻿using Application.ApplicationInterfaces;
 using Application.DTO;
+using Application.Enum;
 using Application.Interfaces;
 using AutoMapper;
 using Domain.Entities;
@@ -113,8 +114,9 @@ namespace Application.Services
             if (userIsInGuild)
             {
                 var eventList = await _eventRepository.CustomToListAsync(
+                    // Status.Order puts active events first, then the ones at earlier stages, finished ones last
                     _eventRepository.Where(e => e.GuildId == guildId)
-                    .OrderByDescending(u => u.Status.Order)
+                    .OrderBy(e => e.Status.Order)
                     .ThenByDescending(e => e.StartDate)
                     .ThenBy(e => e.Id)
                     .Skip(startFrom)
@@ -282,28 +284,40 @@ namespace Application.Services
             return new List<EventRecordObject>();
         }
 
+        // the participant guesses a game for the player they were shuffled to and can change it until the event starts;
         // guessing ends when every participant has guessed a game, then the event becomes active
-        public async Task<(EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string eventRecordId, string gameId)
+        public async Task<(SuggestGameResult Result, EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string userId, string eventRecordId, string gameId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
             var suggestedGame = await _gameRepository.GetByIdAsync(gameId);
+            if (eventRecord == null || suggestedGame == null)
+            {
+                return (SuggestGameResult.NotFound, null, false);
+            }
+
+            if (eventRecord.ParticipantId != userId)
+            {
+                return (SuggestGameResult.Forbidden, null, false);
+            }
+
+            if (eventRecord.Event.StatusId != EventStatusId.GamesGuessing)
+            {
+                return (SuggestGameResult.Unavailable, null, false);
+            }
+
             eventRecord.GameId = gameId;
             eventRecord.Game = suggestedGame;
 
-            var eventStarted = false;
-            if (eventRecord.Event.StatusId == EventStatusId.GamesGuessing)
+            // the changed record is already tracked, so it comes with the new game
+            var eventRecords = await _eventRepository.GetEventRecordsAsync(eventRecord.EventId);
+            var eventStarted = eventRecords.All(er => er.GameId != null);
+            if (eventStarted)
             {
-                // the changed record is already tracked, so it comes with the new game
-                var eventRecords = await _eventRepository.GetEventRecordsAsync(eventRecord.EventId);
-                if (eventRecords.All(er => er.GameId != null))
-                {
-                    eventRecord.Event.StatusId = EventStatusId.Active;
-                    eventStarted = true;
-                }
+                eventRecord.Event.StatusId = EventStatusId.Active;
             }
 
             await _eventRepository.SaveAsync();
-            return (_mapper.Map<EventRecordObject>(eventRecord), eventStarted);
+            return (SuggestGameResult.Suggested, _mapper.Map<EventRecordObject>(eventRecord), eventStarted);
         }
 
         // the one who guessed the game confirms that it is passed, once and while the event is active
@@ -339,7 +353,7 @@ namespace Application.Services
         {
             var hasRights = await _eventRepository
                 .CustomAnyAsync(_eventRepository
-                .Where(e => e.Id == eventId && (e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin))));
+                .Where(e => e.Id == eventId && (e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin && !ug.IsDeleted))));
             // rewards are already in the scores since their passing, summarizing only finishes the event
             if (hasRights)
             {
