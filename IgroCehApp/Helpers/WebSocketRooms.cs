@@ -13,5 +13,6 @@ namespace API.Helpers
         public const string ShuffleUsers = "shuffleUsers";
         public const string SuggestGame = "suggestGame";
         public const string SubmitPassing = "submitPassing";
+        public const string DeleteEvent = "deleteEvent";
     }
 }

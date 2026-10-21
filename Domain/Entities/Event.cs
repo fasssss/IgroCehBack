@@ -16,5 +16,9 @@ namespace Domain.Entities
         public Enums.EventStatusId StatusId { get; set; }
         public EventStatus Status { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
+        // soft delete: the event and its records stay in the database, but are hidden by the query filter of the context
+        public bool IsDeleted { get; set; }
+        public DateTimeOffset? DeletedAt { get; set; }
+        public string? DeletedById { get; set; }
     }
 }

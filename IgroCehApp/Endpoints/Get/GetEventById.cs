@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Get
 {
-    public class GetEventById: Endpoint<GetEventByIdRequest, Results<Ok<GetEventByIdResponse>, BadRequest<string>>>
+    public class GetEventById: Endpoint<GetEventByIdRequest, Results<Ok<GetEventByIdResponse>, NotFound>>
     {
         private readonly IEventApplicationService _eventApplicationService;
         public GetEventById(IEventApplicationService eventApplicationService)
@@ -22,11 +22,17 @@ namespace API.Endpoints.Get
             Get("/api/getEventById");
         }
 
-        public override async Task<Results<Ok<GetEventByIdResponse>, BadRequest<string>>> ExecuteAsync(GetEventByIdRequest request, CancellationToken ct)
+        public override async Task<Results<Ok<GetEventByIdResponse>, NotFound>> ExecuteAsync(GetEventByIdRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
 
             var eventObject = await _eventApplicationService.GetEventByIdAsync(stringId, request.EventId);
+            // the event was deleted or belongs to a guild of other users
+            if (eventObject == null)
+            {
+                return TypedResults.NotFound();
+            }
+
             var response = new GetEventByIdResponse
             {
                 Id = eventObject.Id,

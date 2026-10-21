@@ -64,6 +64,9 @@ namespace Persistence.Context
                 .WithOne(er => er.Participant)
                 .HasForeignKey(er => er.ParticipantId);
             modelBuilder.Entity<Event>().Property(x => x.Id).ValueGeneratedOnAdd();
+            // deleted events and their records are left out of every query, IgnoreQueryFilters() reaches them
+            modelBuilder.Entity<Event>().HasQueryFilter(e => !e.IsDeleted);
+            modelBuilder.Entity<EventRecord>().HasQueryFilter(er => !er.Event.IsDeleted);
             modelBuilder.Entity<Event>()
                 .HasOne(e => e.Guild)
                 .WithMany(g => g.Events)

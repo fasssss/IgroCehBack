@@ -1,10 +1,12 @@
-﻿using Application.Interfaces;
+﻿using Application.DTO;
+using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -61,6 +63,22 @@ namespace Persistence.Repository
                 .ToListAsync();
 
             return eventRecords;
+        }
+
+        public async Task<List<RewardScore>> GetRewardScoresAsync(Expression<Func<Event, bool>> eventFilter)
+        {
+            return await _igroCehContext.Events
+                .Where(eventFilter)
+                .SelectMany(e => e.EventRecords, (e, er) => new { e.GuildId, er.ToUserId, er.Reward })
+                .Where(er => er.Reward != null && er.ToUserId != null)
+                .GroupBy(er => new { er.GuildId, er.ToUserId })
+                .Select(group => new RewardScore
+                {
+                    GuildId = group.Key.GuildId,
+                    UserId = group.Key.ToUserId,
+                    Score = group.Sum(er => er.Reward ?? 0),
+                })
+                .ToListAsync();
         }
 
         public async Task<EventRecord> RemoveEventRecordAsync(string eventRecordId)

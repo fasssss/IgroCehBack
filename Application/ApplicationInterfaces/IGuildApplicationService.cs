@@ -12,5 +12,6 @@ namespace Application.ApplicationInterfaces
         public Task<ICollection<GuildObject>> GetFilteredGuildsAsync(string userId, GuildsFilter filter);
         public Task<GuildObject> GetGuildByIdAsync(string userId, string guildId);
         public Task<ICollection<ScoreObject>> GetScoreByGuildIdAsync(string guildId);
+        public Task<List<PlayedGuildObject>> GetPlayedGuildsAsync(string userId);
     }
 }

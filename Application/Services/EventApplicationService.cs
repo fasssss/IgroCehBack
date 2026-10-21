@@ -282,19 +282,49 @@ namespace Application.Services
             return new List<EventRecordObject>();
         }
 
-        public async Task<EventRecordObject> SuggestGameAsync(string eventRecordId, string gameId)
+        // guessing ends when every participant has guessed a game, then the event becomes active
+        public async Task<(EventRecordObject EventRecord, bool EventStarted)> SuggestGameAsync(string eventRecordId, string gameId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
             var suggestedGame = await _gameRepository.GetByIdAsync(gameId);
             eventRecord.GameId = gameId;
             eventRecord.Game = suggestedGame;
+
+            var eventStarted = false;
+            if (eventRecord.Event.StatusId == EventStatusId.GamesGuessing)
+            {
+                // the changed record is already tracked, so it comes with the new game
+                var eventRecords = await _eventRepository.GetEventRecordsAsync(eventRecord.EventId);
+                if (eventRecords.All(er => er.GameId != null))
+                {
+                    eventRecord.Event.StatusId = EventStatusId.Active;
+                    eventStarted = true;
+                }
+            }
+
             await _eventRepository.SaveAsync();
-            return _mapper.Map<EventRecordObject>(eventRecord);
+            return (_mapper.Map<EventRecordObject>(eventRecord), eventStarted);
         }
 
-        public async Task<EventRecordObject> SubmitPassingAsync(string userId, string eventRecordId)
+        // the one who guessed the game confirms that it is passed, once and while the event is active
+        public async Task<(SubmitPassingResult Result, EventRecordObject EventRecord)> SubmitPassingAsync(string userId, string eventRecordId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
+            if (eventRecord == null)
+            {
+                return (SubmitPassingResult.NotFound, null);
+            }
+
+            if (eventRecord.ParticipantId != userId)
+            {
+                return (SubmitPassingResult.Forbidden, null);
+            }
+
+            if (eventRecord.Event.StatusId != EventStatusId.Active || eventRecord.GameId == null || eventRecord.SucceededAt != null)
+            {
+                return (SubmitPassingResult.Unavailable, null);
+            }
+
             // months are counted from the start of the season the event belongs to (Event.StartDate)
             var countFrom = new DateTimeOffset(eventRecord.Event.StartDate, TimeSpan.Zero);
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
@@ -302,7 +332,7 @@ namespace Application.Services
 
             await _eventRepository.SaveAsync();
 
-            return _mapper.Map<EventRecordObject>(eventRecord);
+            return (SubmitPassingResult.Submitted, _mapper.Map<EventRecordObject>(eventRecord));
         }
 
         public async Task<EventObject> SummarizeEventAsync(string userId, string eventId)
@@ -310,26 +340,40 @@ namespace Application.Services
             var hasRights = await _eventRepository
                 .CustomAnyAsync(_eventRepository
                 .Where(e => e.Id == eventId && (e.CreatorId == userId || e.Guild.UserGuilds.Any(ug => ug.UserId == userId && ug.IsAdmin))));
+            // rewards are already in the scores since their passing, summarizing only finishes the event
             if (hasRights)
             {
-                var eventRecords = await _eventRepository.CustomToListAsync(
-                    _eventRepository.Where(x => x.Id == eventId).SelectMany(x => x.EventRecords));
-                var userGuilds = await _userRepository.GetUserGuildsByEventIdAsync(eventId);
-                foreach (var eventRecord in eventRecords)
-                {
-                    var userGuild = userGuilds.FirstOrDefault(x => x.UserId == eventRecord.ToUserId);
-                    if(userGuild != null)
-                    {
-                        userGuild.Score += eventRecord.Reward ?? 0;
-                    }
-                }
-
                 var completedEvent = await _eventRepository.GetByIdAsync(eventId);
                 completedEvent.StatusId = EventStatusId.Finished;
                 await _eventRepository.SaveAsync();
             }
 
             return new EventObject();
+        }
+
+        // soft delete: the event with its records is only hidden, so it can be restored by unsetting IsDeleted;
+        // scores are summed from the visible records, so its rewards leave them and come back with it
+        public async Task<DeleteEventResult> DeleteEventAsync(string userId, string eventId)
+        {
+            var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null)
+            {
+                return DeleteEventResult.NotFound;
+            }
+
+            var isGuildAdmin = await _userRepository.CustomAnyAsync(_userRepository
+                .Where(u => u.Id == userId && u.UserGuilds.Any(ug => ug.GuildId == eventEntity.GuildId && ug.IsAdmin && !ug.IsDeleted)));
+            if (!isGuildAdmin)
+            {
+                return DeleteEventResult.Forbidden;
+            }
+
+            eventEntity.IsDeleted = true;
+            eventEntity.DeletedAt = DateTimeOffset.UtcNow;
+            eventEntity.DeletedById = userId;
+            await _eventRepository.SaveAsync();
+
+            return DeleteEventResult.Deleted;
         }
 
         // 3 points for passing within the first full month after countFrom, 2 within the second, 1 within the third, 0 later

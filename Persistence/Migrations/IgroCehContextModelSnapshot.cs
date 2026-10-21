@@ -35,12 +35,21 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DeletedById")
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("EndDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("GuildId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -271,9 +280,6 @@ namespace Persistence.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("int");
 
                     b.HasKey("UserId", "GuildId");
 

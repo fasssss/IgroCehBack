@@ -20,5 +20,7 @@ namespace Application.DTO
         public List<string> Features { get; set; }
         public int ApproximateMemberCount { get; set; }
         public int ApproximatePresenceCount { get; set; }
+        // the current user is an admin of the guild in Discord
+        public bool IsCurrentUserAdmin { get; set; }
     }
 }

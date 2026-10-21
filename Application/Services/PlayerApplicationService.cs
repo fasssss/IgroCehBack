@@ -39,14 +39,20 @@ namespace Application.Services
                         Id = ug.GuildId,
                         Name = ug.Guild.Name,
                         IconUrl = ug.Guild.AvatarUrl,
-                        Score = ug.Score,
-                        Place = ug.Guild.UserGuilds.Count(other => other.Score > ug.Score) + 1,
                         PlayersCount = ug.Guild.UserGuilds.Count(),
                         HasLeft = ug.IsDeleted,
                     },
                     HasPlayed = ug.Guild.Events.Any(e => e.EventRecords.Any(er => er.ParticipantId == playerId)),
                     IsShared = ug.Guild.UserGuilds.Any(viewerGuild => viewerGuild.UserId == viewerId),
                 }));
+
+            // rewards of passed games count right away, the event doesn't have to be summarized
+            var scores = await _eventRepository.GetRewardScoresAsync(e => e.Guild.UserGuilds.Any(ug => ug.UserId == playerId));
+            foreach (var guild in playerGuilds.Select(g => g.Guild))
+            {
+                guild.Score = scores.Where(s => s.GuildId == guild.Id && s.UserId == playerId).Sum(s => s.Score);
+                guild.Place = scores.Count(s => s.GuildId == guild.Id && s.Score > guild.Score) + 1;
+            }
 
             // any shared guild opens the profile, even if the player hasn't played yet
             var sharedGuilds = playerGuilds.Where(g => g.IsShared).ToList();

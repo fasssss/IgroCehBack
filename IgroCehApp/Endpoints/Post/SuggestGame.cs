@@ -1,7 +1,9 @@
 using API.Helpers;
 using API.RepR.Request;
+using API.RepR.Response;
 using Application.ApplicationInterfaces;
 using Application.DTO;
+using Domain.Enums;
 using FastEndpoints;
 using Microsoft.AspNetCore.Http.HttpResults;
 
@@ -25,11 +27,17 @@ namespace API.Endpoints.Post
 
         public override async Task<Results<Ok<EventRecordObject>, BadRequest<string>>> ExecuteAsync(SuggestGameRequest request, CancellationToken ct)
         {
-            var updatedEventRecord = await _eventApplicationService.SuggestGameAsync(request.EventRecordId, request.GameId);
+            var (updatedEventRecord, eventStarted) = await _eventApplicationService.SuggestGameAsync(request.EventRecordId, request.GameId);
             await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.SuggestGame, new {
                 Id = updatedEventRecord.Id,
                 Game = updatedEventRecord.Game
             });
+            if (eventStarted)
+            {
+                await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.UpdateEventStage,
+                    new MoveEventToNextStageResponse { MoveToStage = (int)EventStatusId.Active });
+            }
+
             return TypedResults.Ok(updatedEventRecord);
         }
     }
