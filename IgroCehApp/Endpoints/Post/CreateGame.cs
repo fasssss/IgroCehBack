@@ -29,19 +29,18 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok<CreateGameResponse>, BadRequest<string>>> ExecuteAsync(CreateGameRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            string fullPathImageUrl = null;
             string imageUrlToSave = null;
-            if(request.Image != null)
+            // an empty file means the game has no cover
+            if(request.Image is { Length: > 0 })
             {
-                string uploadFolder = Path.Combine(_hostingEnvironment.ContentRootPath, $"Upload/{stringId}/Images/Games");
+                var fileName = Guid.NewGuid().ToString("N") + UploadedImages.Extensions[request.Image.ContentType];
+                var uploadFolder = Path.Combine(_hostingEnvironment.ContentRootPath, "Upload", stringId, "Images", "Games");
                 Directory.CreateDirectory(uploadFolder);
-                var safeGameName = request.Image.FileName.Replace("../", "");
-                fullPathImageUrl = Path.Combine(uploadFolder, safeGameName);
-                imageUrlToSave = Path.Combine($"/Upload/{stringId}/Images/Games", safeGameName);
-                using (var memoryStream = new FileStream(fullPathImageUrl, FileMode.Create))
+                await using (var fileStream = new FileStream(Path.Combine(uploadFolder, fileName), FileMode.CreateNew))
                 {
-                    await request.Image.CopyToAsync(memoryStream);
+                    await request.Image.CopyToAsync(fileStream, ct);
                 }
+                imageUrlToSave = $"/Upload/{stringId}/Images/Games/{fileName}";
             }
 
             var createdGame = await _gameApplicationService.CreateGameAsync(new GameObject

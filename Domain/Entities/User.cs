@@ -7,6 +7,8 @@ namespace Domain.Entities
         public string UserName { get; set; }
         public string Email { get; set; }
         public string AvatarUrl { get; set; }
+        // administrator of the whole application, unlike UserGuild.IsAdmin that comes from a Discord guild
+        public bool IsAppAdmin { get; set; }
         public List<UserGuild> UserGuilds { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public List<Event> CreatorOfEvents { get; set; }

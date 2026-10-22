@@ -258,6 +258,9 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("IsAppAdmin")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("longtext");
