@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace API.Endpoints.Post
 {
     // the participant of the record guesses its game, and can change it, while the event is at the guessing stage
-    public class SuggestGame: Endpoint<SuggestGameRequest, Results<Ok<EventRecordObject>, NotFound, StatusCodeHttpResult, BadRequest<string>>>
+    public class SuggestGame: Endpoint<SuggestGameRequest, Results<Ok<EventRecordObject>, NotFound, StatusCodeHttpResult, BadRequest<string>, Conflict<string>>>
     {
         private readonly IEventApplicationService _eventApplicationService;
         private readonly WebSocketHelper _webSocketHelper;
@@ -26,7 +26,7 @@ namespace API.Endpoints.Post
             Post("/api/suggestGame");
         }
 
-        public override async Task<Results<Ok<EventRecordObject>, NotFound, StatusCodeHttpResult, BadRequest<string>>> ExecuteAsync(SuggestGameRequest request, CancellationToken ct)
+        public override async Task<Results<Ok<EventRecordObject>, NotFound, StatusCodeHttpResult, BadRequest<string>, Conflict<string>>> ExecuteAsync(SuggestGameRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             var (result, updatedEventRecord) = await _eventApplicationService.SuggestGameAsync(stringId, request.EventRecordId, request.GameId);
@@ -36,6 +36,8 @@ namespace API.Endpoints.Post
                     return TypedResults.NotFound();
                 case SuggestGameResult.Forbidden:
                     return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
+                case SuggestGameResult.AlreadyReceived:
+                    return TypedResults.Conflict("The player has already got this game");
                 case SuggestGameResult.Unavailable:
                     return TypedResults.BadRequest("The game can't be guessed now");
             }

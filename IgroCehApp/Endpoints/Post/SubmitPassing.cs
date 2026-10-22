@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    // the one who guessed the game marks it as passed by the player it was guessed for
+    // the one who guessed the game or an admin of the guild marks it as passed by the player it was guessed for
     public class SubmitPassing: Endpoint<SubmitPassingRequest, Results<Ok<SubmitPassingResponse>, NotFound, StatusCodeHttpResult, BadRequest<string>>>
     {
         private readonly IEventApplicationService _eventApplicationService;

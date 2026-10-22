@@ -305,6 +305,14 @@ namespace Application.Services
                 return (SuggestGameResult.Unavailable, null);
             }
 
+            // a player never gets the same game twice; games of deleted events don't count
+            var isAlreadyReceived = eventRecord.ToUserId != null && await _eventRepository.CustomAnyAsync(_eventRepository
+                .Where(e => e.EventRecords.Any(er => er.ToUserId == eventRecord.ToUserId && er.GameId == gameId && er.Id != eventRecord.Id)));
+            if (isAlreadyReceived)
+            {
+                return (SuggestGameResult.AlreadyReceived, null);
+            }
+
             eventRecord.GameId = gameId;
             eventRecord.Game = suggestedGame;
             await _eventRepository.SaveAsync();
@@ -338,7 +346,8 @@ namespace Application.Services
             return ActivateEventResult.Activated;
         }
 
-        // the one who guessed the game confirms that it is passed, once and while the event is active
+        // the one who guessed the game confirms that it is passed, an admin of the guild can do it for any game, their own too;
+        // once and while the event is active
         public async Task<(SubmitPassingResult Result, EventRecordObject EventRecord)> SubmitPassingAsync(string userId, string eventRecordId)
         {
             var eventRecord = await _eventRepository.GetEventRecordAsync(eventRecordId);
@@ -347,7 +356,7 @@ namespace Application.Services
                 return (SubmitPassingResult.NotFound, null);
             }
 
-            if (eventRecord.ParticipantId != userId)
+            if (eventRecord.ParticipantId != userId && !await IsGuildAdminAsync(userId, eventRecord.Event.GuildId))
             {
                 return (SubmitPassingResult.Forbidden, null);
             }
@@ -393,9 +402,7 @@ namespace Application.Services
                 return DeleteEventResult.NotFound;
             }
 
-            var isGuildAdmin = await _userRepository.CustomAnyAsync(_userRepository
-                .Where(u => u.Id == userId && u.UserGuilds.Any(ug => ug.GuildId == eventEntity.GuildId && ug.IsAdmin && !ug.IsDeleted)));
-            if (!isGuildAdmin)
+            if (!await IsGuildAdminAsync(userId, eventEntity.GuildId))
             {
                 return DeleteEventResult.Forbidden;
             }
@@ -406,6 +413,13 @@ namespace Application.Services
             await _eventRepository.SaveAsync();
 
             return DeleteEventResult.Deleted;
+        }
+
+        // an admin who left the guild has no rights in it
+        private async Task<bool> IsGuildAdminAsync(string userId, string guildId)
+        {
+            return await _userRepository.CustomAnyAsync(_userRepository
+                .Where(u => u.Id == userId && u.UserGuilds.Any(ug => ug.GuildId == guildId && ug.IsAdmin && !ug.IsDeleted)));
         }
 
         // 3 points for passing within the first full month after countFrom, 2 within the second, 1 within the third, 0 later
