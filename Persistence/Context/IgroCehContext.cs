@@ -19,6 +19,8 @@ namespace Persistence.Context
     {
         public DbSet<User> Users { get; set; }
         public DbSet<Guild> Guilds { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<ReviewSection> ReviewSections { get; set; }
         public DbSet<UserGuild> UserGuilds { get; set; }
         public DbSet<Event> Events { get; set; }
         public DbSet<Game> Games { get; set; }
@@ -92,6 +94,20 @@ namespace Persistence.Context
                 .HasOne(er => er.Game)
                 .WithMany(g => g.EventRecords)
                 .HasForeignKey(er => er.GameId);
+            // one review for a passed game
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.EventRecord)
+                .WithOne(er => er.Review)
+                .HasForeignKey<Review>(r => r.EventRecordId);
+            modelBuilder.Entity<Review>().HasQueryFilter(r => !r.EventRecord.Event.IsDeleted);
+            modelBuilder.Entity<ReviewSection>()
+                .HasOne(s => s.Review)
+                .WithMany(r => r.Sections)
+                .HasForeignKey(s => s.ReviewId);
+            modelBuilder.Entity<ReviewSection>().HasQueryFilter(s => !s.Review.EventRecord.Event.IsDeleted);
+            modelBuilder.Entity<ReviewSection>().Property(s => s.Title).HasMaxLength(ReviewLimits.TitleMaxLength);
+            modelBuilder.Entity<ReviewSection>().Property(s => s.Text).HasMaxLength(ReviewLimits.TextMaxLength);
+            modelBuilder.Entity<ReviewSection>().Property(s => s.Reply).HasMaxLength(ReviewLimits.ReplyMaxLength);
             modelBuilder.Entity<UserGuild>()
                 .HasKey(ug => new { ug.UserId, ug.GuildId });
             modelBuilder.Entity<EventStatus>()

@@ -98,6 +98,7 @@ namespace Application.Services
                         Game = er.Game,
                         GameId = er.GameId,
                         Reward = er.Reward,
+                        Review = er.Review == null ? null : new Review { Id = er.Review.Id, RepliesPublishedAt = er.Review.RepliesPublishedAt, Visibility = er.Review.Visibility },
                     }).ToList(),
                 }))).FirstOrDefault();
             var eventObject = _mapper.Map<EventObject>(eventEntity);

@@ -242,6 +242,71 @@ namespace Persistence.Migrations
                     b.ToTable("Guilds");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Review", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EventRecordId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("IsRecommended")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset?>("RepliesPublishedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Visibility")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventRecordId")
+                        .IsUnique();
+
+                    b.ToTable("Reviews");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ReviewSection", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reply")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("ReviewId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(5000)
+                        .HasColumnType("varchar(5000)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewId");
+
+                    b.ToTable("ReviewSections");
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -360,6 +425,28 @@ namespace Persistence.Migrations
                     b.Navigation("Creator");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Review", b =>
+                {
+                    b.HasOne("Domain.Entities.EventRecord", "EventRecord")
+                        .WithOne("Review")
+                        .HasForeignKey("Domain.Entities.Review", "EventRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EventRecord");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ReviewSection", b =>
+                {
+                    b.HasOne("Domain.Entities.Review", "Review")
+                        .WithMany("Sections")
+                        .HasForeignKey("ReviewId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Review");
+                });
+
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
                 {
                     b.HasOne("Domain.Entities.Guild", "Guild")
@@ -384,6 +471,12 @@ namespace Persistence.Migrations
                     b.Navigation("EventRecords");
                 });
 
+            modelBuilder.Entity("Domain.Entities.EventRecord", b =>
+                {
+                    b.Navigation("Review")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Entities.EventStatus", b =>
                 {
                     b.Navigation("Events");
@@ -399,6 +492,11 @@ namespace Persistence.Migrations
                     b.Navigation("Events");
 
                     b.Navigation("UserGuilds");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Review", b =>
+                {
+                    b.Navigation("Sections");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

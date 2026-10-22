@@ -1,6 +1,7 @@
 ﻿using Application.DTO;
 using AutoMapper;
 using Domain.Entities;
+using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,9 @@ namespace Application.Configurations
                 .ForMember(dest => dest.ToUser, opt => opt.MapFrom(src => src.ToUser))
                 .ForMember(dest => dest.Game, opt => opt.MapFrom(src => src.Game))
                 .ForMember(dest => dest.Reward, opt => opt.MapFrom(src => src.Reward))
+                .ForMember(dest => dest.HasReview, opt => opt.MapFrom(src => src.Review != null))
+                .ForMember(dest => dest.HasReviewReplies, opt => opt.MapFrom(src => src.Review != null && src.Review.RepliesPublishedAt != null))
+                .ForMember(dest => dest.ReviewVisibility, opt => opt.MapFrom(src => src.Review == null ? (ReviewVisibility?)null : src.Review.Visibility))
                 .ReverseMap();
 
             CreateMap<User, UserObject>()

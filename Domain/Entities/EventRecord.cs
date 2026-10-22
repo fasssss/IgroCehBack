@@ -16,5 +16,7 @@ namespace Domain.Entities
         public DateTimeOffset? CreatedAt { get; set; }
         public DateTimeOffset? SucceededAt { get; set; }
         public int? Reward { get; set; }
+        // written by ToUser after passing the game
+        public Review Review { get; set; }
     }
 }
