@@ -29,7 +29,6 @@ namespace Application.Configurations
                 .ForMember(dest => dest.Game, opt => opt.MapFrom(src => src.Game))
                 .ForMember(dest => dest.Reward, opt => opt.MapFrom(src => src.Reward))
                 .ForMember(dest => dest.HasReview, opt => opt.MapFrom(src => src.Review != null))
-                .ForMember(dest => dest.HasReviewReplies, opt => opt.MapFrom(src => src.Review != null && src.Review.RepliesPublishedAt != null))
                 .ForMember(dest => dest.ReviewVisibility, opt => opt.MapFrom(src => src.Review == null ? (ReviewVisibility?)null : src.Review.Visibility))
                 .ReverseMap();
 

@@ -16,7 +16,6 @@ namespace Application.DTO
         public GameObject Game { get; set; }
         public int? Reward { get; set; }
         public bool HasReview { get; set; }
-        public bool HasReviewReplies { get; set; }
         // the event page offers the review only to those who see it
         public ReviewVisibility? ReviewVisibility { get; set; }
     }

@@ -62,4 +62,36 @@ namespace Application.DTO
         public DateTimeOffset? PublishedAt { get; set; }
         public bool HasReplies { get; set; }
     }
+
+    // a game on the reviews page whose review the player can write or answer
+    public class ReviewSuggestionObject
+    {
+        public string EventRecordId { get; set; }
+        public string EventName { get; set; }
+        public GameObject Game { get; set; }
+    }
+
+    public class ReviewSuggestionsObject
+    {
+        // games the player passed, still without a review
+        public List<ReviewSuggestionObject> ToWrite { get; set; }
+        // reviews of the games the player guessed, still without answers
+        public List<ReviewSuggestionObject> ToAnswer { get; set; }
+    }
+
+    // a review in the list of every review the viewer can read
+    public class CommunityReviewObject
+    {
+        public string EventRecordId { get; set; }
+        public GameObject Game { get; set; }
+        public PlayerShortObject Author { get; set; }
+        public bool IsRecommended { get; set; }
+        public DateTimeOffset? PublishedAt { get; set; }
+    }
+
+    public class CommunityReviewsObject
+    {
+        public List<CommunityReviewObject> Reviews { get; set; }
+        public bool HasMore { get; set; }
+    }
 }

@@ -4,11 +4,15 @@ using Application.Enum;
 using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
+using System.Linq.Expressions;
 
 namespace Application.Services
 {
     public class ReviewApplicationService : IReviewApplicationService
     {
+        // the community list is read in growing portions, this keeps a single request bounded
+        private const int CommunityReviewsMaxCount = 500;
+
         private readonly IReviewRepository _reviewRepository;
         private readonly IUserRepository _userRepository;
 
@@ -136,12 +140,8 @@ namespace Application.Services
         public async Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId, string guildId)
         {
             var reviews = await _reviewRepository.CustomToListAsync(_reviewRepository
-                .Where(r => r.EventRecord.ToUserId == playerId
-                    && (guildId == null || r.EventRecord.Event.GuildId == guildId)
-                    && (r.EventRecord.ToUserId == viewerId
-                        || r.Visibility == ReviewVisibility.Everyone
-                        || (r.Visibility >= ReviewVisibility.AuthorAndGuesser && r.EventRecord.ParticipantId == viewerId)
-                        || (r.Visibility >= ReviewVisibility.Guild && r.EventRecord.Event.Guild.UserGuilds.Any(ug => ug.UserId == viewerId))))
+                .Where(IsVisibleTo(viewerId))
+                .Where(r => r.EventRecord.ToUserId == playerId && (guildId == null || r.EventRecord.Event.GuildId == guildId))
                 .OrderByDescending(r => r.CreatedAt)
                 .ThenBy(r => r.Id)
                 .Select(r => new PlayerReviewObject
@@ -159,6 +159,58 @@ namespace Application.Services
                 }));
 
             return reviews.ToList();
+        }
+
+        // what the player can do on the reviews page: review the passed games and answer the reviews of the guessed ones, the latest first
+        public async Task<ReviewSuggestionsObject> GetReviewSuggestionsAsync(string userId)
+        {
+            var toWrite = await _reviewRepository.CustomToListAsync(_reviewRepository
+                .WhereEventRecords(er => er.ToUserId == userId && er.Reward != null && er.GameId != null && er.Review == null)
+                .OrderByDescending(er => er.SucceededAt)
+                .ThenBy(er => er.Id)
+                .Select(er => new ReviewSuggestionObject
+                {
+                    EventRecordId = er.Id,
+                    EventName = er.Event.Name,
+                    Game = new GameObject { Id = er.Game.Id, Name = er.Game.Name, ImageUrl = er.Game.ImageUrl },
+                }));
+            // a review kept to its author can't be answered
+            var toAnswer = await _reviewRepository.CustomToListAsync(_reviewRepository
+                .Where(r => r.EventRecord.ParticipantId == userId && r.RepliesPublishedAt == null && r.Visibility != ReviewVisibility.OnlyAuthor)
+                .OrderByDescending(r => r.CreatedAt)
+                .ThenBy(r => r.Id)
+                .Select(r => new ReviewSuggestionObject
+                {
+                    EventRecordId = r.EventRecordId,
+                    EventName = r.EventRecord.Event.Name,
+                    Game = new GameObject { Id = r.EventRecord.Game.Id, Name = r.EventRecord.Game.Name, ImageUrl = r.EventRecord.Game.ImageUrl },
+                }));
+
+            return new ReviewSuggestionsObject { ToWrite = toWrite.ToList(), ToAnswer = toAnswer.ToList() };
+        }
+
+        // every review the viewer can read, the newest first; the list grows by asking for more of them,
+        // so a newly published review shows up at the top instead of shifting the pages
+        public async Task<CommunityReviewsObject> GetCommunityReviewsAsync(string viewerId, int count)
+        {
+            var take = Math.Clamp(count, 1, CommunityReviewsMaxCount);
+            // one more review is taken to know whether there are more of them
+            var reviews = (await _reviewRepository.CustomToListAsync(_reviewRepository
+                .Where(IsVisibleTo(viewerId))
+                .OrderByDescending(r => r.CreatedAt)
+                .ThenBy(r => r.Id)
+                .Take(take + 1)
+                .Select(r => new CommunityReviewObject
+                {
+                    EventRecordId = r.EventRecordId,
+                    Game = new GameObject { Id = r.EventRecord.Game.Id, Name = r.EventRecord.Game.Name, ImageUrl = r.EventRecord.Game.ImageUrl },
+                    Author = new PlayerShortObject { Id = r.EventRecord.ToUser.Id, UserName = r.EventRecord.ToUser.UserName, AvatarUrl = r.EventRecord.ToUser.AvatarUrl },
+                    IsRecommended = r.IsRecommended,
+                    PublishedAt = r.CreatedAt,
+                })))
+                .ToList();
+
+            return new CommunityReviewsObject { Reviews = reviews.Take(take).ToList(), HasMore = reviews.Count > take };
         }
 
         // the author changes who sees the review at any time
@@ -180,6 +232,13 @@ namespace Application.Services
 
             return SetReviewVisibilityResult.Changed;
         }
+
+        // the rule of CanSeeAsync for the lists of reviews
+        private static Expression<Func<Review, bool>> IsVisibleTo(string viewerId) => r =>
+            r.EventRecord.ToUserId == viewerId
+            || r.Visibility == ReviewVisibility.Everyone
+            || (r.Visibility >= ReviewVisibility.AuthorAndGuesser && r.EventRecord.ParticipantId == viewerId)
+            || (r.Visibility >= ReviewVisibility.Guild && r.EventRecord.Event.Guild.UserGuilds.Any(ug => ug.UserId == viewerId));
 
         private async Task<bool> CanSeeAsync(string viewerId, EventRecord record)
         {

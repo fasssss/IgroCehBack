@@ -2,6 +2,7 @@ using Application.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Persistence.Context;
+using System.Linq.Expressions;
 
 namespace Persistence.Repository
 {
@@ -24,6 +25,11 @@ namespace Persistence.Repository
                 .Include(er => er.Review)
                     .ThenInclude(r => r.Sections)
                 .FirstOrDefaultAsync(er => er.Id == eventRecordId);
+        }
+
+        public IQueryable<EventRecord> WhereEventRecords(Expression<Func<EventRecord, bool>> expression)
+        {
+            return _context.EventRecords.Where(expression);
         }
     }
 }

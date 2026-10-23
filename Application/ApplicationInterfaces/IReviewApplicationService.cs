@@ -11,5 +11,7 @@ namespace Application.ApplicationInterfaces
         public Task<SetReviewVisibilityResult> SetVisibilityAsync(string userId, string eventRecordId, ReviewVisibility visibility);
         public Task<PublishReviewResult> PublishRepliesAsync(string userId, string eventRecordId, List<ReviewReplyObject> replies);
         public Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId, string guildId);
+        public Task<ReviewSuggestionsObject> GetReviewSuggestionsAsync(string userId);
+        public Task<CommunityReviewsObject> GetCommunityReviewsAsync(string viewerId, int count);
     }
 }
