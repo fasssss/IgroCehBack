@@ -1,5 +1,4 @@
 ﻿using Domain.Entities;
-using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +14,5 @@ namespace Application.DTO
         public UserObject ToUser { get; set; }
         public GameObject Game { get; set; }
         public int? Reward { get; set; }
-        public bool HasReview { get; set; }
-        // the event page offers the review only to those who see it
-        public ReviewVisibility? ReviewVisibility { get; set; }
     }
 }
