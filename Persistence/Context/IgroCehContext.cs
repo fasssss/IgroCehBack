@@ -26,6 +26,8 @@ namespace Persistence.Context
         public DbSet<Game> Games { get; set; }
         public DbSet<EventRecord> EventRecords { get; set; }
         public DbSet<EventStatus> EventStatuses { get; set; }
+        public DbSet<PreferenceTag> PreferenceTags { get; set; }
+        public DbSet<UserPreference> UserPreferences { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -110,6 +112,22 @@ namespace Persistence.Context
             modelBuilder.Entity<ReviewSection>().Property(s => s.Reply).HasMaxLength(ReviewLimits.ReplyMaxLength);
             modelBuilder.Entity<UserGuild>()
                 .HasKey(ug => new { ug.UserId, ug.GuildId });
+            modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();
+            modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.NameRu).IsUnique();
+            modelBuilder.Entity<PreferenceTag>().HasData(PreferenceTagSeed.Tags);
+            // User has no navigation to its preferences: the base repository includes every navigation of a user it loads
+            modelBuilder.Entity<UserPreference>()
+                .HasKey(p => new { p.UserId, p.PreferenceTagId });
+            modelBuilder.Entity<UserPreference>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId);
+            modelBuilder.Entity<UserPreference>()
+                .HasOne(p => p.PreferenceTag)
+                .WithMany()
+                .HasForeignKey(p => p.PreferenceTagId);
             modelBuilder.Entity<EventStatus>()
                 .Property(e => e.Id)
                 .HasConversion<int>();

@@ -1,6 +1,8 @@
 using Application.ApplicationInterfaces;
 using Application.DTO;
+using Application.Enum;
 using Application.Interfaces;
+using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.Services
@@ -14,11 +16,54 @@ namespace Application.Services
 
         private readonly IUserRepository _userRepository;
         private readonly IEventRepository _eventRepository;
+        private readonly IPreferenceRepository _preferenceRepository;
 
-        public PlayerApplicationService(IUserRepository userRepository, IEventRepository eventRepository)
+        public PlayerApplicationService(IUserRepository userRepository, IEventRepository eventRepository, IPreferenceRepository preferenceRepository)
         {
             _userRepository = userRepository;
             _eventRepository = eventRepository;
+            _preferenceRepository = preferenceRepository;
+        }
+
+        public async Task<List<PreferenceTagObject>> GetPreferenceTagsAsync()
+        {
+            return (await _preferenceRepository.GetTagsAsync()).Select(ToTagObject).ToList();
+        }
+
+        // seen by the same players as the profile
+        public async Task<PlayerPreferencesObject> GetPlayerPreferencesAsync(string viewerId, string playerId)
+        {
+            var canSee = await _userRepository.CustomAnyAsync(_userRepository.Where(u => u.Id == playerId
+                && (u.Id == viewerId || u.UserGuilds.Any(ug => ug.Guild.UserGuilds.Any(viewerGuild => viewerGuild.UserId == viewerId)))));
+            if (!canSee)
+            {
+                return null;
+            }
+
+            var preferences = await _preferenceRepository.GetUserPreferencesAsync(playerId);
+            return new PlayerPreferencesObject
+            {
+                Preferred = preferences.Where(p => !p.IsAvoided).Select(p => ToTagObject(p.PreferenceTag)).ToList(),
+                Avoided = preferences.Where(p => p.IsAvoided).Select(p => ToTagObject(p.PreferenceTag)).ToList(),
+            };
+        }
+
+        // both lists are saved at once; the request validation keeps a tag out of both lists and the lists short
+        public async Task<SetPreferencesResult> SetPreferencesAsync(string userId, List<int> preferredTagIds, List<int> avoidedTagIds)
+        {
+            var tagIds = (await _preferenceRepository.GetTagsAsync()).Select(t => t.Id).ToHashSet();
+            if (!preferredTagIds.Concat(avoidedTagIds).All(tagIds.Contains))
+            {
+                return SetPreferencesResult.UnknownTag;
+            }
+
+            UserPreference ToPreference(int tagId, int order, bool isAvoided) =>
+                new() { UserId = userId, PreferenceTagId = tagId, IsAvoided = isAvoided, Order = order };
+            await _preferenceRepository.SetUserPreferencesAsync(userId, preferredTagIds.Select((id, index) => ToPreference(id, index, false))
+                .Concat(avoidedTagIds.Select((id, index) => ToPreference(id, index, true)))
+                .ToList());
+
+            return SetPreferencesResult.Saved;
         }
 
         public async Task<PlayerProfileObject> GetPlayerProfileAsync(string viewerId, string playerId, string guildId)
@@ -182,6 +227,8 @@ namespace Application.Services
                     .ToList(),
             };
         }
+
+        private static PreferenceTagObject ToTagObject(PreferenceTag tag) => new() { Id = tag.Id, Name = tag.Name, NameRu = tag.NameRu };
 
         // platforms of games the player completed
         private static List<PlatformCountObject> CalculateFavoritePlatforms(string playerId, ICollection<PlayerRecordRow> records)

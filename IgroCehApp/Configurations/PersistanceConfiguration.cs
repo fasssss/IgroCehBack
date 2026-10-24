@@ -21,6 +21,7 @@ namespace API.Configurations
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IGameRepository, GameRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
+            services.AddScoped<IPreferenceRepository, PreferenceRepository>();
             return services;
         }
     }

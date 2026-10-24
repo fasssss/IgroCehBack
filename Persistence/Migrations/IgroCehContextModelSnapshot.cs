@@ -242,6 +242,271 @@ namespace Persistence.Migrations
                     b.ToTable("Guilds");
                 });
 
+            modelBuilder.Entity("Domain.Entities.PreferenceTag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("NameRu")
+                        .IsUnique();
+
+                    b.ToTable("PreferenceTags");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Action",
+                            NameRu = "Экшен"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Adventure",
+                            NameRu = "Приключения"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "RPG",
+                            NameRu = "RPG"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "A-RPG",
+                            NameRu = "A-RPG"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "JRPG",
+                            NameRu = "JRPG"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "MMORPG",
+                            NameRu = "MMORPG"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Shooter",
+                            NameRu = "Шутер"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Platformer",
+                            NameRu = "Платформер"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Metroidvania",
+                            NameRu = "Метроидвания"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Soulslike",
+                            NameRu = "Соулслайк"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            Name = "Roguelike",
+                            NameRu = "Рогалик"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            Name = "Strategy",
+                            NameRu = "Стратегия"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            Name = "RTS",
+                            NameRu = "RTS"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            Name = "Turn-based strategy",
+                            NameRu = "Пошаговая стратегия"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            Name = "Tactics",
+                            NameRu = "Тактика"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            Name = "Simulation",
+                            NameRu = "Симулятор"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            Name = "Racing",
+                            NameRu = "Гонки"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            Name = "Sports",
+                            NameRu = "Спорт"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            Name = "Fighting",
+                            NameRu = "Файтинг"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            Name = "Hack and slash",
+                            NameRu = "Слэшер"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            Name = "Beat 'em up",
+                            NameRu = "Битемап"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            Name = "Stealth",
+                            NameRu = "Стелс"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            Name = "Survival",
+                            NameRu = "Выживание"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            Name = "Horror",
+                            NameRu = "Хоррор"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            Name = "Puzzle",
+                            NameRu = "Головоломка"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            Name = "Point-and-click",
+                            NameRu = "Квест"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            Name = "Visual novel",
+                            NameRu = "Визуальная новелла"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            Name = "Rhythm",
+                            NameRu = "Ритм-игра"
+                        },
+                        new
+                        {
+                            Id = 29,
+                            Name = "Sandbox",
+                            NameRu = "Песочница"
+                        },
+                        new
+                        {
+                            Id = 30,
+                            Name = "City builder",
+                            NameRu = "Градостроитель"
+                        },
+                        new
+                        {
+                            Id = 31,
+                            Name = "Card game",
+                            NameRu = "Карточная игра"
+                        },
+                        new
+                        {
+                            Id = 32,
+                            Name = "MOBA",
+                            NameRu = "MOBA"
+                        },
+                        new
+                        {
+                            Id = 33,
+                            Name = "Battle royale",
+                            NameRu = "Королевская битва"
+                        },
+                        new
+                        {
+                            Id = 34,
+                            Name = "...-1999",
+                            NameRu = "...-1999"
+                        },
+                        new
+                        {
+                            Id = 35,
+                            Name = "2000-2009",
+                            NameRu = "2000-2009"
+                        },
+                        new
+                        {
+                            Id = 36,
+                            Name = "2010-2019",
+                            NameRu = "2010-2019"
+                        },
+                        new
+                        {
+                            Id = 37,
+                            Name = "2020-...",
+                            NameRu = "2020-..."
+                        },
+                        new
+                        {
+                            Id = 38,
+                            Name = "AAA",
+                            NameRu = "AAA"
+                        },
+                        new
+                        {
+                            Id = 39,
+                            Name = "Indie",
+                            NameRu = "Инди"
+                        });
+                });
+
             modelBuilder.Entity("Domain.Entities.Review", b =>
                 {
                     b.Property<string>("Id")
@@ -356,6 +621,27 @@ namespace Persistence.Migrations
                     b.ToTable("UserGuilds");
                 });
 
+            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("PreferenceTagId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsAvoided")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "PreferenceTagId");
+
+                    b.HasIndex("PreferenceTagId");
+
+                    b.ToTable("UserPreferences");
+                });
+
             modelBuilder.Entity("Domain.Entities.Event", b =>
                 {
                     b.HasOne("Domain.Entities.User", "Creator")
@@ -462,6 +748,25 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Guild");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserPreference", b =>
+                {
+                    b.HasOne("Domain.Entities.PreferenceTag", "PreferenceTag")
+                        .WithMany()
+                        .HasForeignKey("PreferenceTagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PreferenceTag");
 
                     b.Navigation("User");
                 });
