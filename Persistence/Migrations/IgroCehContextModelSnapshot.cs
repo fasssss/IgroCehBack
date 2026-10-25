@@ -28,6 +28,9 @@ namespace Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(255)");
 
+                    b.Property<bool>("AllowsNewcomers")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -88,6 +91,9 @@ namespace Persistence.Migrations
                     b.Property<string>("GameId")
                         .HasColumnType("varchar(255)");
 
+                    b.Property<string>("NewcomerPoolGameId")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("ParticipantId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");
@@ -106,6 +112,8 @@ namespace Persistence.Migrations
                     b.HasIndex("EventId");
 
                     b.HasIndex("GameId");
+
+                    b.HasIndex("NewcomerPoolGameId");
 
                     b.HasIndex("ParticipantId");
 
@@ -240,6 +248,38 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Guilds");
+                });
+
+            modelBuilder.Entity("Domain.Entities.NewcomerPoolGame", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("AuthorId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EventId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("GameId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
+
+                    b.HasIndex("GameId");
+
+                    b.HasIndex("EventId", "GameId")
+                        .IsUnique();
+
+                    b.ToTable("NewcomerPoolGames");
                 });
 
             modelBuilder.Entity("Domain.Entities.PreferenceTag", b =>
@@ -681,6 +721,11 @@ namespace Persistence.Migrations
                         .WithMany("EventRecords")
                         .HasForeignKey("GameId");
 
+                    b.HasOne("Domain.Entities.NewcomerPoolGame", "NewcomerPoolGame")
+                        .WithMany()
+                        .HasForeignKey("NewcomerPoolGameId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Domain.Entities.User", "Participant")
                         .WithMany("EventRecords")
                         .HasForeignKey("ParticipantId")
@@ -694,6 +739,8 @@ namespace Persistence.Migrations
                     b.Navigation("Event");
 
                     b.Navigation("Game");
+
+                    b.Navigation("NewcomerPoolGame");
 
                     b.Navigation("Participant");
 
@@ -709,6 +756,33 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Creator");
+                });
+
+            modelBuilder.Entity("Domain.Entities.NewcomerPoolGame", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "Author")
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Event", "Event")
+                        .WithMany()
+                        .HasForeignKey("EventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Game", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Author");
+
+                    b.Navigation("Event");
+
+                    b.Navigation("Game");
                 });
 
             modelBuilder.Entity("Domain.Entities.Review", b =>

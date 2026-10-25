@@ -13,6 +13,8 @@ namespace Application.DTO
         public string EventName { get; set; }
         public string EventCreatorId { get; set; }
         public EventStatusId StatusId { get; set; }
+        // participants fill a pool of games for newcomers who join after the start
+        public bool AllowsNewcomers { get; set; }
         public List<EventRecordObject> EventRecordObjects { get; set; }
     }
 }

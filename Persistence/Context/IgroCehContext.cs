@@ -28,6 +28,7 @@ namespace Persistence.Context
         public DbSet<EventStatus> EventStatuses { get; set; }
         public DbSet<PreferenceTag> PreferenceTags { get; set; }
         public DbSet<UserPreference> UserPreferences { get; set; }
+        public DbSet<NewcomerPoolGame> NewcomerPoolGames { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -112,6 +113,27 @@ namespace Persistence.Context
             modelBuilder.Entity<ReviewSection>().Property(s => s.Reply).HasMaxLength(ReviewLimits.ReplyMaxLength);
             modelBuilder.Entity<UserGuild>()
                 .HasKey(ug => new { ug.UserId, ug.GuildId });
+            modelBuilder.Entity<NewcomerPoolGame>()
+                .HasOne(pg => pg.Event)
+                .WithMany()
+                .HasForeignKey(pg => pg.EventId);
+            modelBuilder.Entity<NewcomerPoolGame>()
+                .HasOne(pg => pg.Game)
+                .WithMany()
+                .HasForeignKey(pg => pg.GameId);
+            modelBuilder.Entity<NewcomerPoolGame>()
+                .HasOne(pg => pg.Author)
+                .WithMany()
+                .HasForeignKey(pg => pg.AuthorId);
+            // a game is in the pool of an event once
+            modelBuilder.Entity<NewcomerPoolGame>().HasIndex(pg => new { pg.EventId, pg.GameId }).IsUnique();
+            modelBuilder.Entity<NewcomerPoolGame>().HasQueryFilter(pg => !pg.Event.IsDeleted);
+            // a game that has dropped to a newcomer stays in the pool
+            modelBuilder.Entity<EventRecord>()
+                .HasOne(er => er.NewcomerPoolGame)
+                .WithMany()
+                .HasForeignKey(er => er.NewcomerPoolGameId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();

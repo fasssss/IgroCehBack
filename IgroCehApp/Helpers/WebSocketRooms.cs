@@ -14,5 +14,7 @@ namespace API.Helpers
         public const string SuggestGame = "suggestGame";
         public const string SubmitPassing = "submitPassing";
         public const string DeleteEvent = "deleteEvent";
+        // the pool for newcomers has changed, its viewers fetch it again
+        public const string UpdateNewcomerPool = "updateNewcomerPool";
     }
 }

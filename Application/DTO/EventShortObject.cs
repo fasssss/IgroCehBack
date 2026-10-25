@@ -21,5 +21,7 @@ namespace Application.DTO
         public EventStatusId StatusId { get; set; }
         public string StatusDisplayName { get; set; }
         public List<string> ParticipantsIds { get; set; }
+        // participants fill a pool of games for newcomers who join after the start
+        public bool AllowsNewcomers { get; set; }
     }
 }

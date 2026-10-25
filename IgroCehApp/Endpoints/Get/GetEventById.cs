@@ -39,6 +39,7 @@ namespace API.Endpoints.Get
                 EventName = eventObject.EventName,
                 EventCreatorId = eventObject.EventCreatorId,
                 StatusId = eventObject.StatusId,
+                AllowsNewcomers = eventObject.AllowsNewcomers,
                 EventRecords = eventObject.EventRecordObjects
             };
 

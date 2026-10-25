@@ -18,6 +18,8 @@ namespace Domain.Entities
         public DateTimeOffset? CreatedAt { get; set; }
         // soft delete: the event and its records stay in the database, but are hidden by the query filter of the context
         public bool IsDeleted { get; set; }
+        // participants fill a pool of games during the registration, newcomers join the active event and roll a game from it
+        public bool AllowsNewcomers { get; set; }
         public DateTimeOffset? DeletedAt { get; set; }
         public string? DeletedById { get; set; }
     }

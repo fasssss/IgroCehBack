@@ -22,6 +22,7 @@ namespace API.Configurations
             services.AddScoped<IGameRepository, GameRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<IPreferenceRepository, PreferenceRepository>();
+            services.AddScoped<INewcomerPoolRepository, NewcomerPoolRepository>();
             return services;
         }
     }

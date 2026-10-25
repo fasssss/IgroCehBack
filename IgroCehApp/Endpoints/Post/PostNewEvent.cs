@@ -29,7 +29,8 @@ namespace API.Endpoints.Post
             {
                 GuildId = request.GuildId,
                 Name = request.EventName,
-                CreatorId = stringId
+                CreatorId = stringId,
+                AllowsNewcomers = request.AllowsNewcomers,
             };
 
             if (stringId != null)

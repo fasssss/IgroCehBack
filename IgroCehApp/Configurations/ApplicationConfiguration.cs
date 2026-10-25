@@ -13,6 +13,7 @@ namespace API.Configurations
             services.AddTransient<IGameApplicationService, GameApplicationService>();
             services.AddTransient<IPlayerApplicationService, PlayerApplicationService>();
             services.AddTransient<IReviewApplicationService, ReviewApplicationService>();
+            services.AddTransient<INewcomerPoolApplicationService, NewcomerPoolApplicationService>();
             return services;
         }
     }

@@ -27,13 +27,15 @@ namespace Application.Services
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
         private readonly IGameRepository _gameRepository;
+        private readonly INewcomerPoolRepository _newcomerPoolRepository;
         private readonly IMapper _mapper;
 
-        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository, IGameRepository gameRepository, IMapper mapper) 
+        public EventApplicationService(IEventRepository eventRepository, IUserRepository userRepository, IGameRepository gameRepository, INewcomerPoolRepository newcomerPoolRepository, IMapper mapper)
         {
             _eventRepository = eventRepository;
             _userRepository = userRepository;
             _gameRepository = gameRepository;
+            _newcomerPoolRepository = newcomerPoolRepository;
             _mapper = mapper;
         }
 
@@ -58,7 +60,8 @@ namespace Application.Services
                     StartDate = startSeasonDate,
                     EndDate = startSeasonDate.AddMonths(3),
                     GuildId = eventObject.GuildId,
-                    StatusId = EventStatusId.PlayersRegistration
+                    StatusId = EventStatusId.PlayersRegistration,
+                    AllowsNewcomers = eventObject.AllowsNewcomers,
                 });
 
                 var addedEventRecord = await _eventRepository.AddEventRecordAsync(eventObject.CreatorId, createdEvent.Id);
@@ -96,6 +99,7 @@ namespace Application.Services
                     StatusId = e.StatusId,
                     StartDate = e.StartDate,
                     EndDate = e.EndDate,
+                    AllowsNewcomers = e.AllowsNewcomers,
                     EventRecords = e.EventRecords.Select(er => new EventRecord
                     {
                         Id = er.Id,
@@ -216,39 +220,33 @@ namespace Application.Services
             return (JoinEventResult.Joined, _mapper.Map<EventRecordObject>(await _eventRepository.GetEventRecordAsync(addedEventRecord.Id)));
         }
 
-        public async Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string eventRecordId)
+        // a player leaves by themselves or is removed by the creator, only during the registration: later it would break the chain of guessed games;
+        // the games the player put into the pool for newcomers leave with them
+        public async Task<(RemoveFromEventResult Result, EventRecordObject EventRecord)> RemoveFromEventAsync(string userIdOperator, string userIdToRemove, string eventId)
         {
-            var userHasRight = (await _eventRepository.FirstOrDefaultAsync(e => e.EventRecords.Any(er => er.Id == eventRecordId))).CreatorId == userIdOperator;
-            if (userHasRight)
+            var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
+            var eventRecord = eventEntity == null ? null : (await _eventRepository.GetEventRecordsAsync(eventId)).FirstOrDefault(er => er.ParticipantId == userIdToRemove);
+            if (eventRecord == null)
             {
-                var removedEventRecord = await _eventRepository.RemoveEventRecordAsync(eventRecordId);
-                var removedEventRecordObject = _mapper.Map<EventRecordObject>(removedEventRecord);
-                await _eventRepository.SaveAsync();
-
-                return removedEventRecordObject;
+                return (RemoveFromEventResult.NotFound, null);
             }
 
-            return null;
-        }
-
-        public async Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string userIdToRemove, string eventId)
-        {
-            var eventRecord = (await _eventRepository.CustomToListAsync(_eventRepository
-                .Where(e => e.Id == eventId)
-                .Select(e => e.EventRecords.FirstOrDefault(er => er.ParticipantId == userIdToRemove))))
-                .FirstOrDefault();
-
-            var userHasRight = (await _eventRepository.GetByIdAsync(eventId)).CreatorId == userIdOperator || userIdOperator == userIdToRemove;
-            if (userHasRight)
+            if (eventEntity.CreatorId != userIdOperator && userIdOperator != userIdToRemove)
             {
-                var removedEventRecord = await _eventRepository.RemoveEventRecordAsync(eventRecord.Id);
-                var removedEventRecordObject = _mapper.Map<EventRecordObject>(removedEventRecord);
-                await _eventRepository.SaveAsync();
-
-                return removedEventRecordObject;
+                return (RemoveFromEventResult.Forbidden, null);
             }
 
-            return null;
+            if (eventEntity.StatusId != EventStatusId.PlayersRegistration)
+            {
+                return (RemoveFromEventResult.Unavailable, null);
+            }
+
+            _newcomerPoolRepository.RemoveRange(await _newcomerPoolRepository.CustomToListAsync(_newcomerPoolRepository
+                .Where(pg => pg.EventId == eventId && pg.AuthorId == userIdToRemove)));
+            var removedEventRecord = await _eventRepository.RemoveEventRecordAsync(eventRecord.Id);
+            await _eventRepository.SaveAsync();
+
+            return (RemoveFromEventResult.Removed, _mapper.Map<EventRecordObject>(removedEventRecord));
         }
 
         // the creator moves the event one stage forward; the requested stage has to be the next one, so a repeated request changes nothing
@@ -271,9 +269,11 @@ namespace Application.Services
             }
 
             var records = await _eventRepository.GetEventRecordsAsync(eventId);
-            // the shuffle needs someone to guess a game for, and games are guessed for the players the shuffle gave
+            // the shuffle needs someone to guess a game for and, if newcomers will join, a pool to roll from;
+            // games are guessed for the players the shuffle gave
             var isReady = nextStage == EventStatusId.PlayersShuffle
                 ? records.Count >= MinPlayersCount
+                    && (!eventEntity.AllowsNewcomers || await _newcomerPoolRepository.CountAsync(eventId) >= NewcomerPoolLimits.MinGames)
                 : records.All(er => er.ToUserId != null);
             if (!isReady)
             {
