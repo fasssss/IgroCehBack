@@ -21,6 +21,8 @@ namespace Application.DTO
         public DateTime EndDate { get; set; }
         public PlayerHistoryRecordObject ReceivedGame { get; set; }
         public PlayerHistoryRecordObject SuggestedGame { get; set; }
+        // the player joined the active event and rolled a game of the pool, so they suggested nothing
+        public bool IsNewcomer { get; set; }
     }
 
     public class PlayerHistoryRecordObject

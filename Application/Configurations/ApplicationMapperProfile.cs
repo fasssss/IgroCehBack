@@ -27,6 +27,7 @@ namespace Application.Configurations
                 .ForMember(dest => dest.ToUser, opt => opt.MapFrom(src => src.ToUser))
                 .ForMember(dest => dest.Game, opt => opt.MapFrom(src => src.Game))
                 .ForMember(dest => dest.Reward, opt => opt.MapFrom(src => src.Reward))
+                .ForMember(dest => dest.IsNewcomer, opt => opt.MapFrom(src => src.NewcomerPoolGameId != null))
                 .ReverseMap();
 
             CreateMap<User, UserObject>()

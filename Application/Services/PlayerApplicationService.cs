@@ -87,7 +87,8 @@ namespace Application.Services
                         PlayersCount = ug.Guild.UserGuilds.Count(),
                         HasLeft = ug.IsDeleted,
                     },
-                    HasPlayed = ug.Guild.Events.Any(e => e.EventRecords.Any(er => er.ParticipantId == playerId)),
+                    // a newcomer is only the one who got a game in the event
+                    HasPlayed = ug.Guild.Events.Any(e => e.EventRecords.Any(er => er.ParticipantId == playerId || er.ToUserId == playerId)),
                     IsShared = ug.Guild.UserGuilds.Any(viewerGuild => viewerGuild.UserId == viewerId),
                 }));
 
@@ -124,6 +125,7 @@ namespace Application.Services
                 .Where(er => er.ParticipantId == playerId || er.ToUserId == playerId)
                 .Select(er => new PlayerRecordRow
                 {
+                    EventId = er.EventId,
                     GuildId = er.Event.GuildId,
                     EventStatusId = er.Event.StatusId,
                     EventStartDate = er.Event.StartDate,
@@ -133,6 +135,7 @@ namespace Application.Services
                     GamePlatforms = er.Game.Platforms,
                     Reward = er.Reward,
                     SucceededAt = er.SucceededAt,
+                    IsNewcomer = er.NewcomerPoolGameId != null,
                 }));
 
             return new PlayerProfileObject
@@ -153,7 +156,7 @@ namespace Application.Services
         {
             // one more event is taken to know whether the next page exists
             var events = (await _eventRepository.CustomToListAsync(_eventRepository
-                .Where(e => e.EventRecords.Any(er => er.ParticipantId == playerId)
+                .Where(e => e.EventRecords.Any(er => er.ParticipantId == playerId || er.ToUserId == playerId)
                     && e.Guild.UserGuilds.Any(ug => ug.UserId == viewerId)
                     && (guildId == null || e.GuildId == guildId))
                 .OrderByDescending(e => e.StartDate)
@@ -187,6 +190,7 @@ namespace Application.Services
                             GameSteamUrl = er.Game.SteamUrl,
                             Reward = er.Reward,
                             SucceededAt = er.SucceededAt,
+                            IsNewcomer = er.NewcomerPoolGameId != null,
                         })
                         .ToList(),
                 })))
@@ -201,9 +205,14 @@ namespace Application.Services
 
         private static PlayerStatisticsObject CalculateStatistics(string playerId, List<PlayerGuildObject> guilds, ICollection<PlayerRecordRow> records)
         {
-            // every participant has one record per event, the record is about the game they guess for someone else
-            var playedEvents = records.Where(r => r.ParticipantId == playerId).ToList();
-            var suggestedGames = playedEvents.Where(r => r.GameId != null).ToList();
+            // a participant has the record of the game they guess for someone else, a newcomer has the record of the game they rolled;
+            // the author of a game of the pool has one more record in the event, so the events are counted once
+            var playedEvents = records
+                .Where(r => r.IsNewcomer ? r.ToUserId == playerId : r.ParticipantId == playerId)
+                .DistinctBy(r => r.EventId)
+                .ToList();
+            // a game of the pool that dropped to a newcomer is suggested by its author too
+            var suggestedGames = records.Where(r => r.ParticipantId == playerId && r.GameId != null).ToList();
             var receivedGames = records.Where(r => r.ToUserId == playerId && r.GameId != null).ToList();
             var completedGames = receivedGames.Where(r => r.Reward != null).ToList();
             var daysToComplete = completedGames
@@ -245,7 +254,8 @@ namespace Application.Services
 
         private static PlayerHistoryItemObject ToHistoryItem(string playerId, HistoryEventRow row)
         {
-            var suggested = row.Records.FirstOrDefault(r => r.ParticipantId == playerId);
+            // the game the player guessed in the chain, not the one of the pool that dropped to a newcomer
+            var suggested = row.Records.FirstOrDefault(r => r.ParticipantId == playerId && !r.IsNewcomer);
             var received = row.Records.FirstOrDefault(r => r.ToUserId == playerId);
 
             return new PlayerHistoryItemObject
@@ -262,6 +272,7 @@ namespace Application.Services
                     new PlayerShortObject { Id = received.ParticipantId, UserName = received.ParticipantUserName, AvatarUrl = received.ParticipantAvatarUrl }),
                 SuggestedGame = suggested == null ? null : ToHistoryRecord(suggested, suggested.ToUserId == null ? null :
                     new PlayerShortObject { Id = suggested.ToUserId, UserName = suggested.ToUserName, AvatarUrl = suggested.ToUserAvatarUrl }),
+                IsNewcomer = received?.IsNewcomer ?? false,
             };
         }
 
@@ -291,6 +302,7 @@ namespace Application.Services
 
         private class PlayerRecordRow
         {
+            public string EventId { get; set; }
             public string GuildId { get; set; }
             public EventStatusId EventStatusId { get; set; }
             public DateTime EventStartDate { get; set; }
@@ -300,6 +312,7 @@ namespace Application.Services
             public List<string> GamePlatforms { get; set; }
             public int? Reward { get; set; }
             public DateTimeOffset? SucceededAt { get; set; }
+            public bool IsNewcomer { get; set; }
             public bool IsEventFinished => EventStatusId == EventStatusId.Finished;
         }
 
@@ -330,6 +343,7 @@ namespace Application.Services
             public string GameSteamUrl { get; set; }
             public int? Reward { get; set; }
             public DateTimeOffset? SucceededAt { get; set; }
+            public bool IsNewcomer { get; set; }
         }
     }
 }

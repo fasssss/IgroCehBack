@@ -110,6 +110,7 @@ namespace Application.Services
                         Game = er.Game,
                         GameId = er.GameId,
                         Reward = er.Reward,
+                        NewcomerPoolGameId = er.NewcomerPoolGameId,
                     }).ToList(),
                 }))).FirstOrDefault();
             var eventObject = _mapper.Map<EventObject>(eventEntity);
@@ -152,6 +153,7 @@ namespace Application.Services
                             Name = e.Guild.Name,
                         },
                         StatusId = e.StatusId,
+                        AllowsNewcomers = e.AllowsNewcomers,
                         Status = new EventStatus
                         {
                             Id = e.StatusId,
@@ -176,12 +178,12 @@ namespace Application.Services
                         GuildName = eventEntity.Guild.Name,
                         StatusId = eventEntity.StatusId,
                         StatusDisplayName = eventEntity.Status.UserFriendlyName,
-                        ParticipantsIds = eventEntity.EventRecords.Select(x => x.ParticipantId).ToList(),
+                        // a newcomer takes part as the one who got a game of the pool, its author is in the event anyway
+                        ParticipantsIds = eventEntity.EventRecords.Select(x => x.NewcomerPoolGameId == null ? x.ParticipantId : x.ToUserId).Distinct().ToList(),
+                        AllowsNewcomers = eventEntity.AllowsNewcomers,
                     });
                 }
 
-                await Task.Delay(1000);
-                Task.Delay(1000);
                 return eventListObject;
             }
 

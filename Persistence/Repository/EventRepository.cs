@@ -33,6 +33,12 @@ namespace Persistence.Repository
             return addedRecordWithParticipant.Entity;
         }
 
+        public EventRecord AddEventRecord(EventRecord eventRecord)
+        {
+            eventRecord.CreatedAt = DateTimeOffset.UtcNow;
+            return _igroCehContext.EventRecords.Add(eventRecord).Entity;
+        }
+
         public async Task<EventRecord> GetEventRecordAsync(string eventRecordId)
         {
             var eventRecordEmpty = await _igroCehContext.EventRecords.FindAsync(eventRecordId);

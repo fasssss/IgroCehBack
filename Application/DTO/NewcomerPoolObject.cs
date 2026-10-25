@@ -9,6 +9,16 @@ namespace Application.DTO
         public int GamesPerPlayer { get; set; }
     }
 
+    // what may drop to a newcomer who joins the active event
+    public class NewcomerRollObject
+    {
+        public List<NewcomerPoolGameObject> Games { get; set; }
+        // the games of the pool the newcomer has already got somewhere, they don't drop again
+        public int HiddenCount { get; set; }
+        // the newcomer crosses out games, but keeps at least this many
+        public int MinGames { get; set; }
+    }
+
     public class NewcomerPoolGameObject
     {
         public string Id { get; set; }

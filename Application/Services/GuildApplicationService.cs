@@ -29,7 +29,8 @@ namespace Application.Services
         public async Task<List<PlayedGuildObject>> GetPlayedGuildsAsync(string userId)
         {
             var playedEvents = await _eventRepository.CustomToListAsync(_eventRepository
-                .Where(e => e.EventRecords.Any(er => er.ParticipantId == userId))
+                // a newcomer is only the one who got a game in the event
+                .Where(e => e.EventRecords.Any(er => er.ParticipantId == userId || er.ToUserId == userId))
                 .Select(e => new PlayedEventRow
                 {
                     GuildId = e.GuildId,

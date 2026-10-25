@@ -12,6 +12,7 @@ namespace Application.Interfaces
     public interface IEventRepository: IBaseRepository<Event>
     {
         public Task<EventRecord> AddEventRecordAsync(string userId, string eventId);
+        public EventRecord AddEventRecord(EventRecord eventRecord);
         public Task<EventRecord> GetEventRecordAsync(string eventRecordId);
         public Task<List<EventRecord>> GetEventRecordsAsync(string eventId);
         public Task<EventRecord> RemoveEventRecordAsync(string eventRecordId);

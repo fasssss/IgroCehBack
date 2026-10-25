@@ -14,5 +14,7 @@ namespace Application.DTO
         public UserObject ToUser { get; set; }
         public GameObject Game { get; set; }
         public int? Reward { get; set; }
+        // the newcomer is ToUser, the game came from the pool and Participant is the one who put it there
+        public bool IsNewcomer { get; set; }
     }
 }
