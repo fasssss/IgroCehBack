@@ -1,5 +1,6 @@
 ﻿using Application.DTO;
 using Application.Enum;
+using Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,10 +14,10 @@ namespace Application.ApplicationInterfaces
         public Task<EventShortObject> CreateEventAsync(EventShortObject eventObject);
         public Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId, int startFrom);
         public Task<EventObject> GetEventByIdAsync(string userId, string eventId);
-        public Task<EventRecordObject> JoinEventAsync(string userId, string eventId);
+        public Task<(JoinEventResult Result, EventRecordObject EventRecord)> JoinEventAsync(string userId, string eventId);
         public Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string eventRecordId);
         public Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string userIdToRemove, string eventId);
-        public Task<int> MoveEventToNextStageAsync(string userId, string eventId, int statusId);
+        public Task<MoveEventToNextStageResult> MoveEventToNextStageAsync(string userId, string eventId, EventStatusId statusId);
         public Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId);
         public Task<(SuggestGameResult Result, EventRecordObject EventRecord)> SuggestGameAsync(string userId, string eventRecordId, string gameId);
         public Task<ActivateEventResult> ActivateEventAsync(string userId, string eventId);

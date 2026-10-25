@@ -16,6 +16,14 @@ namespace Application.Services
     public class EventApplicationService: IEventApplicationService
     {
         private static Random randomGenerator = new Random();
+        // nobody to guess a game for with fewer players
+        private const int MinPlayersCount = 2;
+        // the stages the creator moves the event through by hand; activation and summarizing have their own endpoints
+        private static readonly Dictionary<EventStatusId, EventStatusId> ManualNextStages = new()
+        {
+            [EventStatusId.PlayersRegistration] = EventStatusId.PlayersShuffle,
+            [EventStatusId.PlayersShuffle] = EventStatusId.GamesGuessing,
+        };
         private readonly IEventRepository _eventRepository;
         private readonly IUserRepository _userRepository;
         private readonly IGameRepository _gameRepository;
@@ -176,26 +184,36 @@ namespace Application.Services
             return new List<EventShortObject>();
         }
 
-        public async Task<EventRecordObject> JoinEventAsync(string userId, string eventId)
+        // a member of the guild joins the event once, while it gathers players; a player who left the guild doesn't
+        public async Task<(JoinEventResult Result, EventRecordObject EventRecord)> JoinEventAsync(string userId, string eventId)
         {
-            var guildId = (await _eventRepository.GetByIdAsync(eventId)).GuildId;
-            var userHasRight = await _userRepository
-                .CustomAnyAsync(_userRepository
-                .Where(u => u.UserGuilds.Any(ug => ug.GuildId == guildId)));
-
-            if (userHasRight)
+            var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null)
             {
-                var addedEventRecord = await _eventRepository.AddEventRecordAsync(userId, eventId);
-                var saveResult = await _eventRepository.SaveAsync();
-
-                if (saveResult >= 1)
-                {
-                    var addedEventRecordWithNavProps = await _eventRepository.GetEventRecordAsync(addedEventRecord.Id);
-                    return _mapper.Map<EventRecordObject>(addedEventRecord);
-                }
+                return (JoinEventResult.NotFound, null);
             }
 
-            return null;
+            var isMember = await _userRepository.CustomAnyAsync(_userRepository
+                .Where(u => u.Id == userId && u.UserGuilds.Any(ug => ug.GuildId == eventEntity.GuildId && !ug.IsDeleted)));
+            if (!isMember)
+            {
+                return (JoinEventResult.Forbidden, null);
+            }
+
+            if (eventEntity.StatusId != EventStatusId.PlayersRegistration)
+            {
+                return (JoinEventResult.Unavailable, null);
+            }
+
+            if (await _eventRepository.CustomAnyAsync(_eventRepository.Where(e => e.Id == eventId && e.EventRecords.Any(er => er.ParticipantId == userId))))
+            {
+                return (JoinEventResult.AlreadyJoined, null);
+            }
+
+            var addedEventRecord = await _eventRepository.AddEventRecordAsync(userId, eventId);
+            await _eventRepository.SaveAsync();
+
+            return (JoinEventResult.Joined, _mapper.Map<EventRecordObject>(await _eventRepository.GetEventRecordAsync(addedEventRecord.Id)));
         }
 
         public async Task<EventRecordObject> RemoveFromEventAsync(string userIdOperator, string eventRecordId)
@@ -233,25 +251,46 @@ namespace Application.Services
             return null;
         }
 
-        public async Task<int> MoveEventToNextStageAsync(string userId, string eventId, int statusId)
+        // the creator moves the event one stage forward; the requested stage has to be the next one, so a repeated request changes nothing
+        public async Task<MoveEventToNextStageResult> MoveEventToNextStageAsync(string userId, string eventId, EventStatusId statusId)
         {
-            var eventEntity = await _eventRepository.GetByIdAsync(eventId);
-            var userHasRight = eventEntity.CreatorId == userId;
-            if (userHasRight)
+            var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
+            if (eventEntity == null)
             {
-                eventEntity.StatusId = (EventStatusId)statusId;
-                var saveResult = await _eventRepository.SaveAsync();
-                if (saveResult >= 0)
-                {
-                    return (int)eventEntity.StatusId;
-                }
+                return MoveEventToNextStageResult.NotFound;
             }
-            return -1;
+
+            if (eventEntity.CreatorId != userId)
+            {
+                return MoveEventToNextStageResult.Forbidden;
+            }
+
+            if (!ManualNextStages.TryGetValue(eventEntity.StatusId, out var nextStage) || nextStage != statusId)
+            {
+                return MoveEventToNextStageResult.Unavailable;
+            }
+
+            var records = await _eventRepository.GetEventRecordsAsync(eventId);
+            // the shuffle needs someone to guess a game for, and games are guessed for the players the shuffle gave
+            var isReady = nextStage == EventStatusId.PlayersShuffle
+                ? records.Count >= MinPlayersCount
+                : records.All(er => er.ToUserId != null);
+            if (!isReady)
+            {
+                return MoveEventToNextStageResult.Unavailable;
+            }
+
+            eventEntity.StatusId = nextStage;
+            await _eventRepository.SaveAsync();
+
+            return MoveEventToNextStageResult.Moved;
         }
 
+        // the players are shuffled only on their own stage, later it would break the guessed games
         public async Task<List<EventRecordObject>> ShuffleUsersAsync(string userId, string eventId)
         {
-            var userIsCreator = await _eventRepository.CustomAnyAsync(_eventRepository.Where(e => e.Id == eventId && e.CreatorId == userId));
+            var userIsCreator = await _eventRepository.CustomAnyAsync(_eventRepository
+                .Where(e => e.Id == eventId && e.CreatorId == userId && e.StatusId == EventStatusId.PlayersShuffle));
             if (userIsCreator)
             {
                 var eventRecords = await _eventRepository.GetEventRecordsAsync(eventId);
