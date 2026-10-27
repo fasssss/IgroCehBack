@@ -284,6 +284,7 @@ namespace Application.Services
                 CreatedAt = ge.CreatedAt,
                 FinishedAt = ge.FinishedAt,
                 ParticipantCount = ge.Participants.Count(),
+                PassedCount = ge.Participants.Count(p => p.PassedAt != null),
                 Games = ge.Games
                     .OrderBy(geg => geg.Order)
                     .Select(geg => new GlobalEventGameObject

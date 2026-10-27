@@ -11,6 +11,8 @@ namespace Application.DTO
         public DateTimeOffset? FinishedAt { get; set; }
         // the players who rolled its games; with any of them the games can't change
         public int ParticipantCount { get; set; }
+        // the participants who passed their picked game
+        public int PassedCount { get; set; }
         public List<GlobalEventGameObject> Games { get; set; }
     }
 

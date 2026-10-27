@@ -3,7 +3,8 @@ using Application.Enum;
 
 namespace Application.ApplicationInterfaces
 {
-    // a player rolls three games of a global event, picks one of them and may refuse it for a new roll a week after the pick
+    // a player rolls three games of a global event, picks one of them, may refuse it for a new roll a week after the pick
+    // and proves its passing by Steam or by a claim an administrator checks
     public interface IGlobalEventParticipationApplicationService
     {
         // the participation is null when the player hasn't rolled yet
@@ -13,5 +14,10 @@ namespace Application.ApplicationInterfaces
         public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> PickAsync(string userId, string globalEventId, int appId);
         public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> RefuseAsync(string userId, string globalEventId,
             CancellationToken ct = default);
+        // throws SteamUnavailableException when Steam doesn't answer
+        public Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
+            string userId, string globalEventId, CancellationToken ct = default);
+        public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> SubmitClaimAsync(string userId, string globalEventId,
+            ClaimPlatform platform, string profile);
     }
 }

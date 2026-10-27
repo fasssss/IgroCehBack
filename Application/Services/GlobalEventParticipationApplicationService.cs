@@ -5,6 +5,7 @@ using Application.Enum;
 using Application.Exceptions;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Services
 {
@@ -106,19 +107,14 @@ namespace Application.Services
         }
 
         // a week after the pick the player may refuse the game, e.g. it costs too much: three new games drop at once,
-        // the refused one isn't among them this time
+        // the refused one isn't among them this time; a passed game or one with a claim under review stays
         public async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> RefuseAsync(string userId, string globalEventId,
             CancellationToken ct = default)
         {
-            var (result, participant) = await GetParticipantAsync(userId, globalEventId);
+            var (result, participant) = await GetPickedParticipantAsync(userId, globalEventId);
             if (result != ParticipateGlobalEventResult.Succeeded)
             {
-                return (result == ParticipateGlobalEventResult.NotRolled ? ParticipateGlobalEventResult.NotPicked : result, null);
-            }
-
-            if (participant.PickedAt == null)
-            {
-                return (ParticipateGlobalEventResult.NotPicked, null);
+                return (result, null);
             }
 
             if (DateTimeOffset.UtcNow < RefusableAt(participant.PickedAt.Value))
@@ -145,7 +141,108 @@ namespace Application.Services
             return (ParticipateGlobalEventResult.Succeeded, await GetParticipationAsync(userId, globalEventId));
         }
 
+        // Steam is asked about the chosen achievements of the picked game, one unlocked after the pick passes it
+        public async Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
+            string userId, string globalEventId, CancellationToken ct = default)
+        {
+            var (result, participant) = await GetPickedParticipantAsync(userId, globalEventId);
+            if (result != ParticipateGlobalEventResult.Succeeded)
+            {
+                return (result, default, null);
+            }
+
+            if (participant.PickedGame.Achievements.Count == 0)
+            {
+                return (ParticipateGlobalEventResult.NoAchievements, default, null);
+            }
+
+            var steamId = await GetSteamIdAsync(userId);
+            if (steamId == null)
+            {
+                return (ParticipateGlobalEventResult.NoSteam, default, null);
+            }
+
+            var check = await CheckAchievementsAsync(steamId, participant, ct);
+            if (check == PassingCheckResult.Passed)
+            {
+                participant.PassedAt = DateTimeOffset.UtcNow;
+                await _participantRepository.SaveAsync();
+            }
+
+            return (ParticipateGlobalEventResult.Succeeded, check, await GetParticipationAsync(userId, globalEventId));
+        }
+
+        // the profile shows the passing on a platform, an administrator of the site checks it by hand
+        public async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> SubmitClaimAsync(string userId, string globalEventId,
+            ClaimPlatform platform, string profile)
+        {
+            var (result, participant) = await GetPickedParticipantAsync(userId, globalEventId);
+            if (result != ParticipateGlobalEventResult.Succeeded)
+            {
+                return (result, null);
+            }
+
+            participant.Claims.Add(new GlobalEventClaim
+            {
+                Id = Guid.NewGuid().ToString(),
+                GlobalEventGameId = participant.PickedGameId,
+                Platform = (GlobalEventClaimPlatform)platform,
+                Profile = profile.Trim(),
+                Status = GlobalEventClaimStatus.Pending,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await _participantRepository.SaveAsync();
+
+            return (ParticipateGlobalEventResult.Succeeded, await GetParticipationAsync(userId, globalEventId));
+        }
+
         private static DateTimeOffset RefusableAt(DateTimeOffset pickedAt) => pickedAt.AddDays(GlobalEventLimits.RefusalDelayDays);
+
+        private async Task<string> GetSteamIdAsync(string userId) =>
+            (await _userRepository.CustomToListAsync(_userRepository.Where(u => u.Id == userId).Select(u => u.SteamId))).FirstOrDefault();
+
+        // Steam keeps the time of an unlock in seconds, so the pick is cut to seconds too
+        private async Task<PassingCheckResult> CheckAchievementsAsync(string steamId, GlobalEventParticipant participant, CancellationToken ct)
+        {
+            var unlocked = await _steamService.GetUnlockedAchievementsAsync(steamId, participant.PickedGame.Game.VgcId ?? 0, ct);
+            if (unlocked == null)
+            {
+                return PassingCheckResult.ProfileHidden;
+            }
+
+            var pickedAt = DateTimeOffset.FromUnixTimeSeconds(participant.PickedAt.Value.ToUnixTimeSeconds());
+            var unlockTimes = participant.PickedGame.Achievements
+                .Where(a => unlocked.ContainsKey(a.ApiName))
+                .Select(a => unlocked[a.ApiName])
+                .ToList();
+            return unlockTimes.Any(unlockedAt => unlockedAt >= pickedAt) ? PassingCheckResult.Passed
+                : unlockTimes.Count > 0 ? PassingCheckResult.UnlockedBeforePick
+                : PassingCheckResult.NotPassed;
+        }
+
+        // the participant of an active event whose picked game isn't passed and has no claim under review
+        private async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipant Participant)> GetPickedParticipantAsync(string userId, string globalEventId)
+        {
+            var (result, participant) = await GetParticipantAsync(userId, globalEventId);
+            if (result != ParticipateGlobalEventResult.Succeeded)
+            {
+                return (result == ParticipateGlobalEventResult.NotRolled ? ParticipateGlobalEventResult.NotPicked : result, null);
+            }
+
+            if (participant.PickedGameId == null)
+            {
+                return (ParticipateGlobalEventResult.NotPicked, null);
+            }
+
+            if (participant.PassedAt != null)
+            {
+                return (ParticipateGlobalEventResult.AlreadyPassed, null);
+            }
+
+            return participant.Claims.Any(c => c.Status == GlobalEventClaimStatus.Pending)
+                ? (ParticipateGlobalEventResult.ClaimPending, null)
+                : (ParticipateGlobalEventResult.Succeeded, participant);
+        }
 
         // the participant of an event that is still active
         private async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipant Participant)> GetParticipantAsync(string userId, string globalEventId)
@@ -167,7 +264,7 @@ namespace Application.Services
         private async Task<List<GlobalEventRolledGame>> RollGamesAsync(string userId, GlobalEvent globalEvent, string refusedGameId, CancellationToken ct)
         {
             var games = globalEvent.Games.Where(geg => geg.Id != refusedGameId).ToList();
-            var steamId = (await _userRepository.CustomToListAsync(_userRepository.Where(u => u.Id == userId).Select(u => u.SteamId))).FirstOrDefault();
+            var steamId = await GetSteamIdAsync(userId);
             if (steamId != null)
             {
                 var passedGameIds = await GetPassedGameIdsAsync(steamId, games, ct);
@@ -229,6 +326,22 @@ namespace Application.Services
                     RolledAt = p.RolledAt,
                     PickedAppId = p.PickedGame.Game.VgcId,
                     PickedAt = p.PickedAt,
+                    PassedAt = p.PassedAt,
+                    Claim = p.Claims
+                        .Where(c => c.GlobalEventGameId == p.PickedGameId)
+                        .OrderByDescending(c => c.CreatedAt)
+                        .Select(c => new GlobalEventClaimObject
+                        {
+                            Id = c.Id,
+                            AppId = c.GlobalEventGame.Game.VgcId ?? 0,
+                            Platform = (ClaimPlatform)c.Platform,
+                            Profile = c.Profile,
+                            Status = (ClaimStatus)c.Status,
+                            Comment = c.Comment,
+                            CreatedAt = c.CreatedAt,
+                            DecidedAt = c.DecidedAt,
+                        })
+                        .FirstOrDefault(),
                 }))).FirstOrDefault();
             if (participation?.PickedAt != null)
             {

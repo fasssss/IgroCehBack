@@ -11,5 +11,9 @@ namespace Application.DTO
         public DateTimeOffset? PickedAt { get; set; }
         // from then on the picked game can be refused for a new roll, empty until a game is picked
         public DateTimeOffset? RefusableAt { get; set; }
+        // the picked game is passed, the participation is over
+        public DateTimeOffset? PassedAt { get; set; }
+        // the last claim for the picked game, empty without one
+        public GlobalEventClaimObject Claim { get; set; }
     }
 }

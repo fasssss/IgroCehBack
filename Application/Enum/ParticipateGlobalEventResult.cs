@@ -21,5 +21,13 @@ namespace Application.Enum
         NoGames,
         // another request of the player changed the roll first
         Conflict,
+        // the picked game is passed, the participation is over
+        AlreadyPassed,
+        // a claim of the player is under review
+        ClaimPending,
+        // the automatic check needs a linked Steam account
+        NoSteam,
+        // the picked game has no achievements, only a claim proves its passing
+        NoAchievements,
     }
 }

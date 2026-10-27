@@ -35,6 +35,7 @@ namespace Persistence.Context
         public DbSet<GlobalEventAchievement> GlobalEventAchievements { get; set; }
         public DbSet<GlobalEventParticipant> GlobalEventParticipants { get; set; }
         public DbSet<GlobalEventRolledGame> GlobalEventRolledGames { get; set; }
+        public DbSet<GlobalEventClaim> GlobalEventClaims { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -203,6 +204,25 @@ namespace Persistence.Context
                 .HasForeignKey(rg => rg.GlobalEventGameId)
                 .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<GlobalEventRolledGame>().HasQueryFilter(rg => !rg.Participant.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventClaim>()
+                .HasOne(c => c.Participant)
+                .WithMany(p => p.Claims)
+                .HasForeignKey(c => c.ParticipantId);
+            modelBuilder.Entity<GlobalEventClaim>()
+                .HasOne(c => c.GlobalEventGame)
+                .WithMany()
+                .HasForeignKey(c => c.GlobalEventGameId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GlobalEventClaim>()
+                .HasOne(c => c.DecidedBy)
+                .WithMany()
+                .HasForeignKey(c => c.DecidedById)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GlobalEventClaim>().Property(c => c.Profile).HasMaxLength(GlobalEventLimits.ClaimProfileMaxLength).IsRequired();
+            modelBuilder.Entity<GlobalEventClaim>().Property(c => c.Comment).HasMaxLength(GlobalEventLimits.ClaimCommentMaxLength);
+            // of two administrators deciding a claim at once the second fails to save
+            modelBuilder.Entity<GlobalEventClaim>().Property(c => c.Status).IsConcurrencyToken();
+            modelBuilder.Entity<GlobalEventClaim>().HasQueryFilter(c => !c.Participant.GlobalEvent.IsDeleted);
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();
