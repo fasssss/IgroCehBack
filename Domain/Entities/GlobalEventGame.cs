@@ -10,7 +10,7 @@ namespace Domain.Entities
         public Game Game { get; set; }
         // the order the administrator added the games in
         public int Order { get; set; }
-        // any one of them unlocked means the game is passed
+        // any one of them unlocked means the game is passed; without them the game is passed only by a claim checked by hand
         public List<GlobalEventAchievement> Achievements { get; set; } = new List<GlobalEventAchievement>();
         public DateTimeOffset? CreatedAt { get; set; }
     }

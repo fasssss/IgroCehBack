@@ -1,6 +1,6 @@
 namespace Domain.Entities
 {
-    // an event of the whole site made by its administrator: players roll its games and prove the passing by an achievement;
+    // an event of the whole site made by its administrator: players roll its games and prove the passing by an achievement or by a claim checked by hand;
     // one event is active at a time, the administrator finishes it by hand
     public class GlobalEvent : IBaseEntity
     {

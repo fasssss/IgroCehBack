@@ -36,18 +36,10 @@ namespace Application.Services
                 return (CreateGlobalEventResult.AlreadyActive, null);
             }
 
-            // Steam is asked about every game before anything is saved
-            var chosenAchievements = new List<List<SteamAchievementObject>>();
-            foreach (var game in games)
+            var chosenAchievements = await GetChosenAchievementsAsync(games, ct);
+            if (chosenAchievements == null)
             {
-                var steamAchievements = await _steamService.GetAchievementsAsync(game.AppId, ct);
-                var chosen = steamAchievements.Where(a => game.AchievementApiNames.Contains(a.ApiName)).ToList();
-                if (chosen.Count != game.AchievementApiNames.Count)
-                {
-                    return (CreateGlobalEventResult.UnknownAchievement, null);
-                }
-
-                chosenAchievements.Add(chosen);
+                return (CreateGlobalEventResult.UnknownAchievement, null);
             }
 
             var gameIds = new List<string>();
@@ -65,33 +57,89 @@ namespace Application.Services
             var globalEvent = await _globalEventRepository.AddAsync(new GlobalEvent
             {
                 Id = Guid.NewGuid().ToString(),
-                Name = name.Trim(),
-                Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim().Replace("\r\n", "\n"),
+                Name = NormalizeName(name),
+                Description = NormalizeDescription(description),
                 CreatorId = userId,
-                Games = games.Select((game, index) => new GlobalEventGame
+                Games = games.Select((game, index) =>
                 {
-                    Id = Guid.NewGuid().ToString(),
-                    GameId = gameIds[index],
-                    Order = index,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    // in the order of Steam, not of the clicks
-                    Achievements = chosenAchievements[index].Select((achievement, order) => new GlobalEventAchievement
+                    var globalEventGame = new GlobalEventGame
                     {
                         Id = Guid.NewGuid().ToString(),
-                        ApiName = achievement.ApiName,
-                        Name = achievement.Name,
-                        NameRu = achievement.NameRu,
-                        Description = achievement.Description,
-                        DescriptionRu = achievement.DescriptionRu,
-                        IconUrl = achievement.IconUrl,
-                        Order = order,
+                        GameId = gameIds[index],
+                        Order = index,
                         CreatedAt = DateTimeOffset.UtcNow,
-                    }).ToList(),
+                    };
+                    SetAchievements(globalEventGame, chosenAchievements[game.AppId]);
+                    return globalEventGame;
                 }).ToList(),
             });
             await _globalEventRepository.SaveAsync();
 
             return (CreateGlobalEventResult.Created, await GetAsync(globalEvent.Id));
+        }
+
+        // the games come in full, in their new order; Steam is asked only about the games whose achievements are new or changed,
+        // so the name can be changed while Steam is down
+        public async Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,
+            string description, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
+        {
+            var globalEvent = await _globalEventRepository.GetWithGamesAsync(globalEventId);
+            if (globalEvent == null)
+            {
+                return (UpdateGlobalEventResult.NotFound, null);
+            }
+
+            // the games of a global event always come from the catalog
+            var keptGames = globalEvent.Games.ToDictionary(geg => geg.Game.VgcId.Value);
+            var changedGames = games
+                .Where(game => !keptGames.TryGetValue(game.AppId, out var geg)
+                    || !geg.Achievements.Select(a => a.ApiName).ToHashSet().SetEquals(game.AchievementApiNames))
+                .ToList();
+            var chosenAchievements = await GetChosenAchievementsAsync(changedGames, ct);
+            if (chosenAchievements == null)
+            {
+                return (UpdateGlobalEventResult.UnknownAchievement, null);
+            }
+
+            var newGameIds = new Dictionary<int, string>();
+            foreach (var game in games.Where(game => !keptGames.ContainsKey(game.AppId)))
+            {
+                var gameId = await _gameApplicationService.CreateGameFromCatalogAsync(userId, game.AppId, ct);
+                if (gameId == null)
+                {
+                    return (UpdateGlobalEventResult.UnknownGame, null);
+                }
+
+                newGameIds[game.AppId] = gameId;
+            }
+
+            globalEvent.Name = NormalizeName(name);
+            globalEvent.Description = NormalizeDescription(description);
+            var appIds = games.Select(game => game.AppId).ToHashSet();
+            globalEvent.Games.RemoveAll(geg => !appIds.Contains(geg.Game.VgcId.Value));
+            foreach (var (game, index) in games.Select((game, index) => (game, index)))
+            {
+                if (!keptGames.TryGetValue(game.AppId, out var globalEventGame))
+                {
+                    globalEventGame = new GlobalEventGame
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        GameId = newGameIds[game.AppId],
+                        CreatedAt = DateTimeOffset.UtcNow,
+                    };
+                    globalEvent.Games.Add(globalEventGame);
+                }
+
+                globalEventGame.Order = index;
+                if (chosenAchievements.TryGetValue(game.AppId, out var achievements))
+                {
+                    SetAchievements(globalEventGame, achievements);
+                }
+            }
+
+            await _globalEventRepository.SaveAsync();
+
+            return (UpdateGlobalEventResult.Updated, await GetAsync(globalEvent.Id));
         }
 
         // the image is uploaded apart from the event and can be replaced at any time
@@ -157,6 +205,66 @@ namespace Application.Services
         }
 
         private static readonly Expression<Func<GlobalEvent, bool>> IsActive = ge => ge.FinishedAt == null;
+
+        private static string NormalizeName(string name) => name.Trim();
+
+        private static string NormalizeDescription(string description) =>
+            string.IsNullOrWhiteSpace(description) ? null : description.Trim().Replace("\r\n", "\n");
+
+        // Steam is asked about every game with achievements before anything is saved: the chosen achievements of each game in the order of Steam,
+        // null when a game has no such achievement; a game without achievements is passed only by a claim checked by hand
+        private async Task<Dictionary<int, List<SteamAchievementObject>>> GetChosenAchievementsAsync(List<NewGlobalEventGameObject> games, CancellationToken ct)
+        {
+            var chosenAchievements = new Dictionary<int, List<SteamAchievementObject>>();
+            foreach (var game in games)
+            {
+                if (game.AchievementApiNames.Count == 0)
+                {
+                    chosenAchievements[game.AppId] = new List<SteamAchievementObject>();
+                    continue;
+                }
+
+                var steamAchievements = await _steamService.GetAchievementsAsync(game.AppId, ct);
+                var chosen = steamAchievements.Where(a => game.AchievementApiNames.Contains(a.ApiName)).ToList();
+                if (chosen.Count != game.AchievementApiNames.Count)
+                {
+                    return null;
+                }
+
+                chosenAchievements[game.AppId] = chosen;
+            }
+
+            return chosenAchievements;
+        }
+
+        // the achievements that stay keep their rows, so an API name of a game is never deleted and added again in one save
+        private static void SetAchievements(GlobalEventGame globalEventGame, List<SteamAchievementObject> chosen)
+        {
+            var apiNames = chosen.Select(a => a.ApiName).ToHashSet();
+            globalEventGame.Achievements.RemoveAll(a => !apiNames.Contains(a.ApiName));
+            foreach (var (achievement, order) in chosen.Select((achievement, order) => (achievement, order)))
+            {
+                var kept = globalEventGame.Achievements.FirstOrDefault(a => a.ApiName == achievement.ApiName);
+                if (kept == null)
+                {
+                    kept = new GlobalEventAchievement
+                    {
+                        Id = Guid.NewGuid().ToString(),
+                        ApiName = achievement.ApiName,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                    };
+                    globalEventGame.Achievements.Add(kept);
+                }
+
+                // the names come fresh from Steam, the order is the order of Steam, not of the clicks
+                kept.Name = achievement.Name;
+                kept.NameRu = achievement.NameRu;
+                kept.Description = achievement.Description;
+                kept.DescriptionRu = achievement.DescriptionRu;
+                kept.IconUrl = achievement.IconUrl;
+                kept.Order = order;
+            }
+        }
 
         private static IQueryable<GlobalEventObject> ToObjects(IQueryable<GlobalEvent> globalEvents) => globalEvents
             .OrderByDescending(ge => ge.CreatedAt)

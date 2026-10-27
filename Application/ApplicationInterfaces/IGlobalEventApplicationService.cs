@@ -10,6 +10,8 @@ namespace Application.ApplicationInterfaces
         public Task<List<SteamAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default);
         public Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,
             List<NewGlobalEventGameObject> games, CancellationToken ct = default);
+        public Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,
+            string description, List<NewGlobalEventGameObject> games, CancellationToken ct = default);
         public Task<ChangeGlobalEventResult> SetImageAsync(string globalEventId, string imageUrl);
         // null when no event is active
         public Task<GlobalEventObject> GetActiveAsync();

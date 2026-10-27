@@ -26,7 +26,8 @@ namespace API.RepR.Request
                 .Must(games => games.Select(g => g.AppId).Distinct().Count() == games.Count).WithMessage("A game is added once");
             RuleForEach(r => r.Games).ChildRules(game =>
             {
-                game.RuleFor(g => g.AchievementApiNames).Cascade(CascadeMode.Stop).NotEmpty().WithMessage("Every game needs an achievement that means it is passed")
+                // a game without achievements is passed only by a claim the administrator checks by hand
+                game.RuleFor(g => g.AchievementApiNames).Cascade(CascadeMode.Stop).NotNull()
                     .Must(names => names.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements")
                     .Must(names => names.Distinct().Count() == names.Count).WithMessage("An achievement is added once");
             });
