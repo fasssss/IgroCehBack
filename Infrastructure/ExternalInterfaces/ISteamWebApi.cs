@@ -13,5 +13,9 @@ namespace Infrastructure.ExternalInterfaces
         // the share of the players who unlocked every achievement, needs no key
         [Get("/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/")]
         public Task<ApiResponse<SteamPercentagesResponse>> GetGlobalAchievementPercentages(int gameid, CancellationToken ct);
+
+        // the games of a player, https://partner.steamgames.com/doc/webapi/IPlayerService
+        [Get("/IPlayerService/GetOwnedGames/v1/")]
+        public Task<ApiResponse<SteamOwnedGamesResponse>> GetOwnedGames(string key, string steamid, CancellationToken ct);
     }
 }

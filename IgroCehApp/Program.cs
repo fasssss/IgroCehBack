@@ -26,6 +26,9 @@ builder.Services.AddPersistance(configuration);
 builder.Services.AddApplicationConfiguration();
 builder.Services.AddInfrastructure(configuration);
 builder.Services.AddSingleton<WebSocketHelper>();
+// protects the state of the sign-in through Steam, see SteamLinkState
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<SteamLinkState>();
 builder.Services
     .AddAuthentication(o =>
         o.AddScheme<CustomAuthenticationHandler>("customAuthenticationScheme", null));
@@ -45,14 +48,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors(x => x
-        .WithOrigins(configuration.GetValue<string>("FrontendUrl") ?? "https://localhost:5173")
+        .WithOrigins(configuration.GetValue<string>("FrontendUrl")!)
         .AllowAnyHeader()
         .AllowCredentials());
 }
 else
 {
     app.UseCors(x => x
-        .WithOrigins(configuration.GetValue<string>("FrontendUrl") ?? "https://localhost:5173")
+        .WithOrigins(configuration.GetValue<string>("FrontendUrl")!)
         .AllowAnyHeader()
         .AllowCredentials());
 }

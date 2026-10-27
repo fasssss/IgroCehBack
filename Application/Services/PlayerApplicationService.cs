@@ -144,6 +144,7 @@ namespace Application.Services
                 UserName = player.UserName,
                 AvatarUrl = player.AvatarUrl,
                 PlayingSince = player.CreatedAt,
+                SteamId = player.SteamId,
                 Guilds = playedGuilds,
                 OtherGuildsCount = playerGuilds.Count(g => g.HasPlayed && !g.IsShared),
                 Statistics = CalculateStatistics(playerId, selectedGuilds,

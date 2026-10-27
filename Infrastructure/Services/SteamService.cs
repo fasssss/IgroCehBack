@@ -71,6 +71,18 @@ namespace Infrastructure.Services
             return achievements;
         }
 
+        public async Task<bool> IsGameDataPublicAsync(string steamId, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(_options.Key))
+            {
+                throw new SteamUnavailableException("There is no Steam Web API key");
+            }
+
+            // an open profile without games still has the count, hidden game details give an empty response
+            var ownedGames = await SendAsync(() => _steamWebApi.GetOwnedGames(_options.Key, steamId, ct), ct);
+            return ownedGames.Response?.GameCount != null;
+        }
+
         private static List<SteamSchemaAchievement> Achievements(SteamSchemaResponse schema) =>
             schema.Game?.AvailableGameStats?.Achievements ?? new List<SteamSchemaAchievement>();
 

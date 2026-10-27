@@ -68,6 +68,8 @@ namespace Persistence.Context
                         platforms => platforms.Aggregate(0, (hash, platform) => HashCode.Combine(hash, platform.GetHashCode())),
                         platforms => platforms.ToList()))
                 .HasMaxLength(255);
+            modelBuilder.Entity<User>().Property(u => u.SteamId).HasMaxLength(20);
+            modelBuilder.Entity<User>().HasIndex(u => u.SteamId).IsUnique();
             modelBuilder.Entity<User>()
                 .HasMany(u => u.EventRecords)
                 .WithOne(er => er.Participant)

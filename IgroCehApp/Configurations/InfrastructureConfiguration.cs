@@ -32,9 +32,13 @@ namespace API.Configurations
             services.AddRefitClient<ISteamWebApi>()
                 .ConfigureHttpClient((serviceProvider, config) =>
                     config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<SteamApiOptions>>().Value.Address ?? ""));
+            services.AddRefitClient<ISteamCommunityApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<SteamApiOptions>>().Value.CommunityAddress ?? ""));
             services.AddMemoryCache();
             services.AddTransient<IGameCatalogService, VideoGamesCriticCatalogService>();
             services.AddTransient<ISteamService, SteamService>();
+            services.AddTransient<ISteamSignInService, SteamSignInService>();
             return services;
         }
     }

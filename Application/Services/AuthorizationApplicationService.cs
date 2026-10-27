@@ -95,6 +95,7 @@ namespace Application.Services
                     Email = existingUser.Email,
                     Id = existingUser.Id,
                     IsAppAdmin = existingUser.IsAppAdmin,
+                    SteamId = existingUser.SteamId,
                 };
             }
 

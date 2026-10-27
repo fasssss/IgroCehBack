@@ -9,6 +9,8 @@ namespace Domain.Entities
         public string AvatarUrl { get; set; }
         // administrator of the whole application, unlike UserGuild.IsAdmin that comes from a Discord guild
         public bool IsAppAdmin { get; set; }
+        // SteamID64 of the Steam account the user signed in to through Steam, one user per Steam account
+        public string? SteamId { get; set; }
         public List<UserGuild> UserGuilds { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public List<Event> CreatorOfEvents { get; set; }

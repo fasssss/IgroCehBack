@@ -47,4 +47,16 @@ namespace Infrastructure.DTO
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
         public double Percent { get; set; }
     }
+
+    // GetOwnedGames: the response is empty when the game details of the profile aren't public
+    public class SteamOwnedGamesResponse
+    {
+        public SteamOwnedGames Response { get; set; }
+    }
+
+    public class SteamOwnedGames
+    {
+        [JsonPropertyName("game_count")]
+        public int? GameCount { get; set; }
+    }
 }

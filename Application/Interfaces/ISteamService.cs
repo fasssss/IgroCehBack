@@ -7,5 +7,7 @@ namespace Application.Interfaces
     {
         // the achievements of the game in the order of Steam, empty when the game has none
         public Task<List<SteamAchievementObject>> GetAchievementsAsync(int appId, CancellationToken ct = default);
+        // Steam gives the achievements of a player only when the game details of the profile are public
+        public Task<bool> IsGameDataPublicAsync(string steamId, CancellationToken ct = default);
     }
 }

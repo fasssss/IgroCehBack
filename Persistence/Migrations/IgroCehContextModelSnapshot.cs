@@ -756,11 +756,18 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsAppAdmin")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("SteamId")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SteamId")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
