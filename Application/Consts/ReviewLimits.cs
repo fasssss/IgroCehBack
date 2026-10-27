@@ -1,4 +1,4 @@
-namespace Domain.Entities
+namespace Application.Consts
 {
     // the database columns and the validation of a published review share these limits
     public static class ReviewLimits

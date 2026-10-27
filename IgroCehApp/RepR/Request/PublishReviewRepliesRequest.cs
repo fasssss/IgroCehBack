@@ -1,5 +1,5 @@
+using Application.Consts;
 using Application.DTO;
-using Domain.Entities;
 using FastEndpoints;
 using FluentValidation;
 

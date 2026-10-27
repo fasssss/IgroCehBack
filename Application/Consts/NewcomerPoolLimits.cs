@@ -1,4 +1,4 @@
-namespace Domain.Entities
+namespace Application.Consts
 {
     public static class NewcomerPoolLimits
     {

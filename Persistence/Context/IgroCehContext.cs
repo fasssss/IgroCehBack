@@ -1,4 +1,5 @@
-﻿using Domain.Attributes;
+﻿using Application.Consts;
+using Domain.Attributes;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +30,9 @@ namespace Persistence.Context
         public DbSet<PreferenceTag> PreferenceTags { get; set; }
         public DbSet<UserPreference> UserPreferences { get; set; }
         public DbSet<NewcomerPoolGame> NewcomerPoolGames { get; set; }
+        public DbSet<GlobalEvent> GlobalEvents { get; set; }
+        public DbSet<GlobalEventGame> GlobalEventGames { get; set; }
+        public DbSet<GlobalEventAchievement> GlobalEventAchievements { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -134,6 +138,37 @@ namespace Persistence.Context
                 .WithMany()
                 .HasForeignKey(er => er.NewcomerPoolGameId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GlobalEvent>()
+                .HasOne(ge => ge.Creator)
+                .WithMany()
+                .HasForeignKey(ge => ge.CreatorId);
+            modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Name).HasMaxLength(GlobalEventLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Description).HasMaxLength(GlobalEventLimits.DescriptionMaxLength);
+            // deleted global events are left out of every query, like the events of guilds
+            modelBuilder.Entity<GlobalEvent>().HasQueryFilter(ge => !ge.IsDeleted);
+            modelBuilder.Entity<GlobalEventGame>()
+                .HasOne(geg => geg.GlobalEvent)
+                .WithMany(ge => ge.Games)
+                .HasForeignKey(geg => geg.GlobalEventId);
+            modelBuilder.Entity<GlobalEventGame>()
+                .HasOne(geg => geg.Game)
+                .WithMany()
+                .HasForeignKey(geg => geg.GameId);
+            // a game is in an event once
+            modelBuilder.Entity<GlobalEventGame>().HasIndex(geg => new { geg.GlobalEventId, geg.GameId }).IsUnique();
+            modelBuilder.Entity<GlobalEventGame>().HasQueryFilter(geg => !geg.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventAchievement>()
+                .HasOne(a => a.GlobalEventGame)
+                .WithMany(geg => geg.Achievements)
+                .HasForeignKey(a => a.GlobalEventGameId);
+            modelBuilder.Entity<GlobalEventAchievement>().HasIndex(a => new { a.GlobalEventGameId, a.ApiName }).IsUnique();
+            modelBuilder.Entity<GlobalEventAchievement>().HasQueryFilter(a => !a.GlobalEventGame.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.ApiName).HasMaxLength(200).IsRequired();
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.Name).HasMaxLength(255).IsRequired();
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.NameRu).HasMaxLength(255).IsRequired();
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.Description).HasMaxLength(GlobalEventLimits.AchievementTextMaxLength);
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.DescriptionRu).HasMaxLength(GlobalEventLimits.AchievementTextMaxLength);
+            modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.IconUrl).HasMaxLength(500);
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();

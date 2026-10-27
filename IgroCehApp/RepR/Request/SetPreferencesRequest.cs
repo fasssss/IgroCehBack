@@ -1,4 +1,4 @@
-using Domain.Entities;
+using Application.Consts;
 using FastEndpoints;
 using FluentValidation;
 

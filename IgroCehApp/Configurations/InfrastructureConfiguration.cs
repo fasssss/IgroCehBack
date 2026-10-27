@@ -29,8 +29,12 @@ namespace API.Configurations
                         config.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", videoGamesCriticOptions.ApiKey);
                     }
                 });
+            services.AddRefitClient<ISteamWebApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<SteamApiOptions>>().Value.Address ?? ""));
             services.AddMemoryCache();
             services.AddTransient<IGameCatalogService, VideoGamesCriticCatalogService>();
+            services.AddTransient<ISteamService, SteamService>();
             return services;
         }
     }

@@ -1,10 +1,12 @@
 using API.Authentication;
+using API.Authorization;
 using API.Configurations;
 using API.Helpers;
 using Application.Configurations;
 using FastEndpoints;
 using FastEndpoints.Swagger;
 using Infrastructure.Configurations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,7 +29,9 @@ builder.Services.AddSingleton<WebSocketHelper>();
 builder.Services
     .AddAuthentication(o =>
         o.AddScheme<CustomAuthenticationHandler>("customAuthenticationScheme", null));
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(o =>
+    o.AddPolicy(AppAdminPolicy.Name, policy => policy.AddRequirements(new AppAdminRequirement())));
+builder.Services.AddScoped<IAuthorizationHandler, AppAdminHandler>();
 builder.Services
     .AddFastEndpoints()
     .AddSwaggerDocument();

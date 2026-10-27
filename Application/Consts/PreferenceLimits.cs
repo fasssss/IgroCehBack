@@ -1,4 +1,4 @@
-namespace Domain.Entities
+namespace Application.Consts
 {
     // the database columns and the validation of the preferences share these limits
     public static class PreferenceLimits

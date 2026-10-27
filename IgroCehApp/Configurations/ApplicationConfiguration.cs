@@ -14,6 +14,7 @@ namespace API.Configurations
             services.AddTransient<IPlayerApplicationService, PlayerApplicationService>();
             services.AddTransient<IReviewApplicationService, ReviewApplicationService>();
             services.AddTransient<INewcomerPoolApplicationService, NewcomerPoolApplicationService>();
+            services.AddTransient<IGlobalEventApplicationService, GlobalEventApplicationService>();
             return services;
         }
     }

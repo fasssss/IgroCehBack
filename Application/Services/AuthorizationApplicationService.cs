@@ -83,17 +83,18 @@ namespace Application.Services
             return new AuthorizationResult(userData, authResult);
         }
 
-        public async Task<UserObject> GetUserObjectAsync(string userId)
+        public async Task<CurrentUserObject> GetUserObjectAsync(string userId)
         {
             var existingUser = await _userRepository.GetByIdAsync(userId);
             if(existingUser != null)
             {
-                return  new UserObject() 
+                return  new CurrentUserObject() 
                 {
                     AvatarUrl = existingUser.AvatarUrl,
                     UserName = existingUser.UserName,
                     Email = existingUser.Email,
                     Id = existingUser.Id,
+                    IsAppAdmin = existingUser.IsAppAdmin,
                 };
             }
 

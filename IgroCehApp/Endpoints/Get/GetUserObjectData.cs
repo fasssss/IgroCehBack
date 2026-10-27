@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Get
 {
-    public class GetUserObjectData: EndpointWithoutRequest<Results<Ok<UserObject>, BadRequest<string>>>
+    public class GetUserObjectData: EndpointWithoutRequest<Results<Ok<CurrentUserObject>, BadRequest<string>>>
     {
         private readonly IAuthorizationApplicationService _authorizationApplicationService;
 
@@ -23,7 +23,7 @@ namespace API.Endpoints.Get
             Get("/api/getUserObject");
         }
 
-        public override async Task<Results<Ok<UserObject>, BadRequest<string>>> ExecuteAsync(CancellationToken ct)
+        public override async Task<Results<Ok<CurrentUserObject>, BadRequest<string>>> ExecuteAsync(CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             if (stringId != null)
