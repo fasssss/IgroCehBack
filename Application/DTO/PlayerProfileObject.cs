@@ -17,6 +17,8 @@ namespace Application.DTO
         public PlayerStatisticsObject Statistics { get; set; }
         // platforms of completed games from every guild of the player, most frequent first
         public List<PlatformCountObject> FavoritePlatforms { get; set; }
+        // the badges of the passed global events, the latest first; they don't depend on the guilds
+        public List<PlayerBadgeObject> Badges { get; set; }
     }
 
     public class PlayerGuildObject

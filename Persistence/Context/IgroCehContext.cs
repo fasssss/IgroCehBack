@@ -149,6 +149,7 @@ namespace Persistence.Context
                 .HasForeignKey(ge => ge.CreatorId);
             modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Name).HasMaxLength(GlobalEventLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Description).HasMaxLength(GlobalEventLimits.DescriptionMaxLength);
+            modelBuilder.Entity<GlobalEvent>().Property(ge => ge.BadgeId).HasMaxLength(GlobalEventLimits.BadgeIdMaxLength);
             // deleted global events are left out of every query, like the events of guilds
             modelBuilder.Entity<GlobalEvent>().HasQueryFilter(ge => !ge.IsDeleted);
             modelBuilder.Entity<GlobalEventGame>()

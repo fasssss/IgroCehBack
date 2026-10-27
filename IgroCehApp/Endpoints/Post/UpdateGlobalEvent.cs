@@ -31,7 +31,7 @@ namespace API.Endpoints.Post
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             try
             {
-                var (result, globalEvent) = await _globalEventApplicationService.UpdateAsync(stringId, request.GlobalEventId, request.Name, request.Description,
+                var (result, globalEvent) = await _globalEventApplicationService.UpdateAsync(stringId, request.GlobalEventId, request.Name, request.Description, request.BadgeId,
                     request.Games, ct);
                 switch (result)
                 {
@@ -43,6 +43,8 @@ namespace API.Endpoints.Post
                         return TypedResults.BadRequest("A game has no such achievement in Steam");
                     case UpdateGlobalEventResult.GamesLocked:
                         return TypedResults.Conflict("Players have rolled the games, they can't change");
+                    case UpdateGlobalEventResult.BadgeLocked:
+                        return TypedResults.Conflict("Players have got the badge, it can't change");
                 }
 
                 return TypedResults.Ok(new GlobalEventResponse { GlobalEvent = globalEvent });

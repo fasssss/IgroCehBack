@@ -15,12 +15,15 @@ namespace Application.Services
         private static readonly int[] RewardValues = { 3, 2, 1, 0 };
 
         private readonly IUserRepository _userRepository;
+        private readonly IGlobalEventParticipantRepository _participantRepository;
         private readonly IEventRepository _eventRepository;
         private readonly IPreferenceRepository _preferenceRepository;
 
-        public PlayerApplicationService(IUserRepository userRepository, IEventRepository eventRepository, IPreferenceRepository preferenceRepository)
+        public PlayerApplicationService(IUserRepository userRepository, IEventRepository eventRepository, IPreferenceRepository preferenceRepository,
+            IGlobalEventParticipantRepository participantRepository)
         {
             _userRepository = userRepository;
+            _participantRepository = participantRepository;
             _eventRepository = eventRepository;
             _preferenceRepository = preferenceRepository;
         }
@@ -138,6 +141,18 @@ namespace Application.Services
                     IsNewcomer = er.NewcomerPoolGameId != null,
                 }));
 
+            // the same badge of two events is shown twice, each with its event
+            var badges = await _participantRepository.CustomToListAsync(_participantRepository
+                .Where(p => p.UserId == playerId && p.PassedAt != null && p.GlobalEvent.BadgeId != null)
+                .OrderByDescending(p => p.PassedAt)
+                .Select(p => new PlayerBadgeObject
+                {
+                    BadgeId = p.GlobalEvent.BadgeId,
+                    GlobalEventId = p.GlobalEventId,
+                    GlobalEventName = p.GlobalEvent.Name,
+                    PassedAt = p.PassedAt,
+                }));
+
             return new PlayerProfileObject
             {
                 Id = player.Id,
@@ -150,6 +165,7 @@ namespace Application.Services
                 Statistics = CalculateStatistics(playerId, selectedGuilds,
                     guildId == null ? records : records.Where(r => r.GuildId == guildId).ToList()),
                 FavoritePlatforms = CalculateFavoritePlatforms(playerId, records),
+                Badges = badges.ToList(),
             };
         }
 

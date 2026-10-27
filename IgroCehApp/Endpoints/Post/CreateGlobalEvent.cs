@@ -31,7 +31,8 @@ namespace API.Endpoints.Post
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             try
             {
-                var (result, globalEvent) = await _globalEventApplicationService.CreateAsync(stringId, request.Name, request.Description, request.Games, ct);
+                var (result, globalEvent) = await _globalEventApplicationService.CreateAsync(stringId, request.Name, request.Description, request.BadgeId,
+                    request.Games, ct);
                 switch (result)
                 {
                     case CreateGlobalEventResult.AlreadyActive:

@@ -6,6 +6,8 @@ namespace Application.DTO
         public string Name { get; set; }
         public string Description { get; set; }
         public string ImageUrl { get; set; }
+        // the badge a player gets for passing the event, the name of a badge image of the front
+        public string BadgeId { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
         // empty while the event is active
         public DateTimeOffset? FinishedAt { get; set; }

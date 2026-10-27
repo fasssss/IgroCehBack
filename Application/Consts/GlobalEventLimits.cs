@@ -5,6 +5,9 @@ namespace Application.Consts
     {
         public const int NameMaxLength = 100;
         public const int DescriptionMaxLength = 2000;
+        // the name of a badge image of the front without the extension
+        public const int BadgeIdMaxLength = 100;
+        public const string BadgeIdPattern = "^[A-Za-z0-9_-]+$";
         // a player rolls three games at once
         public const int MinGames = 3;
         public const int MaxGames = 50;

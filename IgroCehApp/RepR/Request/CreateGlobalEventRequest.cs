@@ -10,6 +10,8 @@ namespace API.RepR.Request
     {
         public string Name { get; set; }
         public string Description { get; set; }
+        // the badge a player gets for passing the event, the name of a badge image of the front
+        public string BadgeId { get; set; }
         public List<NewGlobalEventGameObject> Games { get; set; }
     }
 
@@ -20,6 +22,8 @@ namespace API.RepR.Request
             RuleFor(r => r.Name).Must(name => !string.IsNullOrWhiteSpace(name)).WithMessage("The event needs a name")
                 .MaximumLength(GlobalEventLimits.NameMaxLength);
             RuleFor(r => r.Description).MaximumLength(GlobalEventLimits.DescriptionMaxLength);
+            RuleFor(r => r.BadgeId).Cascade(CascadeMode.Stop).NotEmpty().WithMessage("The event needs a badge for its passing")
+                .MaximumLength(GlobalEventLimits.BadgeIdMaxLength).Matches(GlobalEventLimits.BadgeIdPattern);
             RuleFor(r => r.Games).Cascade(CascadeMode.Stop).NotNull()
                 .Must(games => games.Count >= GlobalEventLimits.MinGames).WithMessage($"A player rolls {GlobalEventLimits.MinGames} games, the event needs at least as many")
                 .Must(games => games.Count <= GlobalEventLimits.MaxGames).WithMessage($"An event can have up to {GlobalEventLimits.MaxGames} games")

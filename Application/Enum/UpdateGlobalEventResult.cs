@@ -10,5 +10,7 @@ namespace Application.Enum
         UnknownAchievement,
         // a player has rolled the games already, they and their achievements can't change
         GamesLocked,
+        // a player has passed the event and got its badge, it can't change
+        BadgeLocked,
     }
 }

@@ -29,7 +29,7 @@ namespace Application.Services
         // the achievements are checked against Steam and kept with their names, the catalog games are saved on the way;
         // the request validation keeps the games distinct and the lists within the limits
         public async Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,
-            List<NewGlobalEventGameObject> games, CancellationToken ct = default)
+            string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
         {
             if (await _globalEventRepository.CustomAnyAsync(_globalEventRepository.Where(IsActive)))
             {
@@ -59,6 +59,7 @@ namespace Application.Services
                 Id = Guid.NewGuid().ToString(),
                 Name = NormalizeName(name),
                 Description = NormalizeDescription(description),
+                BadgeId = badgeId,
                 CreatorId = userId,
                 Games = games.Select((game, index) =>
                 {
@@ -79,9 +80,10 @@ namespace Application.Services
         }
 
         // the games come in full, in their new order; Steam is asked only about the games whose achievements are new or changed,
-        // so the name can be changed while Steam is down; once a player has rolled, the games and their achievements stay as they are
+        // so the name can be changed while Steam is down; once a player has rolled, the games and their achievements stay as they are,
+        // once a player has passed, the badge stays too
         public async Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,
-            string description, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
+            string description, string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
         {
             var globalEvent = await _globalEventRepository.GetWithGamesAsync(globalEventId);
             if (globalEvent == null)
@@ -100,6 +102,12 @@ namespace Application.Services
             if (isGamesChanged && await _globalEventRepository.CustomAnyAsync(_globalEventRepository.Where(ge => ge.Id == globalEventId && ge.Participants.Any())))
             {
                 return (UpdateGlobalEventResult.GamesLocked, null);
+            }
+
+            if (badgeId != globalEvent.BadgeId
+                && await _globalEventRepository.CustomAnyAsync(_globalEventRepository.Where(ge => ge.Id == globalEventId && ge.Participants.Any(p => p.PassedAt != null))))
+            {
+                return (UpdateGlobalEventResult.BadgeLocked, null);
             }
 
             var chosenAchievements = await GetChosenAchievementsAsync(changedGames, ct);
@@ -122,6 +130,7 @@ namespace Application.Services
 
             globalEvent.Name = NormalizeName(name);
             globalEvent.Description = NormalizeDescription(description);
+            globalEvent.BadgeId = badgeId;
             var appIds = games.Select(game => game.AppId).ToHashSet();
             globalEvent.Games.RemoveAll(geg => !appIds.Contains(geg.Game.VgcId.Value));
             foreach (var (game, index) in games.Select((game, index) => (game, index)))
@@ -211,6 +220,21 @@ namespace Application.Services
             return ChangeGlobalEventResult.Changed;
         }
 
+        // the administrator sees which events give a badge already before picking it for another one
+        public async Task<List<GlobalEventBadgeUseObject>> GetBadgeUsesAsync()
+        {
+            return (await _globalEventRepository.CustomToListAsync(_globalEventRepository
+                .Where(ge => ge.BadgeId != null)
+                .OrderByDescending(ge => ge.CreatedAt)
+                .Select(ge => new GlobalEventBadgeUseObject
+                {
+                    BadgeId = ge.BadgeId,
+                    GlobalEventId = ge.Id,
+                    GlobalEventName = ge.Name,
+                    PassedCount = ge.Participants.Count(p => p.PassedAt != null),
+                }))).ToList();
+        }
+
         private static readonly Expression<Func<GlobalEvent, bool>> IsActive = ge => ge.FinishedAt == null;
 
         private static string NormalizeName(string name) => name.Trim();
@@ -281,6 +305,7 @@ namespace Application.Services
                 Name = ge.Name,
                 Description = ge.Description,
                 ImageUrl = ge.ImageUrl,
+                BadgeId = ge.BadgeId,
                 CreatedAt = ge.CreatedAt,
                 FinishedAt = ge.FinishedAt,
                 ParticipantCount = ge.Participants.Count(),
