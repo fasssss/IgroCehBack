@@ -24,6 +24,7 @@ namespace API.Configurations
             services.AddScoped<IPreferenceRepository, PreferenceRepository>();
             services.AddScoped<INewcomerPoolRepository, NewcomerPoolRepository>();
             services.AddScoped<IGlobalEventRepository, GlobalEventRepository>();
+            services.AddScoped<IGlobalEventParticipantRepository, GlobalEventParticipantRepository>();
             return services;
         }
     }

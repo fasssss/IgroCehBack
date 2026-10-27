@@ -58,5 +58,29 @@ namespace Infrastructure.DTO
     {
         [JsonPropertyName("game_count")]
         public int? GameCount { get; set; }
+        public List<SteamOwnedGame> Games { get; set; }
+    }
+
+    public class SteamOwnedGame
+    {
+        public int AppId { get; set; }
+    }
+
+    // GetPlayerAchievements: every achievement of the game, the unlocked ones with the time in Unix seconds
+    public class SteamPlayerAchievementsResponse
+    {
+        public SteamPlayerStats PlayerStats { get; set; }
+    }
+
+    public class SteamPlayerStats
+    {
+        public List<SteamPlayerAchievement> Achievements { get; set; }
+    }
+
+    public class SteamPlayerAchievement
+    {
+        public string ApiName { get; set; }
+        public int Achieved { get; set; }
+        public long UnlockTime { get; set; }
     }
 }

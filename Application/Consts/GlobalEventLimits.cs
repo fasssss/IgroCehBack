@@ -10,5 +10,9 @@ namespace Application.Consts
         public const int MaxGames = 50;
         public const int MaxAchievementsPerGame = 10;
         public const int AchievementTextMaxLength = 1000;
+        // the games of one roll, the player picks one of them
+        public const int RolledGames = 3;
+        // the picked game can be refused for a new roll when this many days have passed since the pick
+        public const int RefusalDelayDays = 7;
     }
 }

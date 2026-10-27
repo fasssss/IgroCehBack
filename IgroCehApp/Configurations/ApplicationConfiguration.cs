@@ -15,6 +15,7 @@ namespace API.Configurations
             services.AddTransient<IReviewApplicationService, ReviewApplicationService>();
             services.AddTransient<INewcomerPoolApplicationService, NewcomerPoolApplicationService>();
             services.AddTransient<IGlobalEventApplicationService, GlobalEventApplicationService>();
+            services.AddTransient<IGlobalEventParticipationApplicationService, GlobalEventParticipationApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();
             return services;
         }

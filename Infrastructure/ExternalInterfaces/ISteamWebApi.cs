@@ -14,8 +14,12 @@ namespace Infrastructure.ExternalInterfaces
         [Get("/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/")]
         public Task<ApiResponse<SteamPercentagesResponse>> GetGlobalAchievementPercentages(int gameid, CancellationToken ct);
 
-        // the games of a player, https://partner.steamgames.com/doc/webapi/IPlayerService
+        // the games of a player, https://partner.steamgames.com/doc/webapi/IPlayerService; 1 adds the free games the player has played
         [Get("/IPlayerService/GetOwnedGames/v1/")]
-        public Task<ApiResponse<SteamOwnedGamesResponse>> GetOwnedGames(string key, string steamid, CancellationToken ct);
+        public Task<ApiResponse<SteamOwnedGamesResponse>> GetOwnedGames(string key, string steamid, int include_played_free_games, CancellationToken ct);
+
+        // the achievements of a player in a game; 403 for hidden game details, 400 for a game without stats of the player, e.g. one they don't own
+        [Get("/ISteamUserStats/GetPlayerAchievements/v1/")]
+        public Task<ApiResponse<SteamPlayerAchievementsResponse>> GetPlayerAchievements(string key, string steamid, int appid, CancellationToken ct);
     }
 }

@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace API.Endpoints.Post
 {
     // the administrator of the site changes the name, the description and the games of a global event
-    public class UpdateGlobalEvent : Endpoint<UpdateGlobalEventRequest, Results<Ok<GlobalEventResponse>, NotFound, BadRequest<string>, StatusCodeHttpResult>>
+    public class UpdateGlobalEvent : Endpoint<UpdateGlobalEventRequest, Results<Ok<GlobalEventResponse>, NotFound, BadRequest<string>, Conflict<string>, StatusCodeHttpResult>>
     {
         private readonly IGlobalEventApplicationService _globalEventApplicationService;
 
@@ -26,7 +26,7 @@ namespace API.Endpoints.Post
             Policies(AppAdminPolicy.Name);
         }
 
-        public override async Task<Results<Ok<GlobalEventResponse>, NotFound, BadRequest<string>, StatusCodeHttpResult>> ExecuteAsync(UpdateGlobalEventRequest request, CancellationToken ct)
+        public override async Task<Results<Ok<GlobalEventResponse>, NotFound, BadRequest<string>, Conflict<string>, StatusCodeHttpResult>> ExecuteAsync(UpdateGlobalEventRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
             try
@@ -41,6 +41,8 @@ namespace API.Endpoints.Post
                         return TypedResults.BadRequest("A game isn't in the catalog");
                     case UpdateGlobalEventResult.UnknownAchievement:
                         return TypedResults.BadRequest("A game has no such achievement in Steam");
+                    case UpdateGlobalEventResult.GamesLocked:
+                        return TypedResults.Conflict("Players have rolled the games, they can't change");
                 }
 
                 return TypedResults.Ok(new GlobalEventResponse { GlobalEvent = globalEvent });

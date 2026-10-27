@@ -355,6 +355,73 @@ namespace Persistence.Migrations
                     b.ToTable("GlobalEventGames");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("GlobalEventId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("PickedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PickedGameId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset>("RolledAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PickedGameId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("GlobalEventId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("GlobalEventParticipants");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GlobalEventRolledGame", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("GlobalEventGameId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ParticipantId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalEventGameId");
+
+                    b.HasIndex("ParticipantId");
+
+                    b.ToTable("GlobalEventRolledGames");
+                });
+
             modelBuilder.Entity("Domain.Entities.Guild", b =>
                 {
                     b.Property<string>("Id")
@@ -931,6 +998,51 @@ namespace Persistence.Migrations
                     b.Navigation("GlobalEvent");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
+                {
+                    b.HasOne("Domain.Entities.GlobalEvent", "GlobalEvent")
+                        .WithMany("Participants")
+                        .HasForeignKey("GlobalEventId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.GlobalEventGame", "PickedGame")
+                        .WithMany()
+                        .HasForeignKey("PickedGameId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GlobalEvent");
+
+                    b.Navigation("PickedGame");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GlobalEventRolledGame", b =>
+                {
+                    b.HasOne("Domain.Entities.GlobalEventGame", "GlobalEventGame")
+                        .WithMany()
+                        .HasForeignKey("GlobalEventGameId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.GlobalEventParticipant", "Participant")
+                        .WithMany("RolledGames")
+                        .HasForeignKey("ParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GlobalEventGame");
+
+                    b.Navigation("Participant");
+                });
+
             modelBuilder.Entity("Domain.Entities.NewcomerPoolGame", b =>
                 {
                     b.HasOne("Domain.Entities.User", "Author")
@@ -1042,11 +1154,18 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.GlobalEvent", b =>
                 {
                     b.Navigation("Games");
+
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("Domain.Entities.GlobalEventGame", b =>
                 {
                     b.Navigation("Achievements");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
+                {
+                    b.Navigation("RolledGames");
                 });
 
             modelBuilder.Entity("Domain.Entities.Guild", b =>

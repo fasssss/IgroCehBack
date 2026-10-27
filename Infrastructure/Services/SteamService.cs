@@ -8,6 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Refit;
+using System.Net;
 
 namespace Infrastructure.Services
 {
@@ -37,10 +38,7 @@ namespace Infrastructure.Services
                 return cachedAchievements;
             }
 
-            if (string.IsNullOrWhiteSpace(_options.Key))
-            {
-                throw new SteamUnavailableException("There is no Steam Web API key");
-            }
+            RequireKey();
 
             // the names come in the language asked for, so the schema is read for both languages of the site
             var english = SendAsync(() => _steamWebApi.GetSchemaForGame(_options.Key, appId, "english", ct), ct);
@@ -73,14 +71,47 @@ namespace Infrastructure.Services
 
         public async Task<bool> IsGameDataPublicAsync(string steamId, CancellationToken ct = default)
         {
+            return await GetOwnedAppIdsAsync(steamId, ct) != null;
+        }
+
+        public async Task<HashSet<int>> GetOwnedAppIdsAsync(string steamId, CancellationToken ct = default)
+        {
+            RequireKey();
+
+            // an open profile without games still has the count, hidden game details give an empty response
+            var ownedGames = await SendAsync(() => _steamWebApi.GetOwnedGames(_options.Key, steamId, 1, ct), ct);
+            return ownedGames.Response?.GameCount == null
+                ? null
+                : (ownedGames.Response.Games ?? new List<SteamOwnedGame>()).Select(g => g.AppId).ToHashSet();
+        }
+
+        public async Task<Dictionary<string, DateTimeOffset>> GetUnlockedAchievementsAsync(string steamId, int appId, CancellationToken ct = default)
+        {
+            RequireKey();
+
+            var response = await RequestAsync(() => _steamWebApi.GetPlayerAchievements(_options.Key, steamId, appId, ct), ct);
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                return null;
+            }
+
+            if (response.StatusCode == HttpStatusCode.BadRequest)
+            {
+                return new Dictionary<string, DateTimeOffset>();
+            }
+
+            return (Successful(response).PlayerStats?.Achievements ?? new List<SteamPlayerAchievement>())
+                .Where(a => a.Achieved != 0)
+                .GroupBy(a => a.ApiName)
+                .ToDictionary(group => group.Key, group => DateTimeOffset.FromUnixTimeSeconds(group.First().UnlockTime));
+        }
+
+        private void RequireKey()
+        {
             if (string.IsNullOrWhiteSpace(_options.Key))
             {
                 throw new SteamUnavailableException("There is no Steam Web API key");
             }
-
-            // an open profile without games still has the count, hidden game details give an empty response
-            var ownedGames = await SendAsync(() => _steamWebApi.GetOwnedGames(_options.Key, steamId, ct), ct);
-            return ownedGames.Response?.GameCount != null;
         }
 
         private static List<SteamSchemaAchievement> Achievements(SteamSchemaResponse schema) =>
@@ -106,17 +137,24 @@ namespace Infrastructure.Services
 
         private async Task<T> SendAsync<T>(Func<Task<ApiResponse<T>>> request, CancellationToken ct)
         {
-            ApiResponse<T> response;
+            return Successful(await RequestAsync(request, ct));
+        }
+
+        private async Task<ApiResponse<T>> RequestAsync<T>(Func<Task<ApiResponse<T>>> request, CancellationToken ct)
+        {
             try
             {
-                response = await request();
+                return await request();
             }
             catch (Exception e) when ((e is HttpRequestException or ApiException or TaskCanceledException) && !ct.IsCancellationRequested)
             {
                 _logger.LogError(e, "Steam can't be reached");
                 throw new SteamUnavailableException("Steam can't be reached", e);
             }
+        }
 
+        private T Successful<T>(ApiResponse<T> response)
+        {
             if (!response.IsSuccessStatusCode || response.Content == null)
             {
                 _logger.LogError(response.Error, "Steam answered with {StatusCode}", (int)response.StatusCode);

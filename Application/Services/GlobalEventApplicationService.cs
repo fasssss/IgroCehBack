@@ -79,7 +79,7 @@ namespace Application.Services
         }
 
         // the games come in full, in their new order; Steam is asked only about the games whose achievements are new or changed,
-        // so the name can be changed while Steam is down
+        // so the name can be changed while Steam is down; once a player has rolled, the games and their achievements stay as they are
         public async Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,
             string description, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
         {
@@ -95,6 +95,13 @@ namespace Application.Services
                 .Where(game => !keptGames.TryGetValue(game.AppId, out var geg)
                     || !geg.Achievements.Select(a => a.ApiName).ToHashSet().SetEquals(game.AchievementApiNames))
                 .ToList();
+            // the games are distinct, so without new or changed ones a list of the same length is the same games, maybe in another order
+            var isGamesChanged = changedGames.Count > 0 || games.Count != keptGames.Count;
+            if (isGamesChanged && await _globalEventRepository.CustomAnyAsync(_globalEventRepository.Where(ge => ge.Id == globalEventId && ge.Participants.Any())))
+            {
+                return (UpdateGlobalEventResult.GamesLocked, null);
+            }
+
             var chosenAchievements = await GetChosenAchievementsAsync(changedGames, ct);
             if (chosenAchievements == null)
             {
@@ -276,6 +283,7 @@ namespace Application.Services
                 ImageUrl = ge.ImageUrl,
                 CreatedAt = ge.CreatedAt,
                 FinishedAt = ge.FinishedAt,
+                ParticipantCount = ge.Participants.Count(),
                 Games = ge.Games
                     .OrderBy(geg => geg.Order)
                     .Select(geg => new GlobalEventGameObject

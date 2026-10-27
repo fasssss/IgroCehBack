@@ -33,6 +33,8 @@ namespace Persistence.Context
         public DbSet<GlobalEvent> GlobalEvents { get; set; }
         public DbSet<GlobalEventGame> GlobalEventGames { get; set; }
         public DbSet<GlobalEventAchievement> GlobalEventAchievements { get; set; }
+        public DbSet<GlobalEventParticipant> GlobalEventParticipants { get; set; }
+        public DbSet<GlobalEventRolledGame> GlobalEventRolledGames { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -171,6 +173,36 @@ namespace Persistence.Context
             modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.Description).HasMaxLength(GlobalEventLimits.AchievementTextMaxLength);
             modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.DescriptionRu).HasMaxLength(GlobalEventLimits.AchievementTextMaxLength);
             modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.IconUrl).HasMaxLength(500);
+            modelBuilder.Entity<GlobalEventParticipant>()
+                .HasOne(p => p.GlobalEvent)
+                .WithMany(ge => ge.Participants)
+                .HasForeignKey(p => p.GlobalEventId);
+            modelBuilder.Entity<GlobalEventParticipant>()
+                .HasOne(p => p.User)
+                .WithMany()
+                .HasForeignKey(p => p.UserId);
+            // the games of an event with participants don't change, so a picked or rolled game is never removed
+            modelBuilder.Entity<GlobalEventParticipant>()
+                .HasOne(p => p.PickedGame)
+                .WithMany()
+                .HasForeignKey(p => p.PickedGameId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // a player takes part in an event once
+            modelBuilder.Entity<GlobalEventParticipant>().HasIndex(p => new { p.GlobalEventId, p.UserId }).IsUnique();
+            // of two rolls or picks at once the second fails to save instead of mixing with the first
+            modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.RolledAt).IsConcurrencyToken();
+            modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.PickedAt).IsConcurrencyToken();
+            modelBuilder.Entity<GlobalEventParticipant>().HasQueryFilter(p => !p.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventRolledGame>()
+                .HasOne(rg => rg.Participant)
+                .WithMany(p => p.RolledGames)
+                .HasForeignKey(rg => rg.ParticipantId);
+            modelBuilder.Entity<GlobalEventRolledGame>()
+                .HasOne(rg => rg.GlobalEventGame)
+                .WithMany()
+                .HasForeignKey(rg => rg.GlobalEventGameId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GlobalEventRolledGame>().HasQueryFilter(rg => !rg.Participant.GlobalEvent.IsDeleted);
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();
