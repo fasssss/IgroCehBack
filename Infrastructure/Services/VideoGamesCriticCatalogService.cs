@@ -2,10 +2,12 @@ using System.Net;
 using Application.DTO;
 using Application.Exceptions;
 using Application.Interfaces;
+using Infrastructure.Configurations;
 using Infrastructure.DTO;
 using Infrastructure.ExternalInterfaces;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Refit;
 
 namespace Infrastructure.Services
@@ -22,14 +24,17 @@ namespace Infrastructure.Services
         private readonly IVideoGamesCriticApi _videoGamesCriticApi;
         private readonly IMemoryCache _cache;
         private readonly ILogger<VideoGamesCriticCatalogService> _logger;
+        private readonly Uri _catalogAddress;
 
         public VideoGamesCriticCatalogService(IVideoGamesCriticApi videoGamesCriticApi,
             IMemoryCache cache,
-            ILogger<VideoGamesCriticCatalogService> logger)
+            ILogger<VideoGamesCriticCatalogService> logger,
+            IOptions<VideoGamesCriticOptions> options)
         {
             _videoGamesCriticApi = videoGamesCriticApi;
             _cache = cache;
             _logger = logger;
+            _catalogAddress = new Uri(options.Value.Address);
         }
 
         public async Task<List<CatalogGameObject>> SearchGamesAsync(string query, CancellationToken ct = default)
@@ -110,14 +115,14 @@ namespace Infrastructure.Services
             }
         }
 
-        private static CatalogGameObject ToCatalogGame(VgcGame game)
+        private CatalogGameObject ToCatalogGame(VgcGame game)
         {
             return new CatalogGameObject
             {
                 VgcId = game.Id,
                 Name = game.Name,
                 ReleaseDate = game.ReleaseDate,
-                CoverUrl = game.Art?.Cover,
+                CoverUrl = ToAbsoluteUrl(game.Art?.Cover),
                 PageUrl = game.Links?.Page ?? game.Url,
                 // catalog ids are Steam app ids, search results come without store links
                 SteamUrl = game.Links?.Steam ?? $"https://store.steampowered.com/app/{game.Id}/",
@@ -125,6 +130,19 @@ namespace Infrastructure.Services
                 CriticsScore = Round(game.Scores?.Critics),
                 PlayersScore = Round(game.Scores?.Players),
             };
+        }
+
+        // a cover that isn't on Steam comes through the image proxy of the catalog as a path on its site,
+        // e.g. /api/img?u=<the original image>&w=480, a small webp the catalog caches for good;
+        // the path is read as relative on purpose: on Linux a string starting with a slash is an absolute file path to Uri
+        private string ToAbsoluteUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url) || url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                return url;
+            }
+
+            return Uri.TryCreate(url, UriKind.Relative, out var path) ? new Uri(_catalogAddress, path).AbsoluteUri : null;
         }
 
         private static int? Round(double? score) => score.HasValue ? (int)Math.Round(score.Value) : null;
