@@ -10,12 +10,15 @@ namespace Application.Services
     public class GlobalEventApplicationService : IGlobalEventApplicationService
     {
         private readonly IGlobalEventRepository _globalEventRepository;
+        private readonly IBadgeRepository _badgeRepository;
         private readonly IGameApplicationService _gameApplicationService;
         private readonly ISteamService _steamService;
 
-        public GlobalEventApplicationService(IGlobalEventRepository globalEventRepository, IGameApplicationService gameApplicationService, ISteamService steamService)
+        public GlobalEventApplicationService(IGlobalEventRepository globalEventRepository, IBadgeRepository badgeRepository,
+            IGameApplicationService gameApplicationService, ISteamService steamService)
         {
             _globalEventRepository = globalEventRepository;
+            _badgeRepository = badgeRepository;
             _gameApplicationService = gameApplicationService;
             _steamService = steamService;
         }
@@ -34,6 +37,11 @@ namespace Application.Services
             if (await _globalEventRepository.CustomAnyAsync(_globalEventRepository.Where(IsActive)))
             {
                 return (CreateGlobalEventResult.AlreadyActive, null);
+            }
+
+            if (!await IsBadgeAsync(badgeId))
+            {
+                return (CreateGlobalEventResult.UnknownBadge, null);
             }
 
             var chosenAchievements = await GetChosenAchievementsAsync(games, ct);
@@ -89,6 +97,11 @@ namespace Application.Services
             if (globalEvent == null)
             {
                 return (UpdateGlobalEventResult.NotFound, null);
+            }
+
+            if (!await IsBadgeAsync(badgeId))
+            {
+                return (UpdateGlobalEventResult.UnknownBadge, null);
             }
 
             // the games of a global event always come from the catalog
@@ -220,24 +233,11 @@ namespace Application.Services
             return ChangeGlobalEventResult.Changed;
         }
 
-        // the administrator sees which events give a badge already before picking it for another one
-        public async Task<List<GlobalEventBadgeUseObject>> GetBadgeUsesAsync()
-        {
-            return (await _globalEventRepository.CustomToListAsync(_globalEventRepository
-                .Where(ge => ge.BadgeId != null)
-                .OrderByDescending(ge => ge.CreatedAt)
-                .Select(ge => new GlobalEventBadgeUseObject
-                {
-                    BadgeId = ge.BadgeId,
-                    GlobalEventId = ge.Id,
-                    GlobalEventName = ge.Name,
-                    PassedCount = ge.Participants.Count(p => p.PassedAt != null),
-                }))).ToList();
-        }
-
         private static readonly Expression<Func<GlobalEvent, bool>> IsActive = ge => ge.FinishedAt == null;
 
         private static string NormalizeName(string name) => name.Trim();
+
+        private async Task<bool> IsBadgeAsync(string badgeId) => await _badgeRepository.CustomAnyAsync(_badgeRepository.Where(b => b.Id == badgeId));
 
         private static string NormalizeDescription(string description) =>
             string.IsNullOrWhiteSpace(description) ? null : description.Trim().Replace("\r\n", "\n");

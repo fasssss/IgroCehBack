@@ -12,5 +12,7 @@ namespace Application.Enum
         GamesLocked,
         // a player has passed the event and got its badge, it can't change
         BadgeLocked,
+        // there is no such badge
+        UnknownBadge,
     }
 }

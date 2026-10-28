@@ -36,6 +36,7 @@ namespace Persistence.Context
         public DbSet<GlobalEventParticipant> GlobalEventParticipants { get; set; }
         public DbSet<GlobalEventRolledGame> GlobalEventRolledGames { get; set; }
         public DbSet<GlobalEventClaim> GlobalEventClaims { get; set; }
+        public DbSet<Badge> Badges { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -149,7 +150,13 @@ namespace Persistence.Context
                 .HasForeignKey(ge => ge.CreatorId);
             modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Name).HasMaxLength(GlobalEventLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<GlobalEvent>().Property(ge => ge.Description).HasMaxLength(GlobalEventLimits.DescriptionMaxLength);
-            modelBuilder.Entity<GlobalEvent>().Property(ge => ge.BadgeId).HasMaxLength(GlobalEventLimits.BadgeIdMaxLength);
+            // a badge some event gives can't be deleted
+            modelBuilder.Entity<GlobalEvent>()
+                .HasOne<Badge>()
+                .WithMany()
+                .HasForeignKey(ge => ge.BadgeId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<GlobalEvent>().Property(ge => ge.BadgeId).HasMaxLength(BadgeLimits.IdMaxLength);
             // deleted global events are left out of every query, like the events of guilds
             modelBuilder.Entity<GlobalEvent>().HasQueryFilter(ge => !ge.IsDeleted);
             modelBuilder.Entity<GlobalEventGame>()
@@ -224,6 +231,10 @@ namespace Persistence.Context
             // of two administrators deciding a claim at once the second fails to save
             modelBuilder.Entity<GlobalEventClaim>().Property(c => c.Status).IsConcurrencyToken();
             modelBuilder.Entity<GlobalEventClaim>().HasQueryFilter(c => !c.Participant.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<Badge>().Property(b => b.Id).HasMaxLength(BadgeLimits.IdMaxLength);
+            modelBuilder.Entity<Badge>().Property(b => b.Name).HasMaxLength(BadgeLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<Badge>().Property(b => b.Content).IsRequired();
+            modelBuilder.Entity<Badge>().Property(b => b.ContentType).HasMaxLength(BadgeLimits.ContentTypeMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();

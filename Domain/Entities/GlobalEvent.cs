@@ -8,8 +8,8 @@ namespace Domain.Entities
         public string Name { get; set; }
         public string? Description { get; set; }
         public string? ImageUrl { get; set; }
-        // the badge a player gets for passing the event: the name of an image of the front (src/assets/Achievements) without the extension;
-        // empty for the events made before the badges
+        // the badge a player gets for passing the event, empty for the events made before the badges;
+        // there is no navigation to it: the base repository includes every navigation, and the badge carries its image
         public string? BadgeId { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }

@@ -19,7 +19,5 @@ namespace Application.ApplicationInterfaces
         public Task<GlobalEventObject> GetAsync(string globalEventId);
         public Task<ChangeGlobalEventResult> FinishAsync(string userId, string globalEventId);
         public Task<ChangeGlobalEventResult> DeleteAsync(string userId, string globalEventId);
-        // every global event that gives a badge, the latest first
-        public Task<List<GlobalEventBadgeUseObject>> GetBadgeUsesAsync();
     }
 }

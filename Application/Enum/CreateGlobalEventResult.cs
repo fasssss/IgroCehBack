@@ -9,5 +9,7 @@ namespace Application.Enum
         UnknownGame,
         // an achievement isn't among the achievements of its game in Steam
         UnknownAchievement,
+        // there is no such badge
+        UnknownBadge,
     }
 }
