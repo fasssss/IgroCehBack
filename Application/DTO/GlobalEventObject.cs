@@ -1,3 +1,5 @@
+using Application.Enum;
+
 namespace Application.DTO
 {
     public class GlobalEventObject
@@ -23,12 +25,17 @@ namespace Application.DTO
         public GameObject Game { get; set; }
         // the Steam app id, the same as the catalog id of the game
         public int AppId { get; set; }
-        // any one of them unlocked means the game is passed
+        // the game in Xbox the Xbox achievements belong to, empty without them
+        public string XboxTitleId { get; set; }
+        public string XboxTitleName { get; set; }
+        // any one of them unlocked means the game is passed; the Steam ones first
         public List<GlobalEventAchievementObject> Achievements { get; set; }
     }
 
     public class GlobalEventAchievementObject
     {
+        public AchievementPlatform Platform { get; set; }
+        // the API name in Steam or the id in Xbox
         public string ApiName { get; set; }
         public string Name { get; set; }
         public string NameRu { get; set; }
@@ -41,6 +48,10 @@ namespace Application.DTO
     public class NewGlobalEventGameObject
     {
         public int AppId { get; set; }
+        // in Steam
         public List<string> AchievementApiNames { get; set; }
+        // the game in Xbox, needed only with Xbox achievements
+        public string XboxTitleId { get; set; }
+        public List<string> XboxAchievementIds { get; set; } = new List<string>();
     }
 }

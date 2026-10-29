@@ -355,9 +355,12 @@ namespace Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("GlobalEventGameId", "ApiName")
+                    b.HasIndex("GlobalEventGameId", "Platform", "ApiName")
                         .IsUnique();
 
                     b.ToTable("GlobalEventAchievements");
@@ -430,6 +433,14 @@ namespace Persistence.Migrations
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
+
+                    b.Property<string>("XboxTitleId")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<string>("XboxTitleName")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
 
                     b.HasKey("Id");
 

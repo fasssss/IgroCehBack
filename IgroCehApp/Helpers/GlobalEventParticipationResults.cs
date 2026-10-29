@@ -31,6 +31,7 @@ namespace API.Helpers
             ParticipateGlobalEventResult.ClaimPending => "A claim is under review",
             ParticipateGlobalEventResult.NoSteam => "Steam isn't linked",
             ParticipateGlobalEventResult.NoAchievements => "The game has no achievements, only a claim proves its passing",
+            ParticipateGlobalEventResult.NoSteamAchievements => "The game has no achievements in Steam",
             _ => "The roll was changed by another request",
         };
     }

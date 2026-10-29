@@ -3,6 +3,7 @@ using Application.DTO;
 using Application.Enum;
 using Application.Interfaces;
 using Domain.Entities;
+using Domain.Enums;
 using System.Linq.Expressions;
 
 namespace Application.Services
@@ -13,14 +14,16 @@ namespace Application.Services
         private readonly IBadgeRepository _badgeRepository;
         private readonly IGameApplicationService _gameApplicationService;
         private readonly ISteamService _steamService;
+        private readonly IXboxService _xboxService;
 
         public GlobalEventApplicationService(IGlobalEventRepository globalEventRepository, IBadgeRepository badgeRepository,
-            IGameApplicationService gameApplicationService, ISteamService steamService)
+            IGameApplicationService gameApplicationService, ISteamService steamService, IXboxService xboxService)
         {
             _globalEventRepository = globalEventRepository;
             _badgeRepository = badgeRepository;
             _gameApplicationService = gameApplicationService;
             _steamService = steamService;
+            _xboxService = xboxService;
         }
 
         // the achievements the administrator picks from: the catalog id of a game (Game.VgcId) is its Steam app id
@@ -29,7 +32,18 @@ namespace Application.Services
             return await _steamService.GetAchievementsAsync(appId, ct);
         }
 
-        // the achievements are checked against Steam and kept with their names, the catalog games are saved on the way;
+        // the catalog knows no Xbox title ids, so the game is looked for in the Microsoft Store by its name
+        public async Task<List<XboxTitleObject>> SearchXboxTitlesAsync(string query, CancellationToken ct = default)
+        {
+            return await _xboxService.SearchTitlesAsync(query, ct);
+        }
+
+        public async Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default)
+        {
+            return await _xboxService.GetTitleAchievementsAsync(titleId, ct);
+        }
+
+        // the achievements are checked against Steam and Xbox and kept with their names, the catalog games are saved on the way;
         // the request validation keeps the games distinct and the lists within the limits
         public async Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,
             string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
@@ -87,8 +101,8 @@ namespace Application.Services
             return (CreateGlobalEventResult.Created, await GetAsync(globalEvent.Id));
         }
 
-        // the games come in full, in their new order; Steam is asked only about the games whose achievements are new or changed,
-        // so the name can be changed while Steam is down; once a player has rolled, the games and their achievements stay as they are,
+        // the games come in full, in their new order; Steam and Xbox are asked only about the games whose achievements are new or changed,
+        // so the name can be changed while they are down; once a player has rolled, the games and their achievements stay as they are,
         // once a player has passed, the badge stays too
         public async Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,
             string description, string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default)
@@ -107,8 +121,7 @@ namespace Application.Services
             // the games of a global event always come from the catalog
             var keptGames = globalEvent.Games.ToDictionary(geg => geg.Game.VgcId.Value);
             var changedGames = games
-                .Where(game => !keptGames.TryGetValue(game.AppId, out var geg)
-                    || !geg.Achievements.Select(a => a.ApiName).ToHashSet().SetEquals(game.AchievementApiNames))
+                .Where(game => !keptGames.TryGetValue(game.AppId, out var geg) || !IsSameAchievements(geg, game))
                 .ToList();
             // the games are distinct, so without new or changed ones a list of the same length is the same games, maybe in another order
             var isGamesChanged = changedGames.Count > 0 || games.Count != keptGames.Count;
@@ -242,24 +255,55 @@ namespace Application.Services
         private static string NormalizeDescription(string description) =>
             string.IsNullOrWhiteSpace(description) ? null : description.Trim().Replace("\r\n", "\n");
 
-        // Steam is asked about every game with achievements before anything is saved: the chosen achievements of each game in the order of Steam,
-        // null when a game has no such achievement; a game without achievements is passed only by a claim checked by hand
-        private async Task<Dictionary<int, List<SteamAchievementObject>>> GetChosenAchievementsAsync(List<NewGlobalEventGameObject> games, CancellationToken ct)
+        // the Xbox achievements count only together with their game in Xbox
+        private static bool IsSameAchievements(GlobalEventGame globalEventGame, NewGlobalEventGameObject game)
         {
-            var chosenAchievements = new Dictionary<int, List<SteamAchievementObject>>();
+            var xboxIds = game.XboxAchievementIds ?? new List<string>();
+            return ApiNames(globalEventGame, GlobalEventAchievementPlatform.Steam).SetEquals(game.AchievementApiNames)
+                && ApiNames(globalEventGame, GlobalEventAchievementPlatform.Xbox).SetEquals(xboxIds)
+                && (xboxIds.Count == 0 || globalEventGame.XboxTitleId == game.XboxTitleId);
+        }
+
+        private static HashSet<string> ApiNames(GlobalEventGame globalEventGame, GlobalEventAchievementPlatform platform) =>
+            globalEventGame.Achievements.Where(a => a.Platform == platform).Select(a => a.ApiName).ToHashSet();
+
+        // the chosen achievements of a game in Steam and in Xbox, the Xbox ones with their game in Xbox
+        private class ChosenAchievements
+        {
+            public List<SteamAchievementObject> Steam { get; set; } = new List<SteamAchievementObject>();
+            // null without Xbox achievements, its list holds only the chosen ones
+            public XboxTitleAchievementsObject XboxTitle { get; set; }
+        }
+
+        // Steam and Xbox are asked about every game with achievements before anything is saved: the chosen achievements of each game
+        // in the order of the platform, null when a game has no such achievement; a game without achievements is passed only by a claim
+        private async Task<Dictionary<int, ChosenAchievements>> GetChosenAchievementsAsync(List<NewGlobalEventGameObject> games, CancellationToken ct)
+        {
+            var chosenAchievements = new Dictionary<int, ChosenAchievements>();
             foreach (var game in games)
             {
-                if (game.AchievementApiNames.Count == 0)
+                var chosen = new ChosenAchievements();
+                if (game.AchievementApiNames.Count > 0)
                 {
-                    chosenAchievements[game.AppId] = new List<SteamAchievementObject>();
-                    continue;
+                    var steamAchievements = await _steamService.GetAchievementsAsync(game.AppId, ct);
+                    chosen.Steam = steamAchievements.Where(a => game.AchievementApiNames.Contains(a.ApiName)).ToList();
+                    if (chosen.Steam.Count != game.AchievementApiNames.Count)
+                    {
+                        return null;
+                    }
                 }
 
-                var steamAchievements = await _steamService.GetAchievementsAsync(game.AppId, ct);
-                var chosen = steamAchievements.Where(a => game.AchievementApiNames.Contains(a.ApiName)).ToList();
-                if (chosen.Count != game.AchievementApiNames.Count)
+                var xboxIds = game.XboxAchievementIds ?? new List<string>();
+                if (xboxIds.Count > 0)
                 {
-                    return null;
+                    var xboxTitle = await _xboxService.GetTitleAchievementsAsync(game.XboxTitleId, ct);
+                    var chosenXbox = xboxTitle?.Achievements.Where(a => xboxIds.Contains(a.ApiName)).ToList();
+                    if (chosenXbox == null || chosenXbox.Count != xboxIds.Count)
+                    {
+                        return null;
+                    }
+
+                    chosen.XboxTitle = new XboxTitleAchievementsObject { TitleId = xboxTitle.TitleId, Name = xboxTitle.Name, Achievements = chosenXbox };
                 }
 
                 chosenAchievements[game.AppId] = chosen;
@@ -269,25 +313,33 @@ namespace Application.Services
         }
 
         // the achievements that stay keep their rows, so an API name of a game is never deleted and added again in one save
-        private static void SetAchievements(GlobalEventGame globalEventGame, List<SteamAchievementObject> chosen)
+        private static void SetAchievements(GlobalEventGame globalEventGame, ChosenAchievements chosen)
         {
-            var apiNames = chosen.Select(a => a.ApiName).ToHashSet();
-            globalEventGame.Achievements.RemoveAll(a => !apiNames.Contains(a.ApiName));
-            foreach (var (achievement, order) in chosen.Select((achievement, order) => (achievement, order)))
+            var all = chosen.Steam
+                .Select(a => (Platform: GlobalEventAchievementPlatform.Steam, a.ApiName, a.Name, a.NameRu, a.Description, a.DescriptionRu, a.IconUrl))
+                .Concat((chosen.XboxTitle?.Achievements ?? new List<XboxAchievementObject>())
+                    .Select(a => (Platform: GlobalEventAchievementPlatform.Xbox, a.ApiName, a.Name, a.NameRu, a.Description, a.DescriptionRu, a.IconUrl)))
+                .ToList();
+            globalEventGame.XboxTitleId = chosen.XboxTitle?.TitleId;
+            globalEventGame.XboxTitleName = chosen.XboxTitle?.Name;
+            var keys = all.Select(a => (a.Platform, a.ApiName)).ToHashSet();
+            globalEventGame.Achievements.RemoveAll(a => !keys.Contains((a.Platform, a.ApiName)));
+            foreach (var (achievement, order) in all.Select((achievement, order) => (achievement, order)))
             {
-                var kept = globalEventGame.Achievements.FirstOrDefault(a => a.ApiName == achievement.ApiName);
+                var kept = globalEventGame.Achievements.FirstOrDefault(a => a.Platform == achievement.Platform && a.ApiName == achievement.ApiName);
                 if (kept == null)
                 {
                     kept = new GlobalEventAchievement
                     {
                         Id = Guid.NewGuid().ToString(),
+                        Platform = achievement.Platform,
                         ApiName = achievement.ApiName,
                         CreatedAt = DateTimeOffset.UtcNow,
                     };
                     globalEventGame.Achievements.Add(kept);
                 }
 
-                // the names come fresh from Steam, the order is the order of Steam, not of the clicks
+                // the names come fresh from the platform, the order is the order of the platform, not of the clicks
                 kept.Name = achievement.Name;
                 kept.NameRu = achievement.NameRu;
                 kept.Description = achievement.Description;
@@ -316,10 +368,13 @@ namespace Application.Services
                     {
                         Game = new GameObject { Id = geg.Game.Id, Name = geg.Game.Name, ImageUrl = geg.Game.ImageUrl, SteamUrl = geg.Game.SteamUrl },
                         AppId = geg.Game.VgcId ?? 0,
+                        XboxTitleId = geg.XboxTitleId,
+                        XboxTitleName = geg.XboxTitleName,
                         Achievements = geg.Achievements
                             .OrderBy(a => a.Order)
                             .Select(a => new GlobalEventAchievementObject
                             {
+                                Platform = (AchievementPlatform)a.Platform,
                                 ApiName = a.ApiName,
                                 Name = a.Name,
                                 NameRu = a.NameRu,

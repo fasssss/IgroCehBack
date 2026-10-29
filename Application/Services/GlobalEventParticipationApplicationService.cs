@@ -157,6 +157,11 @@ namespace Application.Services
                 return (ParticipateGlobalEventResult.NoAchievements, default, null);
             }
 
+            if (SteamAchievements(participant.PickedGame).Count == 0)
+            {
+                return (ParticipateGlobalEventResult.NoSteamAchievements, default, null);
+            }
+
             var steamId = await GetSteamIdAsync(userId);
             if (steamId == null)
             {
@@ -225,6 +230,10 @@ namespace Application.Services
 
         private static DateTimeOffset SteamCheckableAt(DateTimeOffset checkedAt) => checkedAt.AddMinutes(GlobalEventLimits.PassingCheckDelayMinutes);
 
+        // the Xbox ones have ids of their own, Steam knows nothing about them
+        private static List<GlobalEventAchievement> SteamAchievements(GlobalEventGame globalEventGame) =>
+            globalEventGame.Achievements.Where(a => a.Platform == GlobalEventAchievementPlatform.Steam).ToList();
+
         private async Task<string> GetSteamIdAsync(string userId) =>
             (await _userRepository.CustomToListAsync(_userRepository.Where(u => u.Id == userId).Select(u => u.SteamId))).FirstOrDefault();
 
@@ -238,7 +247,7 @@ namespace Application.Services
             }
 
             var pickedAt = DateTimeOffset.FromUnixTimeSeconds(participant.PickedAt.Value.ToUnixTimeSeconds());
-            var unlockTimes = participant.PickedGame.Achievements
+            var unlockTimes = SteamAchievements(participant.PickedGame)
                 .Where(a => unlocked.ContainsKey(a.ApiName))
                 .Select(a => unlocked[a.ApiName])
                 .ToList();
@@ -324,8 +333,8 @@ namespace Application.Services
                     return new HashSet<string>();
                 }
 
-                // only an owned game with achievements can have one unlocked, Steam is asked about all of them at once
-                var checkedGames = games.Where(geg => geg.Achievements.Count > 0 && ownedAppIds.Contains(geg.Game.VgcId ?? 0)).ToList();
+                // only an owned game with Steam achievements can have one unlocked, Steam is asked about all of them at once
+                var checkedGames = games.Where(geg => SteamAchievements(geg).Count > 0 && ownedAppIds.Contains(geg.Game.VgcId ?? 0)).ToList();
                 var unlocked = await Task.WhenAll(checkedGames.Select(geg => _steamService.GetUnlockedAchievementsAsync(steamId, geg.Game.VgcId ?? 0, ct)));
                 if (unlocked.Any(achievements => achievements == null))
                 {
@@ -333,7 +342,7 @@ namespace Application.Services
                 }
 
                 return checkedGames
-                    .Where((geg, index) => geg.Achievements.Any(a => unlocked[index].ContainsKey(a.ApiName)))
+                    .Where((geg, index) => SteamAchievements(geg).Any(a => unlocked[index].ContainsKey(a.ApiName)))
                     .Select(geg => geg.Id)
                     .ToHashSet();
             }

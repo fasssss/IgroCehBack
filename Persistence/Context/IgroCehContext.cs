@@ -177,7 +177,10 @@ namespace Persistence.Context
                 .HasOne(a => a.GlobalEventGame)
                 .WithMany(geg => geg.Achievements)
                 .HasForeignKey(a => a.GlobalEventGameId);
-            modelBuilder.Entity<GlobalEventAchievement>().HasIndex(a => new { a.GlobalEventGameId, a.ApiName }).IsUnique();
+            modelBuilder.Entity<GlobalEventGame>().Property(geg => geg.XboxTitleId).HasMaxLength(XboxLimits.TitleIdMaxLength);
+            modelBuilder.Entity<GlobalEventGame>().Property(geg => geg.XboxTitleName).HasMaxLength(XboxLimits.TitleNameMaxLength);
+            // the same API name may be in Steam and in Xbox, e.g. "1"
+            modelBuilder.Entity<GlobalEventAchievement>().HasIndex(a => new { a.GlobalEventGameId, a.Platform, a.ApiName }).IsUnique();
             modelBuilder.Entity<GlobalEventAchievement>().HasQueryFilter(a => !a.GlobalEventGame.GlobalEvent.IsDeleted);
             modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.ApiName).HasMaxLength(200).IsRequired();
             modelBuilder.Entity<GlobalEventAchievement>().Property(a => a.Name).HasMaxLength(255).IsRequired();

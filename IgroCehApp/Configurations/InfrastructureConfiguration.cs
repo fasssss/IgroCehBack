@@ -43,6 +43,7 @@ namespace API.Configurations
             services.AddTransient<ISteamService, SteamService>();
             services.AddTransient<ISteamSignInService, SteamSignInService>();
             services.AddTransient<IXboxSignInService, XboxSignInService>();
+            services.AddTransient<IXboxService, XboxService>();
             return services;
         }
     }

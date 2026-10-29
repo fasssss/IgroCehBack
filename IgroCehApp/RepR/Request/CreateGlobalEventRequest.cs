@@ -34,6 +34,15 @@ namespace API.RepR.Request
                 game.RuleFor(g => g.AchievementApiNames).Cascade(CascadeMode.Stop).NotNull()
                     .Must(names => names.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements")
                     .Must(names => names.Distinct().Count() == names.Count).WithMessage("An achievement is added once");
+                // the same limit for the achievements in Xbox, they need their game in Xbox
+                game.RuleFor(g => g.XboxAchievementIds)
+                    .Must(ids => ids.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements in Xbox")
+                    .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("An achievement is added once")
+                    .When(g => g.XboxAchievementIds != null);
+                game.RuleFor(g => g.XboxTitleId).Cascade(CascadeMode.Stop)
+                    .NotEmpty().WithMessage("The achievements in Xbox need their game in Xbox")
+                    .Matches(@"^\d+$").MaximumLength(XboxLimits.TitleIdMaxLength)
+                    .When(g => g.XboxAchievementIds?.Count > 0);
             });
         }
     }

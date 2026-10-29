@@ -40,14 +40,14 @@ namespace API.Endpoints.Post
                     case CreateGlobalEventResult.UnknownGame:
                         return TypedResults.BadRequest("A game isn't in the catalog");
                     case CreateGlobalEventResult.UnknownAchievement:
-                        return TypedResults.BadRequest("A game has no such achievement in Steam");
+                        return TypedResults.BadRequest("A game has no such achievement in Steam or in Xbox");
                     case CreateGlobalEventResult.UnknownBadge:
                         return TypedResults.BadRequest("There is no such badge");
                 }
 
                 return TypedResults.Ok(new GlobalEventResponse { GlobalEvent = globalEvent });
             }
-            catch (Exception e) when (e is SteamUnavailableException or GameCatalogUnavailableException)
+            catch (Exception e) when (e is SteamUnavailableException or XboxUnavailableException or GameCatalogUnavailableException)
             {
                 return TypedResults.StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
