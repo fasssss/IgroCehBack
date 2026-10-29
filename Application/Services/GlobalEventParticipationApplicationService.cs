@@ -141,7 +141,8 @@ namespace Application.Services
             return (ParticipateGlobalEventResult.Succeeded, await GetParticipationAsync(userId, globalEventId));
         }
 
-        // Steam is asked about the chosen achievements of the picked game, one unlocked after the pick passes it
+        // Steam is asked about the chosen achievements of the picked game, one unlocked after the pick passes it;
+        // a player checks once in GlobalEventLimits.PassingCheckDelayMinutes, a check Steam didn't answer doesn't count
         public async Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
             string userId, string globalEventId, CancellationToken ct = default)
         {
@@ -162,7 +163,31 @@ namespace Application.Services
                 return (ParticipateGlobalEventResult.NoSteam, default, null);
             }
 
-            var check = await CheckAchievementsAsync(steamId, participant, ct);
+            var lastCheckedAt = participant.SteamCheckedAt;
+            if (lastCheckedAt != null && DateTimeOffset.UtcNow < SteamCheckableAt(lastCheckedAt.Value))
+            {
+                return (ParticipateGlobalEventResult.CheckedRecently, default, null);
+            }
+
+            // the check is saved before Steam is asked, so of two checks at once the second fails to save
+            participant.SteamCheckedAt = DateTimeOffset.UtcNow;
+            if (!await _participantRepository.TrySaveAsync())
+            {
+                return (ParticipateGlobalEventResult.Conflict, default, null);
+            }
+
+            PassingCheckResult check;
+            try
+            {
+                check = await CheckAchievementsAsync(steamId, participant, ct);
+            }
+            catch (SteamUnavailableException)
+            {
+                participant.SteamCheckedAt = lastCheckedAt;
+                await _participantRepository.TrySaveAsync();
+                throw;
+            }
+
             if (check == PassingCheckResult.Passed)
             {
                 participant.PassedAt = DateTimeOffset.UtcNow;
@@ -197,6 +222,8 @@ namespace Application.Services
         }
 
         private static DateTimeOffset RefusableAt(DateTimeOffset pickedAt) => pickedAt.AddDays(GlobalEventLimits.RefusalDelayDays);
+
+        private static DateTimeOffset SteamCheckableAt(DateTimeOffset checkedAt) => checkedAt.AddMinutes(GlobalEventLimits.PassingCheckDelayMinutes);
 
         private async Task<string> GetSteamIdAsync(string userId) =>
             (await _userRepository.CustomToListAsync(_userRepository.Where(u => u.Id == userId).Select(u => u.SteamId))).FirstOrDefault();
@@ -327,6 +354,7 @@ namespace Application.Services
                     PickedAppId = p.PickedGame.Game.VgcId,
                     PickedAt = p.PickedAt,
                     PassedAt = p.PassedAt,
+                    SteamCheckedAt = p.SteamCheckedAt,
                     Claim = p.Claims
                         .Where(c => c.GlobalEventGameId == p.PickedGameId)
                         .OrderByDescending(c => c.CreatedAt)
@@ -346,6 +374,11 @@ namespace Application.Services
             if (participation?.PickedAt != null)
             {
                 participation.RefusableAt = RefusableAt(participation.PickedAt.Value);
+            }
+
+            if (participation?.SteamCheckedAt != null)
+            {
+                participation.SteamCheckableAt = SteamCheckableAt(participation.SteamCheckedAt.Value);
             }
 
             return participation;

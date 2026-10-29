@@ -467,6 +467,10 @@ namespace Persistence.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("datetime(6)");
 
+                    b.Property<DateTimeOffset?>("SteamCheckedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("varchar(255)");

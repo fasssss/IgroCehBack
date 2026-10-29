@@ -29,5 +29,7 @@ namespace Application.Enum
         NoSteam,
         // the picked game has no achievements, only a claim proves its passing
         NoAchievements,
+        // the passing was checked through Steam less than GlobalEventLimits.PassingCheckDelayMinutes ago
+        CheckedRecently,
     }
 }

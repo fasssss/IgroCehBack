@@ -14,6 +14,8 @@ namespace Application.Consts
         public const int RolledGames = 3;
         // the picked game can be refused for a new roll when this many days have passed since the pick
         public const int RefusalDelayDays = 7;
+        // the passing is checked through Steam once in this many minutes, so the checks don't waste the quota of the API
+        public const int PassingCheckDelayMinutes = 10;
         // a claim: the profile the player types, the reason of a rejection the administrator writes
         public const int ClaimProfileMaxLength = 200;
         public const int ClaimCommentMaxLength = 500;

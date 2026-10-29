@@ -198,9 +198,10 @@ namespace Persistence.Context
                 .OnDelete(DeleteBehavior.Restrict);
             // a player takes part in an event once
             modelBuilder.Entity<GlobalEventParticipant>().HasIndex(p => new { p.GlobalEventId, p.UserId }).IsUnique();
-            // of two rolls or picks at once the second fails to save instead of mixing with the first
+            // of two rolls, picks or checks at once the second fails to save instead of mixing with the first
             modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.RolledAt).IsConcurrencyToken();
             modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.PickedAt).IsConcurrencyToken();
+            modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.SteamCheckedAt).IsConcurrencyToken();
             modelBuilder.Entity<GlobalEventParticipant>().HasQueryFilter(p => !p.GlobalEvent.IsDeleted);
             modelBuilder.Entity<GlobalEventRolledGame>()
                 .HasOne(rg => rg.Participant)

@@ -13,6 +13,9 @@ namespace Application.DTO
         public DateTimeOffset? RefusableAt { get; set; }
         // the picked game is passed, the participation is over
         public DateTimeOffset? PassedAt { get; set; }
+        // the last check of the passing through Steam and from when the next one is allowed, both empty before the first check
+        public DateTimeOffset? SteamCheckedAt { get; set; }
+        public DateTimeOffset? SteamCheckableAt { get; set; }
         // the last claim for the picked game, empty without one
         public GlobalEventClaimObject Claim { get; set; }
     }

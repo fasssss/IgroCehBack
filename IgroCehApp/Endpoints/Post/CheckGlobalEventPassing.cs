@@ -10,7 +10,8 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    // the current user asks Steam whether the picked game of a global event is passed, a chosen achievement unlocked after the pick passes it
+    // the current user asks Steam whether the picked game of a global event is passed, a chosen achievement unlocked after the pick passes it;
+    // 429 when the player checked less than GlobalEventLimits.PassingCheckDelayMinutes ago
     public class CheckGlobalEventPassing : Endpoint<GlobalEventRequest, Results<Ok<CheckGlobalEventPassingResponse>, NotFound, Conflict<string>, StatusCodeHttpResult>>
     {
         private readonly IGlobalEventParticipationApplicationService _participationApplicationService;
@@ -36,6 +37,7 @@ namespace API.Endpoints.Post
                 {
                     ParticipateGlobalEventResult.Succeeded => TypedResults.Ok(new CheckGlobalEventPassingResponse { PassingCheck = check, Participation = participation }),
                     ParticipateGlobalEventResult.NotFound => TypedResults.NotFound(),
+                    ParticipateGlobalEventResult.CheckedRecently => TypedResults.StatusCode(StatusCodes.Status429TooManyRequests),
                     _ => TypedResults.Conflict(GlobalEventParticipationResults.ConflictText(result)),
                 };
             }

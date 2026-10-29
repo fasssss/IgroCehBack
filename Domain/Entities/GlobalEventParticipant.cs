@@ -18,6 +18,8 @@ namespace Domain.Entities
         public DateTimeOffset? PickedAt { get; set; }
         // the picked game is passed, by an achievement in Steam or by a claim; the participation is over
         public DateTimeOffset? PassedAt { get; set; }
+        // the last check of the passing through Steam, the next one is allowed a while later (GlobalEventLimits.PassingCheckDelayMinutes)
+        public DateTimeOffset? SteamCheckedAt { get; set; }
         public List<GlobalEventClaim> Claims { get; set; } = new List<GlobalEventClaim>();
         public DateTimeOffset? CreatedAt { get; set; }
     }
