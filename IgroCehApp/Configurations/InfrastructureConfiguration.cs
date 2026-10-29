@@ -35,10 +35,14 @@ namespace API.Configurations
             services.AddRefitClient<ISteamCommunityApi>()
                 .ConfigureHttpClient((serviceProvider, config) =>
                     config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<SteamApiOptions>>().Value.CommunityAddress ?? ""));
+            services.AddRefitClient<IOpenXblApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<XboxApiOptions>>().Value.Address ?? ""));
             services.AddMemoryCache();
             services.AddTransient<IGameCatalogService, VideoGamesCriticCatalogService>();
             services.AddTransient<ISteamService, SteamService>();
             services.AddTransient<ISteamSignInService, SteamSignInService>();
+            services.AddTransient<IXboxSignInService, XboxSignInService>();
             return services;
         }
     }

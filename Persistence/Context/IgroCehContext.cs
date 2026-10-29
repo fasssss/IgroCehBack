@@ -74,6 +74,9 @@ namespace Persistence.Context
                 .HasMaxLength(255);
             modelBuilder.Entity<User>().Property(u => u.SteamId).HasMaxLength(20);
             modelBuilder.Entity<User>().HasIndex(u => u.SteamId).IsUnique();
+            modelBuilder.Entity<User>().Property(u => u.XboxXuid).HasMaxLength(XboxLimits.XuidMaxLength);
+            modelBuilder.Entity<User>().HasIndex(u => u.XboxXuid).IsUnique();
+            modelBuilder.Entity<User>().Property(u => u.XboxGamertag).HasMaxLength(XboxLimits.GamertagMaxLength);
             modelBuilder.Entity<User>()
                 .HasMany(u => u.EventRecords)
                 .WithOne(er => er.Participant)

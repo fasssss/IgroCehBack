@@ -96,6 +96,7 @@ namespace Application.Services
                     Id = existingUser.Id,
                     IsAppAdmin = existingUser.IsAppAdmin,
                     SteamId = existingUser.SteamId,
+                    XboxGamertag = existingUser.XboxGamertag,
                 };
             }
 

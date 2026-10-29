@@ -19,6 +19,7 @@ namespace API.Configurations
             services.AddTransient<IGlobalEventClaimApplicationService, GlobalEventClaimApplicationService>();
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();
+            services.AddTransient<IXboxLinkApplicationService, XboxLinkApplicationService>();
             return services;
         }
     }

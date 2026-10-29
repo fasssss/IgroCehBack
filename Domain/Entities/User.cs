@@ -11,6 +11,9 @@ namespace Domain.Entities
         public bool IsAppAdmin { get; set; }
         // SteamID64 of the Steam account the user signed in to through Steam, one user per Steam account
         public string? SteamId { get; set; }
+        // the Xbox account the user signed in to through OpenXBL, one user per account; the gamertag is the one of the last sign-in
+        public string? XboxXuid { get; set; }
+        public string? XboxGamertag { get; set; }
         public List<UserGuild> UserGuilds { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public List<Event> CreatorOfEvents { get; set; }

@@ -924,9 +924,20 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("XboxGamertag")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("XboxXuid")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("SteamId")
+                        .IsUnique();
+
+                    b.HasIndex("XboxXuid")
                         .IsUnique();
 
                     b.ToTable("Users");

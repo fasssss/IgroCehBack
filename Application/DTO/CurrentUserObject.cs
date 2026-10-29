@@ -7,5 +7,7 @@ namespace Application.DTO
         public bool IsAppAdmin { get; set; }
         // the linked Steam account, null until the user signs in to Steam from the site
         public string SteamId { get; set; }
+        // the gamertag of the linked Xbox account, null until the user signs in to Xbox from the site
+        public string XboxGamertag { get; set; }
     }
 }
