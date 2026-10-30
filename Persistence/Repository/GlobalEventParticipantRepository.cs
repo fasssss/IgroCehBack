@@ -24,6 +24,7 @@ namespace Persistence.Repository
                 .Include(p => p.PickedGame)
                     .ThenInclude(geg => geg.Achievements)
                 .Include(p => p.Claims)
+                .Include(p => p.PassingChecks)
                 .FirstOrDefaultAsync(p => p.GlobalEventId == globalEventId && p.UserId == userId);
         }
 

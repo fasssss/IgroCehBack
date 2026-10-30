@@ -1,4 +1,5 @@
 using System.Net;
+using Application.Consts;
 using Application.DTO;
 using Application.Exceptions;
 using Application.Interfaces;
@@ -124,8 +125,9 @@ namespace Infrastructure.Services
                 ReleaseDate = game.ReleaseDate,
                 CoverUrl = ToAbsoluteUrl(game.Art?.Cover),
                 PageUrl = game.Links?.Page ?? game.Url,
-                // catalog ids are Steam app ids, search results come without store links
-                SteamUrl = game.Links?.Steam ?? $"https://store.steampowered.com/app/{game.Id}/",
+                // search results come without store links, then the link is made from the id of a game in Steam;
+                // a game outside Steam has none, the details give it null
+                SteamUrl = game.Links?.Steam ?? (CatalogIds.IsSteamAppId(game.Id) ? $"https://store.steampowered.com/app/{game.Id}/" : null),
                 Platforms = game.Platforms ?? new List<string>(),
                 CriticsScore = Round(game.Scores?.Critics),
                 PlayersScore = Round(game.Scores?.Players),

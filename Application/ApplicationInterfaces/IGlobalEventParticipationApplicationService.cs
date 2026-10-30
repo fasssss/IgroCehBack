@@ -14,9 +14,9 @@ namespace Application.ApplicationInterfaces
         public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> PickAsync(string userId, string globalEventId, int appId);
         public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> RefuseAsync(string userId, string globalEventId,
             CancellationToken ct = default);
-        // throws SteamUnavailableException when Steam doesn't answer
+        // throws AchievementPlatformUnavailableException when the platform doesn't answer
         public Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
-            string userId, string globalEventId, CancellationToken ct = default);
+            string userId, string globalEventId, AchievementPlatform platform, CancellationToken ct = default);
         public Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> SubmitClaimAsync(string userId, string globalEventId,
             ClaimPlatform platform, string profile);
     }

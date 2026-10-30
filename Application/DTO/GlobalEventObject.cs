@@ -23,7 +23,7 @@ namespace Application.DTO
     public class GlobalEventGameObject
     {
         public GameObject Game { get; set; }
-        // the Steam app id, the same as the catalog id of the game
+        // the catalog id of the game (VgcId), its Steam app id when the game is in Steam
         public int AppId { get; set; }
         // the game in Xbox the Xbox achievements belong to, empty without them
         public string XboxTitleId { get; set; }

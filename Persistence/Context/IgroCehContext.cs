@@ -36,6 +36,7 @@ namespace Persistence.Context
         public DbSet<GlobalEventParticipant> GlobalEventParticipants { get; set; }
         public DbSet<GlobalEventRolledGame> GlobalEventRolledGames { get; set; }
         public DbSet<GlobalEventClaim> GlobalEventClaims { get; set; }
+        public DbSet<GlobalEventPassingCheck> GlobalEventPassingChecks { get; set; }
         public DbSet<Badge> Badges { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
@@ -204,11 +205,18 @@ namespace Persistence.Context
                 .OnDelete(DeleteBehavior.Restrict);
             // a player takes part in an event once
             modelBuilder.Entity<GlobalEventParticipant>().HasIndex(p => new { p.GlobalEventId, p.UserId }).IsUnique();
-            // of two rolls, picks or checks at once the second fails to save instead of mixing with the first
+            // of two rolls or picks at once the second fails to save instead of mixing with the first
             modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.RolledAt).IsConcurrencyToken();
             modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.PickedAt).IsConcurrencyToken();
-            modelBuilder.Entity<GlobalEventParticipant>().Property(p => p.SteamCheckedAt).IsConcurrencyToken();
             modelBuilder.Entity<GlobalEventParticipant>().HasQueryFilter(p => !p.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventPassingCheck>()
+                .HasOne(pc => pc.Participant)
+                .WithMany(p => p.PassingChecks)
+                .HasForeignKey(pc => pc.ParticipantId);
+            // one check per platform: of two first checks at once the second fails on the index, of two later ones on the token
+            modelBuilder.Entity<GlobalEventPassingCheck>().HasIndex(pc => new { pc.ParticipantId, pc.Platform }).IsUnique();
+            modelBuilder.Entity<GlobalEventPassingCheck>().Property(pc => pc.CheckedAt).IsConcurrencyToken();
+            modelBuilder.Entity<GlobalEventPassingCheck>().HasQueryFilter(pc => !pc.Participant.GlobalEvent.IsDeleted);
             modelBuilder.Entity<GlobalEventRolledGame>()
                 .HasOne(rg => rg.Participant)
                 .WithMany(p => p.RolledGames)

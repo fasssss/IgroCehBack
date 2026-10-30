@@ -1,4 +1,5 @@
 ﻿using Application.ApplicationInterfaces;
+using Application.Interfaces;
 using Application.Services;
 
 namespace API.Configurations
@@ -16,6 +17,9 @@ namespace API.Configurations
             services.AddTransient<INewcomerPoolApplicationService, NewcomerPoolApplicationService>();
             services.AddTransient<IGlobalEventApplicationService, GlobalEventApplicationService>();
             services.AddTransient<IGlobalEventParticipationApplicationService, GlobalEventParticipationApplicationService>();
+            // the platforms whose achievements prove the passing of a game of a global event, one per AchievementPlatform
+            services.AddTransient<IAchievementPlatformChecker, SteamAchievementChecker>();
+            services.AddTransient<IAchievementPlatformChecker, XboxAchievementChecker>();
             services.AddTransient<IGlobalEventClaimApplicationService, GlobalEventClaimApplicationService>();
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();

@@ -13,16 +13,15 @@ namespace Application.Services
     {
         private readonly IGlobalEventRepository _globalEventRepository;
         private readonly IGlobalEventParticipantRepository _participantRepository;
-        private readonly IUserRepository _userRepository;
-        private readonly ISteamService _steamService;
+        // every platform whose achievements prove the passing, one per AchievementPlatform
+        private readonly IEnumerable<IAchievementPlatformChecker> _platformCheckers;
 
         public GlobalEventParticipationApplicationService(IGlobalEventRepository globalEventRepository, IGlobalEventParticipantRepository participantRepository,
-            IUserRepository userRepository, ISteamService steamService)
+            IEnumerable<IAchievementPlatformChecker> platformCheckers)
         {
             _globalEventRepository = globalEventRepository;
             _participantRepository = participantRepository;
-            _userRepository = userRepository;
-            _steamService = steamService;
+            _platformCheckers = platformCheckers;
         }
 
         public async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipationObject Participation)> GetAsync(string userId, string globalEventId)
@@ -141,10 +140,10 @@ namespace Application.Services
             return (ParticipateGlobalEventResult.Succeeded, await GetParticipationAsync(userId, globalEventId));
         }
 
-        // Steam is asked about the chosen achievements of the picked game, one unlocked after the pick passes it;
-        // a player checks once in GlobalEventLimits.PassingCheckDelayMinutes, a check Steam didn't answer doesn't count
+        // the platform asked is asked about its chosen achievements of the picked game, one unlocked after the pick passes it;
+        // a player checks on each platform once in GlobalEventLimits.PassingCheckDelayMinutes, a check the platform didn't answer doesn't count
         public async Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
-            string userId, string globalEventId, CancellationToken ct = default)
+            string userId, string globalEventId, AchievementPlatform platform, CancellationToken ct = default)
         {
             var (result, participant) = await GetPickedParticipantAsync(userId, globalEventId);
             if (result != ParticipateGlobalEventResult.Succeeded)
@@ -157,25 +156,39 @@ namespace Application.Services
                 return (ParticipateGlobalEventResult.NoAchievements, default, null);
             }
 
-            if (SteamAchievements(participant.PickedGame).Count == 0)
+            var achievementPlatform = (GlobalEventAchievementPlatform)platform;
+            if (!participant.PickedGame.Achievements.Any(a => a.Platform == achievementPlatform))
             {
-                return (ParticipateGlobalEventResult.NoSteamAchievements, default, null);
+                return (ParticipateGlobalEventResult.NoPlatformAchievements, default, null);
             }
 
-            var steamId = await GetSteamIdAsync(userId);
-            if (steamId == null)
+            var checker = _platformCheckers.Single(c => c.Platform == platform);
+            var accountId = await checker.GetAccountIdAsync(userId);
+            if (accountId == null)
             {
-                return (ParticipateGlobalEventResult.NoSteam, default, null);
+                return (ParticipateGlobalEventResult.PlatformNotLinked, default, null);
             }
 
-            var lastCheckedAt = participant.SteamCheckedAt;
-            if (lastCheckedAt != null && DateTimeOffset.UtcNow < SteamCheckableAt(lastCheckedAt.Value))
+            var passingCheck = participant.PassingChecks.FirstOrDefault(pc => pc.Platform == achievementPlatform);
+            var lastCheckedAt = passingCheck?.CheckedAt;
+            if (lastCheckedAt != null && DateTimeOffset.UtcNow < CheckableAt(lastCheckedAt.Value))
             {
                 return (ParticipateGlobalEventResult.CheckedRecently, default, null);
             }
 
-            // the check is saved before Steam is asked, so of two checks at once the second fails to save
-            participant.SteamCheckedAt = DateTimeOffset.UtcNow;
+            // the check is saved before the platform is asked, so of two checks at once the second fails to save
+            if (passingCheck == null)
+            {
+                passingCheck = new GlobalEventPassingCheck
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Platform = achievementPlatform,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                };
+                participant.PassingChecks.Add(passingCheck);
+            }
+
+            passingCheck.CheckedAt = DateTimeOffset.UtcNow;
             if (!await _participantRepository.TrySaveAsync())
             {
                 return (ParticipateGlobalEventResult.Conflict, default, null);
@@ -184,11 +197,19 @@ namespace Application.Services
             PassingCheckResult check;
             try
             {
-                check = await CheckAchievementsAsync(steamId, participant, ct);
+                check = await checker.CheckAsync(accountId, participant.PickedGame, participant.PickedAt.Value, ct);
             }
-            catch (SteamUnavailableException)
+            catch (AchievementPlatformUnavailableException)
             {
-                participant.SteamCheckedAt = lastCheckedAt;
+                if (lastCheckedAt == null)
+                {
+                    participant.PassingChecks.Remove(passingCheck);
+                }
+                else
+                {
+                    passingCheck.CheckedAt = lastCheckedAt.Value;
+                }
+
                 await _participantRepository.TrySaveAsync();
                 throw;
             }
@@ -196,6 +217,7 @@ namespace Application.Services
             if (check == PassingCheckResult.Passed)
             {
                 participant.PassedAt = DateTimeOffset.UtcNow;
+                participant.PassedPlatform = achievementPlatform;
                 await _participantRepository.SaveAsync();
             }
 
@@ -228,33 +250,7 @@ namespace Application.Services
 
         private static DateTimeOffset RefusableAt(DateTimeOffset pickedAt) => pickedAt.AddDays(GlobalEventLimits.RefusalDelayDays);
 
-        private static DateTimeOffset SteamCheckableAt(DateTimeOffset checkedAt) => checkedAt.AddMinutes(GlobalEventLimits.PassingCheckDelayMinutes);
-
-        // the Xbox ones have ids of their own, Steam knows nothing about them
-        private static List<GlobalEventAchievement> SteamAchievements(GlobalEventGame globalEventGame) =>
-            globalEventGame.Achievements.Where(a => a.Platform == GlobalEventAchievementPlatform.Steam).ToList();
-
-        private async Task<string> GetSteamIdAsync(string userId) =>
-            (await _userRepository.CustomToListAsync(_userRepository.Where(u => u.Id == userId).Select(u => u.SteamId))).FirstOrDefault();
-
-        // Steam keeps the time of an unlock in seconds, so the pick is cut to seconds too
-        private async Task<PassingCheckResult> CheckAchievementsAsync(string steamId, GlobalEventParticipant participant, CancellationToken ct)
-        {
-            var unlocked = await _steamService.GetUnlockedAchievementsAsync(steamId, participant.PickedGame.Game.VgcId ?? 0, ct);
-            if (unlocked == null)
-            {
-                return PassingCheckResult.ProfileHidden;
-            }
-
-            var pickedAt = DateTimeOffset.FromUnixTimeSeconds(participant.PickedAt.Value.ToUnixTimeSeconds());
-            var unlockTimes = SteamAchievements(participant.PickedGame)
-                .Where(a => unlocked.ContainsKey(a.ApiName))
-                .Select(a => unlocked[a.ApiName])
-                .ToList();
-            return unlockTimes.Any(unlockedAt => unlockedAt >= pickedAt) ? PassingCheckResult.Passed
-                : unlockTimes.Count > 0 ? PassingCheckResult.UnlockedBeforePick
-                : PassingCheckResult.NotPassed;
-        }
+        private static DateTimeOffset CheckableAt(DateTimeOffset checkedAt) => checkedAt.AddMinutes(GlobalEventLimits.PassingCheckDelayMinutes);
 
         // the participant of an active event whose picked game isn't passed and has no claim under review
         private async Task<(ParticipateGlobalEventResult Result, GlobalEventParticipant Participant)> GetPickedParticipantAsync(string userId, string globalEventId)
@@ -300,14 +296,8 @@ namespace Application.Services
         private async Task<List<GlobalEventRolledGame>> RollGamesAsync(string userId, GlobalEvent globalEvent, string refusedGameId, CancellationToken ct)
         {
             var games = globalEvent.Games.Where(geg => geg.Id != refusedGameId).ToList();
-            var steamId = await GetSteamIdAsync(userId);
-            if (steamId != null)
-            {
-                var passedGameIds = await GetPassedGameIdsAsync(steamId, games, ct);
-                games = games.Where(geg => !passedGameIds.Contains(geg.Id)).ToList();
-            }
-
-            var shuffled = games.ToArray();
+            var passedGameIds = await GetPassedGameIdsAsync(userId, games, ct);
+            var shuffled = games.Where(geg => !passedGameIds.Contains(geg.Id)).ToArray();
             Random.Shared.Shuffle(shuffled);
             return shuffled
                 .Take(GlobalEventLimits.RolledGames)
@@ -321,35 +311,29 @@ namespace Application.Services
                 .ToList();
         }
 
-        // the games where the player has unlocked a chosen achievement already, they don't drop; when Steam doesn't answer
-        // or hides the game details, nothing is known and every game drops, as without Steam
-        private async Task<HashSet<string>> GetPassedGameIdsAsync(string steamId, List<GlobalEventGame> games, CancellationToken ct)
+        // the games where the player has unlocked a chosen achievement already on any linked platform, they don't drop;
+        // a platform that doesn't answer tells nothing, as if it weren't linked
+        private async Task<HashSet<string>> GetPassedGameIdsAsync(string userId, List<GlobalEventGame> games, CancellationToken ct)
         {
-            try
+            var passedGameIds = new HashSet<string>();
+            foreach (var checker in _platformCheckers)
             {
-                var ownedAppIds = await _steamService.GetOwnedAppIdsAsync(steamId, ct);
-                if (ownedAppIds == null)
+                var accountId = await checker.GetAccountIdAsync(userId);
+                if (accountId == null)
                 {
-                    return new HashSet<string>();
+                    continue;
                 }
 
-                // only an owned game with Steam achievements can have one unlocked, Steam is asked about all of them at once
-                var checkedGames = games.Where(geg => SteamAchievements(geg).Count > 0 && ownedAppIds.Contains(geg.Game.VgcId ?? 0)).ToList();
-                var unlocked = await Task.WhenAll(checkedGames.Select(geg => _steamService.GetUnlockedAchievementsAsync(steamId, geg.Game.VgcId ?? 0, ct)));
-                if (unlocked.Any(achievements => achievements == null))
+                try
                 {
-                    return new HashSet<string>();
+                    passedGameIds.UnionWith(await checker.GetPassedGameIdsAsync(accountId, games, ct));
                 }
+                catch (AchievementPlatformUnavailableException)
+                {
+                }
+            }
 
-                return checkedGames
-                    .Where((geg, index) => SteamAchievements(geg).Any(a => unlocked[index].ContainsKey(a.ApiName)))
-                    .Select(geg => geg.Id)
-                    .ToHashSet();
-            }
-            catch (SteamUnavailableException)
-            {
-                return new HashSet<string>();
-            }
+            return passedGameIds;
         }
 
         private async Task<GlobalEventParticipationObject> GetParticipationAsync(string userId, string globalEventId)
@@ -363,7 +347,11 @@ namespace Application.Services
                     PickedAppId = p.PickedGame.Game.VgcId,
                     PickedAt = p.PickedAt,
                     PassedAt = p.PassedAt,
-                    SteamCheckedAt = p.SteamCheckedAt,
+                    PassedPlatform = (AchievementPlatform?)p.PassedPlatform,
+                    PassingChecks = p.PassingChecks
+                        .OrderBy(pc => pc.Platform)
+                        .Select(pc => new GlobalEventPassingCheckObject { Platform = (AchievementPlatform)pc.Platform, CheckedAt = pc.CheckedAt })
+                        .ToList(),
                     Claim = p.Claims
                         .Where(c => c.GlobalEventGameId == p.PickedGameId)
                         .OrderByDescending(c => c.CreatedAt)
@@ -385,9 +373,9 @@ namespace Application.Services
                 participation.RefusableAt = RefusableAt(participation.PickedAt.Value);
             }
 
-            if (participation?.SteamCheckedAt != null)
+            foreach (var passingCheck in participation?.PassingChecks ?? new List<GlobalEventPassingCheckObject>())
             {
-                participation.SteamCheckableAt = SteamCheckableAt(participation.SteamCheckedAt.Value);
+                passingCheck.CheckableAt = CheckableAt(passingCheck.CheckedAt);
             }
 
             return participation;

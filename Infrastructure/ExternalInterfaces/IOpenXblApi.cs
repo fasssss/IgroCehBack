@@ -20,5 +20,11 @@ namespace Infrastructure.ExternalInterfaces
         [Get("/v2/achievements/title/{titleId}")]
         public Task<ApiResponse<OpenXblResponse<OpenXblAchievements>>> GetTitleAchievements([Header("X-Authorization")] string key,
             [Header("Accept-Language")] string language, string titleId, string continuationToken, CancellationToken ct);
+
+        // the achievements of a player in a title with their progress, all of them at once; Xbox Live answers 403
+        // when the privacy settings of the player hide them, OpenXBL passes it either as its own status or in the code of the answer
+        [Get("/v2/achievements/player/{xuid}/{titleId}")]
+        public Task<ApiResponse<OpenXblResponse<OpenXblAchievements>>> GetPlayerAchievements([Header("X-Authorization")] string key, string xuid,
+            string titleId, CancellationToken ct);
     }
 }

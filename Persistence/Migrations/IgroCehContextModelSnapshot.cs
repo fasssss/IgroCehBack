@@ -467,6 +467,9 @@ namespace Persistence.Migrations
                     b.Property<DateTimeOffset?>("PassedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("PassedPlatform")
+                        .HasColumnType("int");
+
                     b.Property<DateTimeOffset?>("PickedAt")
                         .IsConcurrencyToken()
                         .HasColumnType("datetime(6)");
@@ -475,10 +478,6 @@ namespace Persistence.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<DateTimeOffset>("RolledAt")
-                        .IsConcurrencyToken()
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTimeOffset?>("SteamCheckedAt")
                         .IsConcurrencyToken()
                         .HasColumnType("datetime(6)");
 
@@ -496,6 +495,33 @@ namespace Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("GlobalEventParticipants");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GlobalEventPassingCheck", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset>("CheckedAt")
+                        .IsConcurrencyToken()
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ParticipantId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ParticipantId", "Platform")
+                        .IsUnique();
+
+                    b.ToTable("GlobalEventPassingChecks");
                 });
 
             modelBuilder.Entity("Domain.Entities.GlobalEventRolledGame", b =>
@@ -1170,6 +1196,17 @@ namespace Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlobalEventPassingCheck", b =>
+                {
+                    b.HasOne("Domain.Entities.GlobalEventParticipant", "Participant")
+                        .WithMany("PassingChecks")
+                        .HasForeignKey("ParticipantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Participant");
+                });
+
             modelBuilder.Entity("Domain.Entities.GlobalEventRolledGame", b =>
                 {
                     b.HasOne("Domain.Entities.GlobalEventGame", "GlobalEventGame")
@@ -1312,6 +1349,8 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
                 {
                     b.Navigation("Claims");
+
+                    b.Navigation("PassingChecks");
 
                     b.Navigation("RolledGames");
                 });

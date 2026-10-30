@@ -2,7 +2,7 @@ namespace API.RepR.Request
 {
     public class GetSteamAchievementsRequest
     {
-        // the Steam app id, the same as the catalog id of the game (VgcId)
+        // the catalog id of the game (VgcId), a game outside Steam has no achievements there
         public int AppId { get; set; }
     }
 }

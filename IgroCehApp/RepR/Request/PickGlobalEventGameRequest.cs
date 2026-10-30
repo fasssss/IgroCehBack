@@ -3,7 +3,7 @@ namespace API.RepR.Request
     public class PickGlobalEventGameRequest
     {
         public string GlobalEventId { get; set; }
-        // the Steam app id of one of the rolled games
+        // the catalog id of one of the rolled games (VgcId)
         public int AppId { get; set; }
     }
 }

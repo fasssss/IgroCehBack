@@ -25,13 +25,13 @@ namespace Application.Enum
         AlreadyPassed,
         // a claim of the player is under review
         ClaimPending,
-        // the automatic check needs a linked Steam account
-        NoSteam,
+        // the automatic check on a platform needs the account of the player there linked
+        PlatformNotLinked,
         // the picked game has no achievements, only a claim proves its passing
         NoAchievements,
-        // the picked game has achievements only in Xbox, Steam can't prove its passing
-        NoSteamAchievements,
-        // the passing was checked through Steam less than GlobalEventLimits.PassingCheckDelayMinutes ago
+        // the picked game has no achievements on the platform asked, the platform can't prove its passing
+        NoPlatformAchievements,
+        // the passing was checked on the platform less than GlobalEventLimits.PassingCheckDelayMinutes ago
         CheckedRecently,
     }
 }

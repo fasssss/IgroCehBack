@@ -18,10 +18,12 @@ namespace Infrastructure.DTO
         public string Gamertag { get; set; }
     }
 
-    // the API of OpenXBL wraps the answer of Xbox Live into content
+    // the API of OpenXBL wraps the answer of Xbox Live into content with its status code
     public class OpenXblResponse<T>
     {
         public T Content { get; set; }
+        // the status Xbox Live answered OpenXBL with, a number
+        public JsonElement? Code { get; set; }
     }
 
     // a search of the Microsoft Store, the fields are named by the store
@@ -71,9 +73,18 @@ namespace Infrastructure.DTO
         public string Description { get; set; }
         public string LockedDescription { get; set; }
         public bool IsSecret { get; set; }
+        // Achieved, InProgress or NotStarted for the player asked about
+        public string ProgressState { get; set; }
+        public OpenXblProgression Progression { get; set; }
         public List<OpenXblMediaAsset> MediaAssets { get; set; }
         public OpenXblRarity Rarity { get; set; }
         public List<OpenXblTitleAssociation> TitleAssociations { get; set; }
+    }
+
+    public class OpenXblProgression
+    {
+        // 0001-01-01 while the achievement is locked
+        public DateTimeOffset? TimeUnlocked { get; set; }
     }
 
     public class OpenXblMediaAsset

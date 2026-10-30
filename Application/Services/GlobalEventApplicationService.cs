@@ -1,4 +1,5 @@
 using Application.ApplicationInterfaces;
+using Application.Consts;
 using Application.DTO;
 using Application.Enum;
 using Application.Interfaces;
@@ -26,10 +27,11 @@ namespace Application.Services
             _xboxService = xboxService;
         }
 
-        // the achievements the administrator picks from: the catalog id of a game (Game.VgcId) is its Steam app id
+        // the achievements the administrator picks from: the catalog id of a game in Steam (Game.VgcId) is its Steam app id,
+        // a game outside Steam has none there, so Steam isn't asked
         public async Task<List<SteamAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default)
         {
-            return await _steamService.GetAchievementsAsync(appId, ct);
+            return CatalogIds.IsSteamAppId(appId) ? await _steamService.GetAchievementsAsync(appId, ct) : new List<SteamAchievementObject>();
         }
 
         // the catalog knows no Xbox title ids, so the game is looked for in the Microsoft Store by its name
@@ -276,7 +278,8 @@ namespace Application.Services
         }
 
         // Steam and Xbox are asked about every game with achievements before anything is saved: the chosen achievements of each game
-        // in the order of the platform, null when a game has no such achievement; a game without achievements is passed only by a claim
+        // in the order of the platform, null when a game has no such achievement or a game outside Steam is given Steam ones;
+        // a game without achievements is passed only by a claim
         private async Task<Dictionary<int, ChosenAchievements>> GetChosenAchievementsAsync(List<NewGlobalEventGameObject> games, CancellationToken ct)
         {
             var chosenAchievements = new Dictionary<int, ChosenAchievements>();
@@ -285,6 +288,11 @@ namespace Application.Services
                 var chosen = new ChosenAchievements();
                 if (game.AchievementApiNames.Count > 0)
                 {
+                    if (!CatalogIds.IsSteamAppId(game.AppId))
+                    {
+                        return null;
+                    }
+
                     var steamAchievements = await _steamService.GetAchievementsAsync(game.AppId, ct);
                     chosen.Steam = steamAchievements.Where(a => game.AchievementApiNames.Contains(a.ApiName)).ToList();
                     if (chosen.Steam.Count != game.AchievementApiNames.Count)

@@ -51,7 +51,7 @@ namespace API.Endpoints.Post
 
                 return TypedResults.Ok(new GlobalEventResponse { GlobalEvent = globalEvent });
             }
-            catch (Exception e) when (e is SteamUnavailableException or XboxUnavailableException or GameCatalogUnavailableException)
+            catch (Exception e) when (e is AchievementPlatformUnavailableException or GameCatalogUnavailableException)
             {
                 return TypedResults.StatusCode(StatusCodes.Status503ServiceUnavailable);
             }

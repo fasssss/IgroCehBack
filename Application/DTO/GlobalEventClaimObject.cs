@@ -8,7 +8,7 @@ namespace Application.DTO
         public string Id { get; set; }
         // empty in the participation of the player themselves
         public PlayerShortObject Player { get; set; }
-        // the Steam app id of the game the claim is about
+        // the catalog id of the game the claim is about (VgcId)
         public int AppId { get; set; }
         public ClaimPlatform Platform { get; set; }
         public string Profile { get; set; }

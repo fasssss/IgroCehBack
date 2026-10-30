@@ -1,9 +1,11 @@
+using Application.Enum;
+
 namespace Application.DTO
 {
     // the roll of a player in a global event: the games that dropped, the one picked and when it can be refused
     public class GlobalEventParticipationObject
     {
-        // the Steam app ids of the rolled games in the order they dropped
+        // the catalog ids of the rolled games (VgcId) in the order they dropped
         public List<int> RolledAppIds { get; set; }
         public DateTimeOffset RolledAt { get; set; }
         // empty until the player picks one of the rolled games
@@ -13,9 +15,10 @@ namespace Application.DTO
         public DateTimeOffset? RefusableAt { get; set; }
         // the picked game is passed, the participation is over
         public DateTimeOffset? PassedAt { get; set; }
-        // the last check of the passing through Steam and from when the next one is allowed, both empty before the first check
-        public DateTimeOffset? SteamCheckedAt { get; set; }
-        public DateTimeOffset? SteamCheckableAt { get; set; }
+        // the platform whose achievement passed the game, empty for a claim
+        public AchievementPlatform? PassedPlatform { get; set; }
+        // the last check of the passing on each platform the player checked on
+        public List<GlobalEventPassingCheckObject> PassingChecks { get; set; }
         // the last claim for the picked game, empty without one
         public GlobalEventClaimObject Claim { get; set; }
     }

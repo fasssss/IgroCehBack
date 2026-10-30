@@ -1,6 +1,7 @@
 namespace Domain.Entities
 {
-    // a game of a global event, always a catalog game: its VgcId is the Steam app id the Steam achievements come from
+    // a game of a global event, always a catalog game: the VgcId of a game in Steam is the Steam app id the Steam achievements come from,
+    // a game outside Steam (Application.Consts.CatalogIds) has only Xbox achievements or none
     public class GlobalEventGame : IBaseEntity
     {
         public string Id { get; set; }

@@ -19,7 +19,8 @@ namespace API.Helpers
             _ => TypedResults.Conflict(ConflictText(result)),
         };
 
-        public static string ConflictText(ParticipateGlobalEventResult result) => result switch
+        // the platform of an automatic check names itself in the text
+        public static string ConflictText(ParticipateGlobalEventResult result, AchievementPlatform? platform = null) => result switch
         {
             ParticipateGlobalEventResult.Finished => "The event is finished",
             ParticipateGlobalEventResult.AlreadyRolled => "The games are rolled already",
@@ -29,9 +30,9 @@ namespace API.Helpers
             ParticipateGlobalEventResult.TooEarly => "The picked game can't be refused yet",
             ParticipateGlobalEventResult.AlreadyPassed => "The picked game is passed already",
             ParticipateGlobalEventResult.ClaimPending => "A claim is under review",
-            ParticipateGlobalEventResult.NoSteam => "Steam isn't linked",
+            ParticipateGlobalEventResult.PlatformNotLinked => $"{platform} isn't linked",
             ParticipateGlobalEventResult.NoAchievements => "The game has no achievements, only a claim proves its passing",
-            ParticipateGlobalEventResult.NoSteamAchievements => "The game has no achievements in Steam",
+            ParticipateGlobalEventResult.NoPlatformAchievements => $"The game has no achievements in {platform}",
             _ => "The roll was changed by another request",
         };
     }

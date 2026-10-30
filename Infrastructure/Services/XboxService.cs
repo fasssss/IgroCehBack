@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using Application.DTO;
 using Application.Exceptions;
@@ -125,6 +126,45 @@ namespace Infrastructure.Services
             _cache.Set(cacheKey, title, AchievementsCacheDuration);
 
             return title;
+        }
+
+        // the progress of a player changes all the time, so it isn't kept
+        public async Task<Dictionary<string, DateTimeOffset>> GetUnlockedAchievementsAsync(string xuid, string titleId, CancellationToken ct = default)
+        {
+            if (!IsTitleId(titleId))
+            {
+                return new Dictionary<string, DateTimeOffset>();
+            }
+
+            RequireKey();
+            ApiResponse<OpenXblResponse<OpenXblAchievements>> response;
+            try
+            {
+                response = await _openXblApi.GetPlayerAchievements(_options.Key, xuid, titleId, ct);
+            }
+            catch (Exception e) when ((e is HttpRequestException or ApiException or TaskCanceledException) && !ct.IsCancellationRequested)
+            {
+                _logger.LogError(e, "OpenXBL can't be reached");
+                throw new XboxUnavailableException("OpenXBL can't be reached", e);
+            }
+
+            LogQuota(response);
+            var code = response.Content?.Code is { ValueKind: JsonValueKind.Number } value && value.TryGetInt32(out var number) ? number : (int?)null;
+            if (response.StatusCode == HttpStatusCode.Forbidden || code == (int)HttpStatusCode.Forbidden)
+            {
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode || response.Content?.Content == null || code >= 400)
+            {
+                _logger.LogError(response.Error, "OpenXBL answered the achievements of a player with {StatusCode}, Xbox Live with {Code}", (int)response.StatusCode, code);
+                throw new XboxUnavailableException($"OpenXBL answered with {(int)response.StatusCode}", response.Error);
+            }
+
+            return (response.Content.Content.Achievements ?? new List<OpenXblAchievement>())
+                .Where(a => a.ProgressState == "Achieved" && !string.IsNullOrEmpty(a.Id) && a.Progression?.TimeUnlocked > DateTimeOffset.MinValue)
+                .GroupBy(a => a.Id)
+                .ToDictionary(group => group.Key, group => group.First().Progression.TimeUnlocked.Value);
         }
 
         private async Task<List<OpenXblAchievement>> GetAllAchievementsAsync(string titleId, string language, CancellationToken ct)
