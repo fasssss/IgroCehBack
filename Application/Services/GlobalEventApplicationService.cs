@@ -40,6 +40,12 @@ namespace Application.Services
             return await _xboxService.SearchTitlesAsync(query, ct);
         }
 
+        // the search gives no title ids for the games found by their names, only the chosen one is looked up
+        public async Task<string> GetXboxTitleIdAsync(string productId, CancellationToken ct = default)
+        {
+            return await _xboxService.GetProductTitleIdAsync(productId, ct);
+        }
+
         public async Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default)
         {
             return await _xboxService.GetTitleAchievementsAsync(titleId, ct);

@@ -10,6 +10,8 @@ namespace Application.ApplicationInterfaces
         public Task<List<SteamAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default);
         // the games in Xbox the administrator chooses from for a catalog game, found by its name
         public Task<List<XboxTitleObject>> SearchXboxTitlesAsync(string query, CancellationToken ct = default);
+        // the title id of the game the administrator chose among the found ones, null when the product of the store has none
+        public Task<string> GetXboxTitleIdAsync(string productId, CancellationToken ct = default);
         // null when the game in Xbox has no achievements or there is no such game
         public Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default);
         public Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,

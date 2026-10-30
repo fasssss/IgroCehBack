@@ -15,6 +15,17 @@ namespace Infrastructure.ExternalInterfaces
         public Task<ApiResponse<OpenXblResponse<OpenXblStoreSearch>>> SearchStore([Header("X-Authorization")] string key, [AliasAs("q")] string query,
             string enrich, string deviceFamily, CancellationToken ct);
 
+        // the strict search of the store: only the games whose titles start with the query, without the recommendations the search pads
+        // its cards with; the products carry no title id
+        [Get("/v2/marketplace/autosuggest")]
+        public Task<ApiResponse<OpenXblResponse<OpenXblStoreSuggestions>>> SuggestStore([Header("X-Authorization")] string key, [AliasAs("q")] string query,
+            CancellationToken ct);
+
+        // the Xbox title id of a store product, 404 for a product without one (a bundle, an add-on, a PC listing)
+        [Get("/v2/marketplace/titleid/{productId}")]
+        public Task<ApiResponse<OpenXblResponse<OpenXblProductTitleId>>> GetProductTitleId([Header("X-Authorization")] string key, string productId,
+            CancellationToken ct);
+
         // the achievements of a title as the owner of the key sees them, the whole list even for a title the owner never played;
         // 150 a page, the next page by the continuation token; an unknown title gives an empty list
         [Get("/v2/achievements/title/{titleId}")]

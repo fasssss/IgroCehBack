@@ -12,6 +12,8 @@ namespace Application.Consts
         // an unsigned 32-bit number, e.g. 1993022209
         public const int TitleIdMaxLength = 10;
         public const int TitleNameMaxLength = 255;
+        // a product of the Microsoft Store is 12 letters and digits, e.g. 9MXMJHC1K8CH
+        public const int ProductIdMaxLength = 20;
         public const int SearchQueryMaxLength = 100;
     }
 }

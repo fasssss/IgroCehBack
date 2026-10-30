@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using Application.Consts;
 using Application.DTO;
 using Application.Exceptions;
 using Application.Interfaces;
@@ -23,6 +24,8 @@ namespace Infrastructure.Services
         private const int LowQuotaThreshold = 20;
 
         private static readonly TimeSpan SearchCacheDuration = TimeSpan.FromHours(6);
+        // a product of the store keeps its title id
+        private static readonly TimeSpan ProductTitleIdCacheDuration = TimeSpan.FromDays(7);
         // achievements of a released game rarely change
         private static readonly TimeSpan AchievementsCacheDuration = TimeSpan.FromHours(12);
 
@@ -48,23 +51,83 @@ namespace Infrastructure.Services
             }
 
             var cacheKey = $"xbox-search:{normalizedQuery}";
-            if (_cache.TryGetValue(cacheKey, out List<XboxTitleObject> cachedTitles))
+            if (!_cache.TryGetValue(cacheKey, out List<XboxTitleObject> titles))
             {
-                return cachedTitles;
+                RequireKey();
+                // the store search pads its twenty cards with recommendations and leaves out the games that aren't popular
+                // (Ninja Gaiden 3, Dread Delusion), so the games whose titles start with the query come first; their title ids aren't
+                // looked up here, only the one of the game the administrator chooses, so a search costs a request,
+                // and the store search is asked only when no title starts with the query
+                titles = await SearchMatchingTitlesAsync(normalizedQuery, ct);
+                if (titles.Count == 0)
+                {
+                    titles = await SearchStoreTitlesAsync(normalizedQuery, ct);
+                }
+
+                _cache.Set(cacheKey, titles, SearchCacheDuration);
+            }
+
+            // a title id looked up since the search shows, a product found to have none is left out;
+            // the editions of a game share its title id, the first one stands for all of them
+            var known = new List<XboxTitleObject>();
+            foreach (var title in titles)
+            {
+                if (title.TitleId != null || !_cache.TryGetValue(ProductTitleIdCacheKey(title.ProductId), out string titleId))
+                {
+                    known.Add(title);
+                }
+                else if (titleId != null)
+                {
+                    known.Add(new XboxTitleObject { TitleId = titleId, ProductId = title.ProductId, Name = title.Name, ImageUrl = title.ImageUrl });
+                }
+            }
+
+            return known.DistinctBy(title => title.TitleId ?? title.ProductId).ToList();
+        }
+
+        public async Task<string> GetProductTitleIdAsync(string productId, CancellationToken ct = default)
+        {
+            if (!IsProductId(productId))
+            {
+                return null;
+            }
+
+            var cacheKey = ProductTitleIdCacheKey(productId);
+            if (_cache.TryGetValue(cacheKey, out string cachedTitleId))
+            {
+                return cachedTitleId;
             }
 
             RequireKey();
-            var search = await SendAsync(() => _openXblApi.SearchStore(_options.Key, normalizedQuery, "titleid", "Windows.Xbox", ct), ct);
-            // the editions of a game share its title id, the first one found stands for all of them
-            var titles = (search.Payload?.SearchResults ?? new List<OpenXblStoreProduct>())
-                .Select(product => new XboxTitleObject { TitleId = TitleIdOf(product.XboxTitleId), Name = product.Title, ImageUrl = ImageOf(product) })
-                .Where(title => title.TitleId != null && !string.IsNullOrWhiteSpace(title.Name))
-                .DistinctBy(title => title.TitleId)
-                .Take(SearchResultsLimit)
-                .ToList();
-            _cache.Set(cacheKey, titles, SearchCacheDuration);
+            ApiResponse<OpenXblResponse<OpenXblProductTitleId>> response;
+            try
+            {
+                response = await _openXblApi.GetProductTitleId(_options.Key, productId, ct);
+            }
+            catch (Exception e) when ((e is HttpRequestException or ApiException or TaskCanceledException) && !ct.IsCancellationRequested)
+            {
+                _logger.LogError(e, "OpenXBL can't be reached");
+                throw new XboxUnavailableException("OpenXBL can't be reached", e);
+            }
 
-            return titles;
+            LogQuota(response);
+            // a product without a title id is a 404 of OpenXBL itself or the code 404 of the store inside the answer
+            var code = response.Content?.Code is { ValueKind: JsonValueKind.Number } value && value.TryGetInt32(out var number) ? number : (int?)null;
+            if (response.StatusCode == HttpStatusCode.NotFound || code == (int)HttpStatusCode.NotFound)
+            {
+                _cache.Set(cacheKey, (string)null, ProductTitleIdCacheDuration);
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode || response.Content?.Content == null || code >= 400)
+            {
+                _logger.LogError(response.Error, "OpenXBL answered the title id of a product with {StatusCode}, the store with {Code}", (int)response.StatusCode, code);
+                throw new XboxUnavailableException($"OpenXBL answered with {(int)response.StatusCode}", response.Error);
+            }
+
+            var titleId = TitleIdOf(response.Content.Content.TitleId);
+            _cache.Set(cacheKey, titleId, ProductTitleIdCacheDuration);
+            return titleId;
         }
 
         public async Task<XboxTitleAchievementsObject> GetTitleAchievementsAsync(string titleId, CancellationToken ct = default)
@@ -167,6 +230,43 @@ namespace Infrastructure.Services
                 .ToDictionary(group => group.Key, group => group.First().Progression.TimeUnlocked.Value);
         }
 
+        // the games whose titles start with the query, without title ids; a demo is a game too
+        private async Task<List<XboxTitleObject>> SearchMatchingTitlesAsync(string query, CancellationToken ct)
+        {
+            var suggestions = await SendAsync(() => _openXblApi.SuggestStore(_options.Key, query, ct), ct);
+            return (suggestions.Results ?? new List<OpenXblStoreSuggestionGroup>())
+                .SelectMany(group => group.Products ?? new List<OpenXblStoreSuggestion>())
+                .Where(product => product.Type == "Game" && IsProductId(product.ProductId) && !string.IsNullOrWhiteSpace(product.Title))
+                .DistinctBy(product => product.ProductId)
+                .Take(SearchResultsLimit)
+                .Select(product => new XboxTitleObject { ProductId = product.ProductId, Name = product.Title, ImageUrl = WithScheme(product.Icon) })
+                .ToList();
+        }
+
+        // the store search with the title ids, a listing without one is left out
+        private async Task<List<XboxTitleObject>> SearchStoreTitlesAsync(string query, CancellationToken ct)
+        {
+            var search = await SendAsync(() => _openXblApi.SearchStore(_options.Key, query, "titleid", "Windows.Xbox", ct), ct);
+            return (search.Payload?.SearchResults ?? new List<OpenXblStoreProduct>())
+                .Select(product => new XboxTitleObject
+                {
+                    TitleId = TitleIdOf(product.XboxTitleId),
+                    ProductId = IsProductId(product.ProductId) ? product.ProductId : null,
+                    Name = product.Title,
+                    ImageUrl = ImageOf(product),
+                })
+                .Where(title => title.TitleId != null && !string.IsNullOrWhiteSpace(title.Name))
+                .DistinctBy(title => title.TitleId)
+                .Take(SearchResultsLimit)
+                .ToList();
+        }
+
+        private static string ProductTitleIdCacheKey(string productId) => $"xbox-product-title-id:{productId}";
+
+        // a product id goes into the path of the request, so only letters and digits pass
+        private static bool IsProductId(string productId) => !string.IsNullOrEmpty(productId) && productId.Length <= XboxLimits.ProductIdMaxLength
+            && productId.All(char.IsAsciiLetterOrDigit);
+
         private async Task<List<OpenXblAchievement>> GetAllAchievementsAsync(string titleId, string language, CancellationToken ct)
         {
             var achievements = new List<OpenXblAchievement>();
@@ -202,10 +302,11 @@ namespace Infrastructure.Services
         {
             var images = product.Images ?? new List<OpenXblStoreImage>();
             var image = images.FirstOrDefault(i => i.ImageType == "BoxArt") ?? images.FirstOrDefault(i => i.ImageType == "Poster") ?? images.FirstOrDefault();
-            var url = image?.Url;
-            // the store gives the addresses without the scheme
-            return string.IsNullOrEmpty(url) ? null : url.StartsWith("//") ? "https:" + url : url;
+            return WithScheme(image?.Url);
         }
+
+        // the store gives the addresses without the scheme
+        private static string WithScheme(string url) => string.IsNullOrEmpty(url) ? null : url.StartsWith("//") ? "https:" + url : url;
 
         private static string DescriptionOf(OpenXblAchievement achievement) =>
             achievement == null ? null

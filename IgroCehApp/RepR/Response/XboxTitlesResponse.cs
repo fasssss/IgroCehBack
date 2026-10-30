@@ -7,6 +7,11 @@ namespace API.RepR.Response
         public List<XboxTitleObject> Titles { get; set; }
     }
 
+    public class GetXboxTitleIdResponse
+    {
+        public string TitleId { get; set; }
+    }
+
     public class GetXboxAchievementsResponse
     {
         // the name of the game in Xbox, so the administrator sees it is the right one

@@ -53,6 +53,34 @@ namespace Infrastructure.DTO
         public string Url { get; set; }
     }
 
+    // the strict search of the store, the products grouped as the store groups them
+    public class OpenXblStoreSuggestions
+    {
+        public List<OpenXblStoreSuggestionGroup> Results { get; set; }
+    }
+
+    public class OpenXblStoreSuggestionGroup
+    {
+        public List<OpenXblStoreSuggestion> Products { get; set; }
+    }
+
+    public class OpenXblStoreSuggestion
+    {
+        public string ProductId { get; set; }
+        public string Title { get; set; }
+        // Game for a game or its demo
+        public string Type { get; set; }
+        // the box art or the logo, without the scheme
+        public string Icon { get; set; }
+    }
+
+    // the title id of a store product, a string of digits
+    public class OpenXblProductTitleId
+    {
+        public string ProductId { get; set; }
+        public JsonElement? TitleId { get; set; }
+    }
+
     // a page of the achievements of a title, the next one comes by the continuation token
     public class OpenXblAchievements
     {

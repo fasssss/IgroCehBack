@@ -6,8 +6,11 @@ namespace Application.Interfaces
     // refuses the key or there is no key
     public interface IXboxService
     {
-        // the games of the Microsoft Store with an Xbox title id whose names match the query, empty for a query shorter than 2 characters
+        // the games of the Microsoft Store whose names start with the query, the title id known only for some of them,
+        // or the games the store search finds when none starts with it; empty for a query shorter than 2 characters
         public Task<List<XboxTitleObject>> SearchTitlesAsync(string query, CancellationToken ct = default);
+        // the title id of a product of the Microsoft Store, null when it has none (a bundle, an add-on) or there is no such product
+        public Task<string> GetProductTitleIdAsync(string productId, CancellationToken ct = default);
         // null when the title has no achievements or there is no such title
         public Task<XboxTitleAchievementsObject> GetTitleAchievementsAsync(string titleId, CancellationToken ct = default);
         // the unlocked achievements of a player in a title by their ids with the time of the unlock, empty when the player hasn't played it;
