@@ -485,3 +485,7 @@ $RECYCLE.BIN/
 
 # Static files folder
 Upload/
+
+# the local HTTPS certificate of the API, its private key must never be committed
+localhost.key
+localhost.crt

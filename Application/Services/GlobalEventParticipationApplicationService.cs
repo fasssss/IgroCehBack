@@ -141,7 +141,7 @@ namespace Application.Services
         }
 
         // the platform asked is asked about its chosen achievements of the picked game, one unlocked after the pick passes it;
-        // a player checks on each platform once in GlobalEventLimits.PassingCheckDelayMinutes, a check the platform didn't answer doesn't count
+        // a player checks on each platform once in GlobalEventLimits.PassingCheckDelayMinutes, a check that got no answer doesn't count
         public async Task<(ParticipateGlobalEventResult Result, PassingCheckResult Check, GlobalEventParticipationObject Participation)> CheckPassingAsync(
             string userId, string globalEventId, AchievementPlatform platform, CancellationToken ct = default)
         {
@@ -199,7 +199,8 @@ namespace Application.Services
             {
                 check = await checker.CheckAsync(accountId, participant.PickedGame, participant.PickedAt.Value, ct);
             }
-            catch (AchievementPlatformUnavailableException)
+            // the platform is down, the request was cancelled (the player left) or something else failed: the check is given back
+            catch
             {
                 if (lastCheckedAt == null)
                 {
