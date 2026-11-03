@@ -9,6 +9,9 @@ namespace Application.Consts
         public const int MinGames = 3;
         public const int MaxGames = 50;
         public const int MaxAchievementsPerGame = 10;
+        // the id of a game on a platform where it has one of its own, e.g. a title id in Xbox; its format is checked by the platform
+        public const int TitleRefMaxLength = 64;
+        public const int TitleNameMaxLength = 255;
         public const int AchievementTextMaxLength = 1000;
         // the games of one roll, the player picks one of them
         public const int RolledGames = 3;

@@ -7,7 +7,7 @@ namespace Application.ApplicationInterfaces
     // that ask Steam, Xbox or the catalog throw SteamUnavailableException, XboxUnavailableException or GameCatalogUnavailableException
     public interface IGlobalEventApplicationService
     {
-        public Task<List<SteamAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default);
+        public Task<List<PlatformAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default);
         // the games in Xbox the administrator chooses from for a catalog game, found by its name
         public Task<List<XboxTitleObject>> SearchXboxTitlesAsync(string query, CancellationToken ct = default);
         // the title id of the game the administrator chose among the found ones, null when the product of the store has none

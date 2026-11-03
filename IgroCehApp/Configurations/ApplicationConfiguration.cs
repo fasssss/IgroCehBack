@@ -20,6 +20,9 @@ namespace API.Configurations
             // the platforms whose achievements prove the passing of a game of a global event, one per AchievementPlatform
             services.AddTransient<IAchievementPlatformChecker, SteamAchievementChecker>();
             services.AddTransient<IAchievementPlatformChecker, XboxAchievementChecker>();
+            // the platforms the administrator chooses the achievements of a game on, one per AchievementPlatform next to its checker
+            services.AddTransient<IAchievementPlatformCatalog, SteamAchievementCatalog>();
+            services.AddTransient<IAchievementPlatformCatalog, XboxAchievementCatalog>();
             services.AddTransient<IGlobalEventClaimApplicationService, GlobalEventClaimApplicationService>();
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();

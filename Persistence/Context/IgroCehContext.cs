@@ -33,6 +33,7 @@ namespace Persistence.Context
         public DbSet<GlobalEvent> GlobalEvents { get; set; }
         public DbSet<GlobalEventGame> GlobalEventGames { get; set; }
         public DbSet<GlobalEventAchievement> GlobalEventAchievements { get; set; }
+        public DbSet<GlobalEventGameTitle> GlobalEventGameTitles { get; set; }
         public DbSet<GlobalEventParticipant> GlobalEventParticipants { get; set; }
         public DbSet<GlobalEventRolledGame> GlobalEventRolledGames { get; set; }
         public DbSet<GlobalEventClaim> GlobalEventClaims { get; set; }
@@ -178,8 +179,15 @@ namespace Persistence.Context
                 .HasOne(a => a.GlobalEventGame)
                 .WithMany(geg => geg.Achievements)
                 .HasForeignKey(a => a.GlobalEventGameId);
-            modelBuilder.Entity<GlobalEventGame>().Property(geg => geg.XboxTitleId).HasMaxLength(XboxLimits.TitleIdMaxLength);
-            modelBuilder.Entity<GlobalEventGame>().Property(geg => geg.XboxTitleName).HasMaxLength(XboxLimits.TitleNameMaxLength);
+            modelBuilder.Entity<GlobalEventGameTitle>()
+                .HasOne(t => t.GlobalEventGame)
+                .WithMany(geg => geg.Titles)
+                .HasForeignKey(t => t.GlobalEventGameId);
+            // one game per platform: a game with several on a platform (e.g. for two consoles) is chosen in one of them
+            modelBuilder.Entity<GlobalEventGameTitle>().HasIndex(t => new { t.GlobalEventGameId, t.Platform }).IsUnique();
+            modelBuilder.Entity<GlobalEventGameTitle>().HasQueryFilter(t => !t.GlobalEventGame.GlobalEvent.IsDeleted);
+            modelBuilder.Entity<GlobalEventGameTitle>().Property(t => t.TitleRef).HasMaxLength(GlobalEventLimits.TitleRefMaxLength).IsRequired();
+            modelBuilder.Entity<GlobalEventGameTitle>().Property(t => t.TitleName).HasMaxLength(GlobalEventLimits.TitleNameMaxLength).IsRequired();
             // the same API name may be in Steam and in Xbox, e.g. "1"
             modelBuilder.Entity<GlobalEventAchievement>().HasIndex(a => new { a.GlobalEventGameId, a.Platform, a.ApiName }).IsUnique();
             modelBuilder.Entity<GlobalEventAchievement>().HasQueryFilter(a => !a.GlobalEventGame.GlobalEvent.IsDeleted);

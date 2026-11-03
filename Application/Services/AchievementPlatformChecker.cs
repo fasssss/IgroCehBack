@@ -43,5 +43,9 @@ namespace Application.Services
         // the platforms have ids of their own, one knows nothing about the achievements of another
         protected List<GlobalEventAchievement> AchievementsOf(GlobalEventGame game) =>
             game.Achievements.Where(a => a.Platform == (GlobalEventAchievementPlatform)Platform).ToList();
+
+        // the game on the platform its achievements belong to, null on a platform that knows the game by its catalog id
+        protected string TitleRefOf(GlobalEventGame game) =>
+            game.Titles.FirstOrDefault(t => t.Platform == (GlobalEventAchievementPlatform)Platform)?.TitleRef;
     }
 }

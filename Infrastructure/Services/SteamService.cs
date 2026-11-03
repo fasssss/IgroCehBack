@@ -30,10 +30,10 @@ namespace Infrastructure.Services
             _logger = logger;
         }
 
-        public async Task<List<SteamAchievementObject>> GetAchievementsAsync(int appId, CancellationToken ct = default)
+        public async Task<List<PlatformAchievementObject>> GetAchievementsAsync(int appId, CancellationToken ct = default)
         {
             var cacheKey = $"steam-achievements:{appId}";
-            if (_cache.TryGetValue(cacheKey, out List<SteamAchievementObject> cachedAchievements))
+            if (_cache.TryGetValue(cacheKey, out List<PlatformAchievementObject> cachedAchievements))
             {
                 return cachedAchievements;
             }
@@ -51,7 +51,7 @@ namespace Infrastructure.Services
                 .Select(achievement =>
                 {
                     var translated = russianByName.GetValueOrDefault(achievement.Name);
-                    return new SteamAchievementObject
+                    return new PlatformAchievementObject
                     {
                         ApiName = achievement.Name,
                         Name = achievement.DisplayName,

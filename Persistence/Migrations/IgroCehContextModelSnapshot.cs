@@ -434,14 +434,6 @@ namespace Persistence.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<string>("XboxTitleId")
-                        .HasMaxLength(10)
-                        .HasColumnType("varchar(10)");
-
-                    b.Property<string>("XboxTitleName")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("GameId");
@@ -450,6 +442,39 @@ namespace Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("GlobalEventGames");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GlobalEventGameTitle", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("GlobalEventGameId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Platform")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TitleName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("TitleRef")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GlobalEventGameId", "Platform")
+                        .IsUnique();
+
+                    b.ToTable("GlobalEventGameTitles");
                 });
 
             modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
@@ -1170,6 +1195,17 @@ namespace Persistence.Migrations
                     b.Navigation("GlobalEvent");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GlobalEventGameTitle", b =>
+                {
+                    b.HasOne("Domain.Entities.GlobalEventGame", "GlobalEventGame")
+                        .WithMany("Titles")
+                        .HasForeignKey("GlobalEventGameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GlobalEventGame");
+                });
+
             modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>
                 {
                     b.HasOne("Domain.Entities.GlobalEvent", "GlobalEvent")
@@ -1344,6 +1380,8 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.GlobalEventGame", b =>
                 {
                     b.Navigation("Achievements");
+
+                    b.Navigation("Titles");
                 });
 
             modelBuilder.Entity("Domain.Entities.GlobalEventParticipant", b =>

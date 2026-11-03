@@ -4,7 +4,7 @@ using Domain.Entities;
 
 namespace Application.Services
 {
-    // Xbox proves the passing by its achievements of the game in Xbox the administrator found for the event (GlobalEventGame.XboxTitleId);
+    // Xbox proves the passing by its achievements of the game in Xbox the administrator found for the event (its title id is the ref of GlobalEventGameTitle);
     // it keeps the time of an unlock to a fraction of a second, so the pick is compared as it is
     public class XboxAchievementChecker : AchievementPlatformChecker
     {
@@ -27,6 +27,6 @@ namespace Application.Services
             Task.FromResult(new HashSet<string>());
 
         protected override Task<Dictionary<string, DateTimeOffset>> GetUnlockedAchievementsAsync(string xuid, GlobalEventGame game, CancellationToken ct) =>
-            _xboxService.GetUnlockedAchievementsAsync(xuid, game.XboxTitleId, ct);
+            _xboxService.GetUnlockedAchievementsAsync(xuid, TitleRefOf(game), ct);
     }
 }

@@ -16,7 +16,7 @@ namespace Domain.Entities
         public string? Description { get; set; }
         public string? DescriptionRu { get; set; }
         public string? IconUrl { get; set; }
-        // the Steam ones in the order of Steam, then the Xbox ones in the order of their ids
+        // by the platforms in the order of their values (Steam first), within one in the order of the platform
         public int Order { get; set; }
         public DateTimeOffset? CreatedAt { get; set; }
     }

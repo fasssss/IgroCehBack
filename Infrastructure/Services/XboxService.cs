@@ -167,7 +167,7 @@ namespace Infrastructure.Services
                         .Select(achievement =>
                         {
                             var translated = russianById.GetValueOrDefault(achievement.Id);
-                            return new XboxAchievementObject
+                            return new PlatformAchievementObject
                             {
                                 ApiName = achievement.Id,
                                 Name = achievement.Name,

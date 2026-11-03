@@ -16,6 +16,6 @@ namespace API.RepR.Response
     {
         // the name of the game in Xbox, so the administrator sees it is the right one
         public XboxTitleObject Title { get; set; }
-        public List<XboxAchievementObject> Achievements { get; set; }
+        public List<PlatformAchievementObject> Achievements { get; set; }
     }
 }
