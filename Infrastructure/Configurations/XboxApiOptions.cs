@@ -3,7 +3,7 @@ namespace Infrastructure.Configurations
     // OpenXBL (https://api.xbl.io/docs/json) stands between the site and Xbox Live: the sign-in to Xbox and the achievements of the players
     public class XboxApiOptions
     {
-        public string Address { get; set; } = "https://api.xbl.io";
+        public string Address { get; set; }
 
         // the public key of the app in the dashboard of OpenXBL; the sign-in link carries it, so it isn't a secret
         public string PublicKey { get; set; }

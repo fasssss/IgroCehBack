@@ -11,6 +11,7 @@ namespace API.Configurations
             services.Configure<VideoGamesCriticOptions>(config.GetSection(nameof(VideoGamesCriticOptions)));
             services.Configure<SteamApiOptions>(config.GetSection(nameof(SteamApiOptions)));
             services.Configure<XboxApiOptions>(config.GetSection(nameof(XboxApiOptions)));
+            services.Configure<PsnApiOptions>(config.GetSection(nameof(PsnApiOptions)));
             return services;
         }
     }

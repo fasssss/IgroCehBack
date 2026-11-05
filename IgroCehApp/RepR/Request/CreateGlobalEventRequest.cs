@@ -30,13 +30,11 @@ namespace API.RepR.Request
                 .Must(games => games.Select(g => g.AppId).Distinct().Count() == games.Count).WithMessage("A game is added once");
             RuleForEach(r => r.Games).ChildRules(game =>
             {
-                // a game without achievements is passed only by a claim the administrator checks by hand; without the platforms
-                // a tab opened before them would clear the achievements of the game, so a game comes with one of the contracts
+                // a game without achievements is passed only by a claim the administrator checks by hand, its list of platforms is empty;
+                // without the list a request of an older front would clear the achievements of the game
                 game.RuleFor(g => g.Platforms).Cascade(CascadeMode.Stop)
-                    .NotNull().WithMessage("A game needs its platforms").When(g => g.AchievementApiNames == null);
-                game.RuleFor(g => g.Platforms)
-                    .Must(platforms => platforms.Select(p => p.Platform).Distinct().Count() == platforms.Count).WithMessage("A platform is added once")
-                    .When(g => g.Platforms != null);
+                    .NotNull().WithMessage("A game needs its platforms")
+                    .Must(platforms => platforms.Select(p => p.Platform).Distinct().Count() == platforms.Count).WithMessage("A platform is added once");
                 game.RuleForEach(g => g.Platforms).ChildRules(platform =>
                 {
                     platform.RuleFor(p => p.Platform).IsInEnum();
@@ -46,21 +44,6 @@ namespace API.RepR.Request
                         .Must(ids => ids.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements on a platform")
                         .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("An achievement is added once");
                 }).When(g => g.Platforms != null);
-
-                // the old contract, removed once every front sends the platforms
-                game.RuleFor(g => g.AchievementApiNames)
-                    .Must(names => names.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements")
-                    .Must(names => names.Distinct().Count() == names.Count).WithMessage("An achievement is added once")
-                    .When(g => g.Platforms == null && g.AchievementApiNames != null);
-                // the same limit for the achievements in Xbox, they need their game in Xbox
-                game.RuleFor(g => g.XboxAchievementIds)
-                    .Must(ids => ids.Count <= GlobalEventLimits.MaxAchievementsPerGame).WithMessage($"A game can have up to {GlobalEventLimits.MaxAchievementsPerGame} achievements in Xbox")
-                    .Must(ids => ids.Distinct().Count() == ids.Count).WithMessage("An achievement is added once")
-                    .When(g => g.Platforms == null && g.XboxAchievementIds != null);
-                game.RuleFor(g => g.XboxTitleId).Cascade(CascadeMode.Stop)
-                    .NotEmpty().WithMessage("The achievements in Xbox need their game in Xbox")
-                    .Matches(@"^\d+$").MaximumLength(XboxLimits.TitleIdMaxLength)
-                    .When(g => g.Platforms == null && g.XboxAchievementIds?.Count > 0);
             });
         }
     }

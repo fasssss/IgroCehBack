@@ -27,9 +27,6 @@ namespace Application.DTO
         public int AppId { get; set; }
         // the game on every platform with an id of its own its achievements belong to, e.g. in Xbox
         public List<GlobalEventGameTitleObject> Titles { get; set; }
-        // the game in Xbox from Titles for a front of the old contract, removed once every front reads Titles
-        public string XboxTitleId { get; set; }
-        public string XboxTitleName { get; set; }
         // any one of them unlocked means the game is passed; by the platforms in the order of their values, within one in the order of the platform
         public List<GlobalEventAchievementObject> Achievements { get; set; }
     }
@@ -60,18 +57,6 @@ namespace Application.DTO
         public int AppId { get; set; }
         // the achievements chosen on each platform
         public List<NewGlobalEventPlatformObject> Platforms { get; set; }
-        // the old contract, sent by a tab of the administrator opened before the platforms came and read only without Platforms;
-        // removed once every front sends Platforms
-        public List<string> AchievementApiNames { get; set; }
-        public string XboxTitleId { get; set; }
-        public List<string> XboxAchievementIds { get; set; } = new List<string>();
-
-        // Platforms, or the same built from the fields of the old contract
-        public List<NewGlobalEventPlatformObject> PlatformsOrOldFields() => Platforms ?? new List<NewGlobalEventPlatformObject>
-        {
-            new NewGlobalEventPlatformObject { Platform = AchievementPlatform.Steam, AchievementIds = AchievementApiNames ?? new List<string>() },
-            new NewGlobalEventPlatformObject { Platform = AchievementPlatform.Xbox, TitleRef = XboxTitleId, AchievementIds = XboxAchievementIds ?? new List<string>() },
-        };
     }
 
     // the achievements of a game chosen on one platform; a platform without them is left out or comes with none

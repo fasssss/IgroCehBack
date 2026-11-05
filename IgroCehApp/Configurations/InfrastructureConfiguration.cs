@@ -38,12 +38,30 @@ namespace API.Configurations
             services.AddRefitClient<IOpenXblApi>()
                 .ConfigureHttpClient((serviceProvider, config) =>
                     config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<XboxApiOptions>>().Value.Address ?? ""));
+            services.AddRefitClient<IPsnAuthApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<PsnApiOptions>>().Value.AuthAddress ?? ""))
+                // the code of the sign-in is in the address of a redirect to the app, and the npsso cookie is set on the request by hand
+                .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false, UseCookies = false })
+                // HttpClient logs the headers at Trace, these carry the NPSSO, the tokens and the code
+                .RedactLoggedHeaders(_ => true);
+            services.AddRefitClient<IPsnApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<PsnApiOptions>>().Value.ApiAddress ?? ""))
+                .RedactLoggedHeaders(_ => true);
+            services.AddRefitClient<IPsnProfileApi>()
+                .ConfigureHttpClient((serviceProvider, config) =>
+                    config.BaseAddress = new Uri(serviceProvider.GetRequiredService<IOptions<PsnApiOptions>>().Value.ProfileAddress ?? ""))
+                .RedactLoggedHeaders(_ => true);
             services.AddMemoryCache();
             services.AddTransient<IGameCatalogService, VideoGamesCriticCatalogService>();
             services.AddTransient<ISteamService, SteamService>();
             services.AddTransient<ISteamSignInService, SteamSignInService>();
             services.AddTransient<IXboxSignInService, XboxSignInService>();
             services.AddTransient<IXboxService, XboxService>();
+            services.AddSingleton<PsnRateLimiter>();
+            services.AddSingleton<PsnTokenStore>();
+            services.AddTransient<IPsnService, PsnService>();
             return services;
         }
     }

@@ -282,7 +282,7 @@ namespace Application.Services
 
         // the platforms the administrator chose achievements on, in the order of their values
         private static IEnumerable<NewGlobalEventPlatformObject> ChosenPlatforms(NewGlobalEventGameObject game) =>
-            game.PlatformsOrOldFields().Where(p => p.AchievementIds.Count > 0).OrderBy(p => p.Platform);
+            game.Platforms.Where(p => p.AchievementIds.Count > 0).OrderBy(p => p.Platform);
 
         // the chosen achievements of a game on one platform with its game there, the list holds only the chosen ones
         private record ChosenTitle(GlobalEventAchievementPlatform Platform, PlatformTitleAchievementsObject Title);
@@ -392,8 +392,6 @@ namespace Application.Services
                             .OrderBy(t => t.Platform)
                             .Select(t => new GlobalEventGameTitleObject { Platform = (AchievementPlatform)t.Platform, TitleRef = t.TitleRef, TitleName = t.TitleName })
                             .ToList(),
-                        XboxTitleId = geg.Titles.Where(t => t.Platform == GlobalEventAchievementPlatform.Xbox).Select(t => t.TitleRef).FirstOrDefault(),
-                        XboxTitleName = geg.Titles.Where(t => t.Platform == GlobalEventAchievementPlatform.Xbox).Select(t => t.TitleName).FirstOrDefault(),
                         Achievements = geg.Achievements
                             .OrderBy(a => a.Order)
                             .Select(a => new GlobalEventAchievementObject

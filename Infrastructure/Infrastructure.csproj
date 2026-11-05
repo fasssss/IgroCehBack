@@ -11,6 +11,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="Refit" Version="7.2.1" />
     <PackageReference Include="Refit.HttpClientFactory" Version="7.2.1" />
+    <PackageReference Include="System.Threading.RateLimiting" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
