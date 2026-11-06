@@ -13,6 +13,14 @@ namespace Application.Consts
         // the trophy lists of PS5 games live in trophy2, the ones of PS3, PS4 and Vita games in trophy; the same id in the other one answers 404
         public const string Ps5TrophyService = "trophy2";
         public const string OlderTrophyService = "trophy";
+        // the code the user puts in About me to prove the account, typed on a console: no 0, O, 1, I and L, they are easy to mix up
+        public const string LinkCodePrefix = "IGRO-";
+        public const string LinkCodeAlphabet = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+        public const int LinkCodeLength = 6;
+        public const int LinkCodeLifetimeMinutes = 30;
+        // the whole site shares one limit of requests to PSN, one user linking can't spend it; only a confirmation asks PSN, so only it is counted
+        public const int LinkAttemptsPerWindow = 1;
+        public const int LinkAttemptsWindowMinutes = 15;
 
         private static readonly Regex TitleRefFormat = new(@"^(NPWR\d{5,}_\d{2})(?:/(trophy2?))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         private static readonly Regex OnlineIdFormat = new(@"^[A-Za-z0-9_-]{3,16}$", RegexOptions.CultureInvariant);

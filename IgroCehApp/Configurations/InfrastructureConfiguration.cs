@@ -62,6 +62,7 @@ namespace API.Configurations
             services.AddSingleton<PsnRateLimiter>();
             services.AddSingleton<PsnTokenStore>();
             services.AddTransient<IPsnService, PsnService>();
+            services.AddSingleton<IPsnLinkStore, PsnLinkStore>();
             return services;
         }
     }

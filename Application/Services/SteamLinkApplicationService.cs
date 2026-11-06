@@ -34,11 +34,6 @@ namespace Application.Services
                 return (LinkSteamResult.InvalidAnswer, null);
             }
 
-            if (await _userRepository.CustomAnyAsync(_userRepository.Where(u => u.SteamId == steamId && u.Id != userId)))
-            {
-                return (LinkSteamResult.TakenByAnotherUser, null);
-            }
-
             var user = await _userRepository.GetByIdAsync(userId);
             user.SteamId = steamId;
             await _userRepository.SaveAsync();

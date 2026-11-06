@@ -12,6 +12,8 @@ namespace Application.DTO
         public string SteamId { get; set; }
         // the gamertag of the linked Xbox account, its profile is linked from the page
         public string XboxGamertag { get; set; }
+        // the online id of the linked PSN account, its profile is linked from the page
+        public string PsnOnlineId { get; set; }
         // shared guilds where the player took part in at least one event
         public List<PlayerGuildObject> Guilds { get; set; }
         // guilds where the player took part in events, but the viewer is not a member

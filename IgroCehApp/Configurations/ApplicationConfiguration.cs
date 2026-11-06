@@ -27,6 +27,7 @@ namespace API.Configurations
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();
             services.AddTransient<IXboxLinkApplicationService, XboxLinkApplicationService>();
+            services.AddTransient<IPsnLinkApplicationService, PsnLinkApplicationService>();
             return services;
         }
     }

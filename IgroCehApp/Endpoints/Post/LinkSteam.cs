@@ -11,7 +11,7 @@ using System.Security.Claims;
 namespace API.Endpoints.Post
 {
     // the front passes the answer of Steam it was sent to, Steam itself confirms it, then the account is linked
-    public class LinkSteam : Endpoint<LinkSteamRequest, Results<Ok<SteamProfileStatusResponse>, BadRequest<string>, Conflict<string>, StatusCodeHttpResult>>
+    public class LinkSteam : Endpoint<LinkSteamRequest, Results<Ok<SteamProfileStatusResponse>, BadRequest<string>, StatusCodeHttpResult>>
     {
         private readonly ISteamLinkApplicationService _steamLinkApplicationService;
         private readonly SteamLinkState _steamLinkState;
@@ -27,7 +27,7 @@ namespace API.Endpoints.Post
             Post("/api/linkSteam");
         }
 
-        public override async Task<Results<Ok<SteamProfileStatusResponse>, BadRequest<string>, Conflict<string>, StatusCodeHttpResult>> ExecuteAsync(
+        public override async Task<Results<Ok<SteamProfileStatusResponse>, BadRequest<string>, StatusCodeHttpResult>> ExecuteAsync(
             LinkSteamRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
@@ -41,12 +41,9 @@ namespace API.Endpoints.Post
             try
             {
                 var (result, isGameDataPublic) = await _steamLinkApplicationService.LinkAsync(stringId, request.Parameters, returnTo, ct);
-                switch (result)
+                if (result == LinkSteamResult.InvalidAnswer)
                 {
-                    case LinkSteamResult.InvalidAnswer:
-                        return TypedResults.BadRequest("Steam doesn't confirm the sign-in");
-                    case LinkSteamResult.TakenByAnotherUser:
-                        return TypedResults.Conflict("The Steam account is linked to another user");
+                    return TypedResults.BadRequest("Steam doesn't confirm the sign-in");
                 }
 
                 return TypedResults.Ok(new SteamProfileStatusResponse { IsGameDataPublic = isGameDataPublic });

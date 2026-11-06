@@ -29,11 +29,6 @@ namespace Application.Services
                 return (LinkXboxResult.InvalidCode, null);
             }
 
-            if (await _userRepository.CustomAnyAsync(_userRepository.Where(u => u.XboxXuid == account.Xuid && u.Id != userId)))
-            {
-                return (LinkXboxResult.TakenByAnotherUser, null);
-            }
-
             var user = await _userRepository.GetByIdAsync(userId);
             user.XboxXuid = account.Xuid;
             user.XboxGamertag = account.Gamertag;

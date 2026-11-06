@@ -978,6 +978,14 @@ namespace Persistence.Migrations
                     b.Property<bool>("IsAppAdmin")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("PsnAccountId")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("PsnOnlineId")
+                        .HasMaxLength(16)
+                        .HasColumnType("varchar(16)");
+
                     b.Property<string>("SteamId")
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)");
@@ -995,12 +1003,6 @@ namespace Persistence.Migrations
                         .HasColumnType("varchar(20)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SteamId")
-                        .IsUnique();
-
-                    b.HasIndex("XboxXuid")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });

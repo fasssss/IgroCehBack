@@ -161,6 +161,7 @@ namespace Application.Services
                 PlayingSince = player.CreatedAt,
                 SteamId = player.SteamId,
                 XboxGamertag = player.XboxGamertag,
+                PsnOnlineId = player.PsnOnlineId,
                 Guilds = playedGuilds,
                 OtherGuildsCount = playerGuilds.Count(g => g.HasPlayed && !g.IsShared),
                 Statistics = CalculateStatistics(playerId, selectedGuilds,
