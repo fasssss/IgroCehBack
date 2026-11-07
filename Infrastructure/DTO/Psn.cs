@@ -15,6 +15,13 @@ namespace Infrastructure.DTO
         public int RefreshTokenExpiresIn { get; set; }
     }
 
+    // the answer has the NPSSO itself too, it isn't read on purpose
+    public class PsnSsoCookie
+    {
+        [JsonPropertyName("expires_in")]
+        public long ExpiresIn { get; set; }
+    }
+
     public class PsnProfileResponse
     {
         public PsnProfile Profile { get; set; }

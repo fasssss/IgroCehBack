@@ -16,5 +16,9 @@ namespace Infrastructure.ExternalInterfaces
         [Post("/api/authz/v3/oauth/token")]
         public Task<ApiResponse<PsnTokens>> GetTokens([Header("Authorization")] string clientAuthorization,
             [Body(BodySerializationMethod.UrlEncoded)] Dictionary<string, string> form, CancellationToken ct);
+
+        // the npsso cookie gives the time it has left and doesn't change; 400 with invalid_grant for a value that doesn't work
+        [Get("/api/v1/ssocookie")]
+        public Task<ApiResponse<PsnSsoCookie>> GetSsoCookie([Header("Cookie")] string cookie, CancellationToken ct);
     }
 }
