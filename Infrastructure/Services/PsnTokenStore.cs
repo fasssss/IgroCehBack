@@ -1,5 +1,8 @@
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
+using Application.Consts;
+using Application.DTO;
 using Application.Exceptions;
 using Infrastructure.Configurations;
 using Infrastructure.DTO;
@@ -29,6 +32,7 @@ namespace Infrastructure.Services
         private readonly SemaphoreSlim _renewal = new(1, 1);
         private volatile Tokens _tokens;
         private DateTimeOffset _signInRetryAt = DateTimeOffset.MinValue;
+        private volatile bool _isNpssoRefused;
 
         public PsnTokenStore(IServiceScopeFactory scopeFactory, PsnRateLimiter limiter, IOptions<PsnApiOptions> options, ILogger<PsnTokenStore> logger)
         {
@@ -58,12 +62,36 @@ namespace Infrastructure.Services
                 using var scope = _scopeFactory.CreateScope();
                 var authApi = scope.ServiceProvider.GetRequiredService<IPsnAuthApi>();
                 _tokens = await RefreshAsync(authApi, ct) ?? await SignInAsync(authApi, ct);
+                WarnAboutNpssoEnd();
                 return _tokens.AccessToken;
             }
             finally
             {
                 _renewal.Release();
             }
+        }
+
+        public async Task<PsnStatusObject> GetStatusAsync(CancellationToken ct)
+        {
+            var isSignInWorking = true;
+            try
+            {
+                await GetAccessTokenAsync(ct);
+            }
+            catch (PsnUnavailableException)
+            {
+                isSignInWorking = false;
+            }
+
+            var npssoExpiresAt = GetNpssoExpiresAt();
+            return new PsnStatusObject
+            {
+                IsSignInWorking = isSignInWorking,
+                IsNpssoRefused = !isSignInWorking && (_isNpssoRefused || string.IsNullOrWhiteSpace(_options.Npsso)),
+                NpssoExpiresAt = npssoExpiresAt,
+                IsNpssoEnding = IsNpssoEnding(npssoExpiresAt),
+                RefreshTokenExpiresAt = _tokens?.RefreshExpiresAt,
+            };
         }
 
         // PSN refused the token before its time; another request may have brought a new one by now, which stays
@@ -77,6 +105,28 @@ namespace Infrastructure.Services
         }
 
         private static bool IsAlive(DateTimeOffset? expiresAt) => expiresAt > DateTimeOffset.UtcNow + ExpiryMargin;
+
+        private static bool IsNpssoEnding(DateTimeOffset? expiresAt) => expiresAt < DateTimeOffset.UtcNow.AddDays(PsnLimits.NpssoWarningDays);
+
+        private DateTimeOffset? GetNpssoExpiresAt() =>
+            DateTimeOffset.TryParseExact(_options.NpssoExpiresAt, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var expiresAt)
+                ? expiresAt
+                : null;
+
+        // tokens are renewed about once an hour while PSN is used, often enough to be noticed in the log and not so often as to fill it
+        private void WarnAboutNpssoEnd()
+        {
+            // the day is optional, so only one that can't be read is worth a line
+            var expiresAt = GetNpssoExpiresAt();
+            if (expiresAt == null && !string.IsNullOrWhiteSpace(_options.NpssoExpiresAt))
+            {
+                _logger.LogWarning("PsnApiOptions:NpssoExpiresAt isn't a date yyyy-MM-dd, the site can't warn about the end of the NPSSO");
+            }
+            else if (IsNpssoEnding(expiresAt))
+            {
+                _logger.LogWarning("By NpssoExpiresAt the NPSSO of the service account works until about {ExpiresAt:yyyy-MM-dd}, it needs renewing, or the day needs changing if it was renewed", expiresAt);
+            }
+        }
 
         // null when the refresh token is gone or doesn't work, then the NPSSO signs in
         private async Task<Tokens> RefreshAsync(IPsnAuthApi authApi, CancellationToken ct)
@@ -112,6 +162,7 @@ namespace Infrastructure.Services
         {
             if (string.IsNullOrWhiteSpace(_options.Npsso))
             {
+                _logger.LogError("There is no NPSSO of the service account");
                 throw new PsnUnavailableException("There is no NPSSO of the service account");
             }
 
@@ -163,13 +214,15 @@ namespace Infrastructure.Services
                 var code = CodeParameter.Match(location);
                 if (!code.Success)
                 {
-                    // 4165 means that the NPSSO doesn't work anymore
+                    // 4165 means that the NPSSO doesn't work anymore; an answer without a redirect says nothing about the NPSSO
                     var errorCode = ErrorCodeParameter.Match(location);
+                    _isNpssoRefused = errorCode.Success;
                     _logger.LogError("PSN refused the sign-in of the service account with {StatusCode}, error code {ErrorCode}, the NPSSO may need renewing",
                         (int)response.StatusCode, errorCode.Success ? errorCode.Groups[1].Value : null);
                     throw new PsnUnavailableException("PSN refused the sign-in of the service account");
                 }
 
+                _isNpssoRefused = false;
                 return code.Groups[1].Value;
             }
             catch (Exception e) when ((e is HttpRequestException or ApiException or TaskCanceledException) && !ct.IsCancellationRequested)

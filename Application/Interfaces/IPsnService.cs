@@ -15,5 +15,7 @@ namespace Application.Interfaces
         // the earned trophies of a player in a game by their ids with the time they were earned, titleRef as the site saved it;
         // empty when the player hasn't played the game or it hasn't synced; null when the privacy settings of the player hide them
         public Task<Dictionary<string, DateTimeOffset>> GetEarnedTrophiesAsync(string accountId, string titleRef, CancellationToken ct = default);
+        // asks PSN only when the tokens need renewing; it doesn't throw PsnUnavailableException, a sign-in that doesn't work is the answer itself
+        public Task<PsnStatusObject> GetStatusAsync(CancellationToken ct = default);
     }
 }

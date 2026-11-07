@@ -132,6 +132,8 @@ namespace Infrastructure.Services
             return earned;
         }
 
+        public Task<PsnStatusObject> GetStatusAsync(CancellationToken ct = default) => _tokens.GetStatusAsync(ct);
+
         private static string TrophiesCacheKey(string communicationId, string service) => $"psn-trophies:{PsnLimits.FormatTitleRef(communicationId, service)}";
 
         // null when the service doesn't keep this list

@@ -16,6 +16,7 @@ namespace Application.ApplicationInterfaces
         public Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default);
         // the trophies of a game in PSN, its ref in the answer has the service that keeps the list; null when there is no such list or it has no trophies
         public Task<PlatformTitleAchievementsObject> GetPsnTrophiesAsync(string titleRef, CancellationToken ct = default);
+        public Task<PsnStatusObject> GetPsnStatusAsync(CancellationToken ct = default);
         public Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,
             string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default);
         public Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,

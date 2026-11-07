@@ -62,6 +62,12 @@ namespace Application.Services
             return await _psnService.GetTitleTrophiesAsync(titleRef, ct);
         }
 
+        // the constructor and the claims show the administrator when the service account of PSN needs attention
+        public async Task<PsnStatusObject> GetPsnStatusAsync(CancellationToken ct = default)
+        {
+            return await _psnService.GetStatusAsync(ct);
+        }
+
         // the achievements are checked against their platforms and kept with their names, the catalog games are saved on the way;
         // the request validation keeps the games and their platforms distinct and the lists within the limits
         public async Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,

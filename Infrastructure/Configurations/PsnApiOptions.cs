@@ -17,6 +17,11 @@ namespace Infrastructure.Configurations
         // Empty means PSN is unavailable
         public string Npsso { get; set; }
 
+        // the day the NPSSO ends, yyyy-MM-dd, optional: whoever renews it counts the day from expires_in of the answer that gives the NPSSO.
+        // Only the warning about the end depends on it, a day that is missing, old or wrong breaks nothing;
+        // a text and not a date, because a date that can't be read fails every class that takes these options
+        public string NpssoExpiresAt { get; set; }
+
         // Sony publishes no limit, PSNAWP keeps to about 300 requests in 15 minutes and warns that more can ban the account
         public int RequestsPerWindow { get; set; } = 250;
         public int WindowMinutes { get; set; } = 15;

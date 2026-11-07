@@ -21,6 +21,8 @@ namespace Application.Consts
         // the whole site shares one limit of requests to PSN, one user linking can't spend it; only a confirmation asks PSN, so only it is counted
         public const int LinkAttemptsPerWindow = 1;
         public const int LinkAttemptsWindowMinutes = 15;
+        // the administrator is warned this many days before the day of PsnApiOptions.NpssoExpiresAt
+        public const int NpssoWarningDays = 7;
 
         private static readonly Regex TitleRefFormat = new(@"^(NPWR\d{5,}_\d{2})(?:/(trophy2?))?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
         private static readonly Regex OnlineIdFormat = new(@"^[A-Za-z0-9_-]{3,16}$", RegexOptions.CultureInvariant);
