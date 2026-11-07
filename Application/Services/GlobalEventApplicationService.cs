@@ -16,10 +16,11 @@ namespace Application.Services
         private readonly IGameApplicationService _gameApplicationService;
         private readonly ISteamService _steamService;
         private readonly IXboxService _xboxService;
+        private readonly IPsnService _psnService;
         private readonly IEnumerable<IAchievementPlatformCatalog> _catalogs;
 
         public GlobalEventApplicationService(IGlobalEventRepository globalEventRepository, IBadgeRepository badgeRepository,
-            IGameApplicationService gameApplicationService, ISteamService steamService, IXboxService xboxService,
+            IGameApplicationService gameApplicationService, ISteamService steamService, IXboxService xboxService, IPsnService psnService,
             IEnumerable<IAchievementPlatformCatalog> catalogs)
         {
             _globalEventRepository = globalEventRepository;
@@ -27,6 +28,7 @@ namespace Application.Services
             _gameApplicationService = gameApplicationService;
             _steamService = steamService;
             _xboxService = xboxService;
+            _psnService = psnService;
             _catalogs = catalogs;
         }
 
@@ -52,6 +54,12 @@ namespace Application.Services
         public async Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default)
         {
             return await _xboxService.GetTitleAchievementsAsync(titleId, ct);
+        }
+
+        // PSN has no search that gives the ids of trophy lists, so the administrator types the id
+        public async Task<PlatformTitleAchievementsObject> GetPsnTrophiesAsync(string titleRef, CancellationToken ct = default)
+        {
+            return await _psnService.GetTitleTrophiesAsync(titleRef, ct);
         }
 
         // the achievements are checked against their platforms and kept with their names, the catalog games are saved on the way;

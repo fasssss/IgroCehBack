@@ -5,5 +5,6 @@ namespace Domain.Enums
     {
         Steam = 1,
         Xbox = 2,
+        Psn = 3,
     }
 }

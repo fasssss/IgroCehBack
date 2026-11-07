@@ -3,8 +3,8 @@ using Application.Enum;
 
 namespace Application.ApplicationInterfaces
 {
-    // events of the whole site made by its administrator, a game of such an event is passed by a Steam or an Xbox achievement; the methods
-    // that ask Steam, Xbox or the catalog throw SteamUnavailableException, XboxUnavailableException or GameCatalogUnavailableException
+    // events of the whole site made by its administrator, a game of such an event is passed by an achievement on a platform; the methods
+    // that ask a platform or the catalog throw AchievementPlatformUnavailableException or GameCatalogUnavailableException
     public interface IGlobalEventApplicationService
     {
         public Task<List<PlatformAchievementObject>> GetGameAchievementsAsync(int appId, CancellationToken ct = default);
@@ -14,6 +14,8 @@ namespace Application.ApplicationInterfaces
         public Task<string> GetXboxTitleIdAsync(string productId, CancellationToken ct = default);
         // null when the game in Xbox has no achievements or there is no such game
         public Task<XboxTitleAchievementsObject> GetXboxAchievementsAsync(string titleId, CancellationToken ct = default);
+        // the trophies of a game in PSN, its ref in the answer has the service that keeps the list; null when there is no such list or it has no trophies
+        public Task<PlatformTitleAchievementsObject> GetPsnTrophiesAsync(string titleRef, CancellationToken ct = default);
         public Task<(CreateGlobalEventResult Result, GlobalEventObject GlobalEvent)> CreateAsync(string userId, string name, string description,
             string badgeId, List<NewGlobalEventGameObject> games, CancellationToken ct = default);
         public Task<(UpdateGlobalEventResult Result, GlobalEventObject GlobalEvent)> UpdateAsync(string userId, string globalEventId, string name,

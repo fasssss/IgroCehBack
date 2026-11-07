@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    // the administrator of the site creates a global event from catalog games and their Steam achievements
+    // the administrator of the site creates a global event from catalog games and their achievements on the platforms
     public class CreateGlobalEvent : Endpoint<CreateGlobalEventRequest, Results<Ok<GlobalEventResponse>, BadRequest<string>, Conflict<string>, StatusCodeHttpResult>>
     {
         private readonly IGlobalEventApplicationService _globalEventApplicationService;
@@ -40,7 +40,7 @@ namespace API.Endpoints.Post
                     case CreateGlobalEventResult.UnknownGame:
                         return TypedResults.BadRequest("A game isn't in the catalog");
                     case CreateGlobalEventResult.UnknownAchievement:
-                        return TypedResults.BadRequest("A game has no such achievement in Steam or in Xbox");
+                        return TypedResults.BadRequest("A game has no such achievement on the platform");
                     case CreateGlobalEventResult.UnknownBadge:
                         return TypedResults.BadRequest("There is no such badge");
                 }

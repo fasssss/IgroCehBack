@@ -40,7 +40,7 @@ namespace API.Endpoints.Post
                     case UpdateGlobalEventResult.UnknownGame:
                         return TypedResults.BadRequest("A game isn't in the catalog");
                     case UpdateGlobalEventResult.UnknownAchievement:
-                        return TypedResults.BadRequest("A game has no such achievement in Steam or in Xbox");
+                        return TypedResults.BadRequest("A game has no such achievement on the platform");
                     case UpdateGlobalEventResult.UnknownBadge:
                         return TypedResults.BadRequest("There is no such badge");
                     case UpdateGlobalEventResult.GamesLocked:

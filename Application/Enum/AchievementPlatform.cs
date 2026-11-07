@@ -5,5 +5,6 @@ namespace Application.Enum
     {
         Steam = 1,
         Xbox = 2,
+        Psn = 3,
     }
 }

@@ -23,6 +23,7 @@ namespace API.Configurations
             // the platforms the administrator chooses the achievements of a game on, one per AchievementPlatform next to its checker
             services.AddTransient<IAchievementPlatformCatalog, SteamAchievementCatalog>();
             services.AddTransient<IAchievementPlatformCatalog, XboxAchievementCatalog>();
+            services.AddTransient<IAchievementPlatformCatalog, PsnAchievementCatalog>();
             services.AddTransient<IGlobalEventClaimApplicationService, GlobalEventClaimApplicationService>();
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();
