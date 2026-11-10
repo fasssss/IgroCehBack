@@ -76,7 +76,11 @@ app.UseWebSockets(new WebSocketOptions
     })
     .UseAuthentication()
     .UseAuthorization()
-    .UseFastEndpoints()
-    .UseSwaggerGen();
+    .UseFastEndpoints();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwaggerGen();
+}
 
 app.Run();
