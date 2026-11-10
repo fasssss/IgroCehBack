@@ -25,8 +25,8 @@ RUN dotnet publish "./API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:Use
 
 FROM base AS final
 WORKDIR /app
-COPY ["IgroCehApp/localhost.pfx", "/app/localhost.pfx"]
-COPY ["IgroCehApp/localhost.crt", "/usr/local/share/ca-certificates/localhost.crt"]
+COPY ["IgroCehApp/gamews-quest.pfx", "/app/gamews-quest.pfx"]
+COPY ["IgroCehApp/gamews-quest.crt", "/usr/local/share/ca-certificates/gamews-quest.crt"]
 RUN update-ca-certificates
 RUN mkdir -p /app/Upload
 COPY --from=publish /app/publish .
