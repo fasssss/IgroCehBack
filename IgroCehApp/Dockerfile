@@ -23,11 +23,15 @@ FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "./API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-FROM base AS final
+# Server stage: plain http on 8080 behind the nginx of the server, which holds the certificate
+FROM base AS production
 WORKDIR /app
-COPY ["IgroCehApp/gamews-quest.pfx", "/app/gamews-quest.pfx"]
-COPY ["IgroCehApp/gamews-quest.crt", "/usr/local/share/ca-certificates/gamews-quest.crt"]
-RUN update-ca-certificates
 RUN mkdir -p /app/Upload
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "API.dll"]
+
+# Local stage: the local certificate for https on 8081
+FROM production AS final
+COPY ["IgroCehApp/gamews-quest.pfx", "/app/gamews-quest.pfx"]
+COPY ["IgroCehApp/gamews-quest.crt", "/usr/local/share/ca-certificates/gamews-quest.crt"]
+RUN update-ca-certificates

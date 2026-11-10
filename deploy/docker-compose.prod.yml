@@ -1,0 +1,41 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: igroceh-mysql
+    restart: unless-stopped
+    env_file: ./mysql.env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      retries: 12
+
+  api:
+    build:
+      context: ./Back
+      dockerfile: IgroCehApp/Dockerfile
+      target: production
+    container_name: igroceh-api
+    restart: unless-stopped
+    env_file: ./api.env
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - uploads:/app/Upload
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./Front
+      target: production
+    container_name: igroceh-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+
+volumes:
+  mysql_data:
+  uploads:
