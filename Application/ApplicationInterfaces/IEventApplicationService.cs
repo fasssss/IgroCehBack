@@ -11,7 +11,7 @@ namespace Application.ApplicationInterfaces
 {
     public interface IEventApplicationService
     {
-        public Task<EventShortObject> CreateEventAsync(EventShortObject eventObject);
+        public Task<EventShortObject> CreateEventAsync(EventShortObject eventObject, bool? isNextSeason);
         public Task<List<EventShortObject>> GetEventsByGuildIdAsync(string userId, string guildId, int startFrom);
         public Task<EventObject> GetEventByIdAsync(string userId, string eventId);
         public Task<(JoinEventResult Result, EventRecordObject EventRecord)> JoinEventAsync(string userId, string eventId);

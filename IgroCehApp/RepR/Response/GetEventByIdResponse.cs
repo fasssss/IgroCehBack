@@ -10,6 +10,7 @@ namespace API.RepR.Response
         public string EventCreatorId { get; set; }
         public EventStatusId StatusId { get; set; }
         public bool AllowsNewcomers { get; set; }
+        public DateTimeOffset SeasonStartsAt { get; set; }
         public List<EventRecordObject> EventRecords { get; set; }
     }
 }

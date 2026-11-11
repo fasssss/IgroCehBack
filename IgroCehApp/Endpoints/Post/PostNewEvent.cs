@@ -35,7 +35,7 @@ namespace API.Endpoints.Post
 
             if (stringId != null)
             {
-                var userObject = await _eventApplicationService.CreateEventAsync(newEvent);
+                var userObject = await _eventApplicationService.CreateEventAsync(newEvent, request.IsNextSeason);
                 if(userObject != null)
                 {
                     return TypedResults.Ok(new PostNewEventResponse

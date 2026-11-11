@@ -19,6 +19,8 @@ namespace Application.Services
         private static Random randomGenerator = new Random();
         // nobody to guess a game for with fewer players
         private const int MinPlayersCount = 2;
+        // an event lasts one season; the front mirrors the seasons in features/events/seasons.ts
+        private const int SeasonMonths = 3;
         // the stages the creator moves the event through by hand; activation and summarizing have their own endpoints
         private static readonly Dictionary<EventStatusId, EventStatusId> ManualNextStages = new()
         {
@@ -40,7 +42,8 @@ namespace Application.Services
             _mapper = mapper;
         }
 
-        public async Task<EventShortObject> CreateEventAsync(EventShortObject eventObject)
+        // the creator picks the current season or the next one; without a choice the last month of a season gives the next one
+        public async Task<EventShortObject> CreateEventAsync(EventShortObject eventObject, bool? isNextSeason)
         {
             var userHasRight = await _userRepository
                 .CustomAnyAsync(_userRepository
@@ -52,14 +55,17 @@ namespace Application.Services
                     && e.GuildId == eventObject.GuildId));
             if (userHasRight) // TODO use this statement instead "userHasRight && !userAlreadyHasEvent"
             {
-                var startSeasonDate = GetStartSeasonDate();
+                var currentSeasonStart = GetSeasonStart(DateTime.UtcNow);
+                var startSeasonDate = isNextSeason ?? IsLastSeasonMonth(DateTime.UtcNow)
+                    ? currentSeasonStart.AddMonths(SeasonMonths)
+                    : currentSeasonStart;
                 var createdEvent = await _eventRepository.AddAsync(new Event()
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = eventObject.Name,
                     CreatorId = eventObject.CreatorId,
                     StartDate = startSeasonDate,
-                    EndDate = startSeasonDate.AddMonths(3),
+                    EndDate = startSeasonDate.AddMonths(SeasonMonths),
                     GuildId = eventObject.GuildId,
                     StatusId = EventStatusId.PlayersRegistration,
                     AllowsNewcomers = eventObject.AllowsNewcomers,
@@ -269,6 +275,12 @@ namespace Application.Services
             if (!ManualNextStages.TryGetValue(eventEntity.StatusId, out var nextStage) || nextStage != statusId)
             {
                 return MoveEventToNextStageResult.Unavailable;
+            }
+
+            // an event planned for the next season gathers players until its season starts
+            if (eventEntity.StatusId == EventStatusId.PlayersRegistration && DateTime.UtcNow < eventEntity.StartDate)
+            {
+                return MoveEventToNextStageResult.SeasonNotStarted;
             }
 
             var records = await _eventRepository.GetEventRecordsAsync(eventId);
@@ -484,37 +496,16 @@ namespace Application.Services
             };
         }
 
-        private DateTime GetStartSeasonDate()
+        // seasons are the calendar ones and start on the 1st of December, March, June and September at 00:00 UTC
+        private static DateTime GetSeasonStart(DateTime utcNow)
         {
-            DateTime currentDate = DateTime.UtcNow.Date;
-            DateTime startDate;
+            return new DateTime(utcNow.Year, utcNow.Month, 1).AddMonths(-(utcNow.Month % SeasonMonths));
+        }
 
-            if(currentDate.Month == 1) //exceptional if because it has to be winter of previous year
-            {
-                startDate = new DateTime(currentDate.Year - 1, 12, 1);
-                return startDate;
-            }
-
-            if (currentDate.Month >= 11)  //if Now last month of autmn or any of two first months of winter - set "winter season" start date
-            {
-                startDate = new DateTime(currentDate.Year, 12, 1);
-                return startDate;
-            }
-
-            if(currentDate.Month >= 8) //if Now at least last month of summer - set "autumn season" start date
-            {
-                startDate = new DateTime(currentDate.Year, 9, 1);
-                return startDate;
-            }
-
-            if (currentDate.Month >= 5) //if Now at least last month of spring - set "summer season" start date
-            {
-                startDate = new DateTime(currentDate.Year, 6, 1);
-                return startDate;
-            }
-
-            startDate = new DateTime(currentDate.Year, 3, 1);
-            return startDate;
+        // February, May, August and November
+        private static bool IsLastSeasonMonth(DateTime utcNow)
+        {
+            return utcNow.Month % SeasonMonths == SeasonMonths - 1;
         }
     }
 }

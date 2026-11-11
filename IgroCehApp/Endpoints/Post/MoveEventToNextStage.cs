@@ -39,6 +39,8 @@ namespace API.Endpoints.Post
                     return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
                 case MoveEventToNextStageResult.Unavailable:
                     return TypedResults.BadRequest("The event can't move to this stage now");
+                case MoveEventToNextStageResult.SeasonNotStarted:
+                    return TypedResults.BadRequest("The season of the event hasn't started yet");
             }
 
             var response = new MoveEventToNextStageResponse { MoveToStage = request.StatusId };
