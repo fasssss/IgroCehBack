@@ -19,7 +19,7 @@ namespace Application.Services
         private static Random randomGenerator = new Random();
         // nobody to guess a game for with fewer players
         private const int MinPlayersCount = 2;
-        // an event lasts one season; the front mirrors the seasons in features/events/seasons.ts
+        // an event lasts one season; the front gets the seasons from getEventSeasons and doesn't count them
         private const int SeasonMonths = 3;
         // the stages the creator moves the event through by hand; activation and summarizing have their own endpoints
         private static readonly Dictionary<EventStatusId, EventStatusId> ManualNextStages = new()
@@ -493,6 +493,28 @@ namespace Application.Services
                 1 => 2,
                 2 => 1,
                 _ => 0
+            };
+        }
+
+        public EventSeasonsObject GetEventSeasons()
+        {
+            var utcNow = DateTime.UtcNow;
+            var currentSeasonStart = GetSeasonStart(utcNow);
+
+            return new EventSeasonsObject
+            {
+                Current = ToSeasonObject(currentSeasonStart),
+                Next = ToSeasonObject(currentSeasonStart.AddMonths(SeasonMonths)),
+                IsNextByDefault = IsLastSeasonMonth(utcNow),
+            };
+        }
+
+        private static EventSeasonObject ToSeasonObject(DateTime seasonStart)
+        {
+            return new EventSeasonObject
+            {
+                Start = new DateTimeOffset(seasonStart.Ticks, TimeSpan.Zero),
+                End = new DateTimeOffset(seasonStart.AddMonths(SeasonMonths).Ticks, TimeSpan.Zero),
             };
         }
 
