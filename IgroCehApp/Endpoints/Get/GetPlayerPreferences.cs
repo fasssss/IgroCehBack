@@ -31,7 +31,7 @@ namespace API.Endpoints.Get
                 return TypedResults.NotFound();
             }
 
-            return TypedResults.Ok(new GetPlayerPreferencesResponse { Preferred = preferences.Preferred, Avoided = preferences.Avoided });
+            return TypedResults.Ok(new GetPlayerPreferencesResponse { Preferred = preferences.Preferred, Avoided = preferences.Avoided, LikedAspects = preferences.LikedAspects });
         }
     }
 }

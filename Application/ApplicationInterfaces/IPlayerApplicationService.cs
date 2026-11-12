@@ -17,5 +17,8 @@ namespace Application.ApplicationInterfaces
         // null when the viewer can't see the profile of the player
         public Task<PlayerPreferencesObject> GetPlayerPreferencesAsync(string viewerId, string playerId);
         public Task<SetPreferencesResult> SetPreferencesAsync(string userId, List<int> preferredTagIds, List<int> avoidedTagIds);
+        public Task<List<GameAspectObject>> GetGameAspectsAsync();
+        // UnknownTag for an id out of the catalog of aspects
+        public Task<SetPreferencesResult> SetLikedAspectsAsync(string userId, List<int> aspectIds);
     }
 }

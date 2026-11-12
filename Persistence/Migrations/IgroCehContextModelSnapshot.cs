@@ -261,6 +261,97 @@ namespace Persistence.Migrations
                     b.ToTable("Games");
                 });
 
+            modelBuilder.Entity("Domain.Entities.GameAspect", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("NameRu")
+                        .IsUnique();
+
+                    b.ToTable("GameAspects");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Story",
+                            NameRu = "Сюжет"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Gameplay",
+                            NameRu = "Геймплей"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Visuals",
+                            NameRu = "Визуал"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Music",
+                            NameRu = "Музыка"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Atmosphere",
+                            NameRu = "Атмосфера"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Difficulty",
+                            NameRu = "Сложность"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Achievements",
+                            NameRu = "Ачивки"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Exploration",
+                            NameRu = "Исследование"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Multiplayer",
+                            NameRu = "Мультиплеер"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Co-op",
+                            NameRu = "Кооператив"
+                        });
+                });
+
             modelBuilder.Entity("Domain.Entities.GlobalEvent", b =>
                 {
                     b.Property<string>("Id")
@@ -1008,6 +1099,24 @@ namespace Persistence.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("Domain.Entities.UserGameAspect", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("GameAspectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "GameAspectId");
+
+                    b.HasIndex("GameAspectId");
+
+                    b.ToTable("UserGameAspects");
+                });
+
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
                 {
                     b.Property<string>("UserId")
@@ -1312,6 +1421,25 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserGameAspect", b =>
+                {
+                    b.HasOne("Domain.Entities.GameAspect", "GameAspect")
+                        .WithMany()
+                        .HasForeignKey("GameAspectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GameAspect");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>

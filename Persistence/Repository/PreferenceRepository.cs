@@ -51,5 +51,41 @@ namespace Persistence.Repository
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<List<GameAspect>> GetAspectsAsync()
+        {
+            return await _context.GameAspects.AsNoTracking().OrderBy(a => a.Id).ToListAsync();
+        }
+
+        public async Task<List<UserGameAspect>> GetUserAspectsAsync(string userId)
+        {
+            return await _context.UserGameAspects
+                .AsNoTracking()
+                .Include(a => a.GameAspect)
+                .Where(a => a.UserId == userId)
+                .OrderBy(a => a.Order)
+                .ToListAsync();
+        }
+
+        public async Task SetUserAspectsAsync(string userId, List<UserGameAspect> aspects)
+        {
+            // kept rows are updated in place, as the preferences
+            var existing = await _context.UserGameAspects.Where(a => a.UserId == userId).ToListAsync();
+            _context.UserGameAspects.RemoveRange(existing.Where(a => aspects.All(n => n.GameAspectId != a.GameAspectId)));
+            foreach (var aspect in aspects)
+            {
+                var kept = existing.Find(a => a.GameAspectId == aspect.GameAspectId);
+                if (kept == null)
+                {
+                    _context.UserGameAspects.Add(aspect);
+                }
+                else
+                {
+                    kept.Order = aspect.Order;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+        }
     }
 }

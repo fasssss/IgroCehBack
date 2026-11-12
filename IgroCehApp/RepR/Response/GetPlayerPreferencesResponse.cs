@@ -6,5 +6,6 @@ namespace API.RepR.Response
     {
         public List<PreferenceTagObject> Preferred { get; set; }
         public List<PreferenceTagObject> Avoided { get; set; }
+        public List<GameAspectObject> LikedAspects { get; set; }
     }
 }

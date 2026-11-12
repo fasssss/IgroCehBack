@@ -43,11 +43,34 @@ namespace Application.Services
             }
 
             var preferences = await _preferenceRepository.GetUserPreferencesAsync(playerId);
+            var aspects = await _preferenceRepository.GetUserAspectsAsync(playerId);
             return new PlayerPreferencesObject
             {
                 Preferred = preferences.Where(p => !p.IsAvoided).Select(p => ToTagObject(p.PreferenceTag)).ToList(),
                 Avoided = preferences.Where(p => p.IsAvoided).Select(p => ToTagObject(p.PreferenceTag)).ToList(),
+                LikedAspects = aspects.Select(a => ToAspectObject(a.GameAspect)).ToList(),
             };
+        }
+
+        public async Task<List<GameAspectObject>> GetGameAspectsAsync()
+        {
+            return (await _preferenceRepository.GetAspectsAsync()).Select(ToAspectObject).ToList();
+        }
+
+        // the list is saved whole; the request validation keeps it short and without repeats
+        public async Task<SetPreferencesResult> SetLikedAspectsAsync(string userId, List<int> aspectIds)
+        {
+            var catalogIds = (await _preferenceRepository.GetAspectsAsync()).Select(a => a.Id).ToHashSet();
+            if (!aspectIds.All(catalogIds.Contains))
+            {
+                return SetPreferencesResult.UnknownTag;
+            }
+
+            await _preferenceRepository.SetUserAspectsAsync(userId, aspectIds
+                .Select((id, index) => new UserGameAspect { UserId = userId, GameAspectId = id, Order = index })
+                .ToList());
+
+            return SetPreferencesResult.Saved;
         }
 
         // both lists are saved at once; the request validation keeps a tag out of both lists and the lists short
@@ -352,6 +375,8 @@ namespace Application.Services
         }
 
         private static PreferenceTagObject ToTagObject(PreferenceTag tag) => new() { Id = tag.Id, Name = tag.Name, NameRu = tag.NameRu };
+
+        private static GameAspectObject ToAspectObject(GameAspect aspect) => new() { Id = aspect.Id, Name = aspect.Name, NameRu = aspect.NameRu };
 
         // the own profile and the players of a shared guild
         private Task<bool> CanSeePlayerAsync(string viewerId, string playerId)
