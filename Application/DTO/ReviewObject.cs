@@ -20,7 +20,8 @@ namespace Application.DTO
 
     public class ReviewObject
     {
-        public bool IsRecommended { get; set; }
+        // the score of the game by the author, from 1 to 10 in steps of 0.5
+        public decimal Score { get; set; }
         public ReviewVisibility Visibility { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
         public DateTimeOffset? RepliesPublishedAt { get; set; }
@@ -57,7 +58,8 @@ namespace Application.DTO
         public string GuildIconUrl { get; set; }
         public GameObject Game { get; set; }
         public PlayerShortObject Guesser { get; set; }
-        public bool IsRecommended { get; set; }
+        // the score of the game by the author, from 1 to 10 in steps of 0.5
+        public decimal Score { get; set; }
         public ReviewVisibility Visibility { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
         public bool HasReplies { get; set; }
@@ -85,7 +87,8 @@ namespace Application.DTO
         public string EventRecordId { get; set; }
         public GameObject Game { get; set; }
         public PlayerShortObject Author { get; set; }
-        public bool IsRecommended { get; set; }
+        // the score of the game by the author, from 1 to 10 in steps of 0.5
+        public decimal Score { get; set; }
         public DateTimeOffset? PublishedAt { get; set; }
     }
 

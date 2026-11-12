@@ -9,8 +9,8 @@ namespace Domain.Entities
         public string Id { get; set; }
         public string EventRecordId { get; set; }
         public EventRecord EventRecord { get; set; }
-        // the thumb up or down of the player who passed the game
-        public bool IsRecommended { get; set; }
+        // the score of the game by the player who passed it, from 1 to 10 in steps of 0.5
+        public decimal Score { get; set; }
         // the author changes it at any time, the texts stay as published
         public ReviewVisibility Visibility { get; set; }
         public List<ReviewSection> Sections { get; set; }

@@ -43,7 +43,7 @@ namespace Application.Services
                 IsPassed = record.Reward != null,
                 Review = record.Review == null ? null : new ReviewObject
                 {
-                    IsRecommended = record.Review.IsRecommended,
+                    Score = record.Review.Score,
                     Visibility = record.Review.Visibility,
                     PublishedAt = record.Review.CreatedAt,
                     RepliesPublishedAt = record.Review.RepliesPublishedAt,
@@ -56,7 +56,7 @@ namespace Application.Services
         }
 
         // the player who passed the game publishes the whole review at once, there are no drafts
-        public async Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, bool isRecommended, ReviewVisibility visibility, List<NewReviewSectionObject> sections)
+        public async Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, decimal score, ReviewVisibility visibility, List<NewReviewSectionObject> sections)
         {
             var record = await _reviewRepository.GetEventRecordWithReviewAsync(eventRecordId);
             if (record == null)
@@ -80,7 +80,7 @@ namespace Application.Services
             {
                 Id = reviewId,
                 EventRecordId = record.Id,
-                IsRecommended = isRecommended,
+                Score = score,
                 Visibility = visibility,
                 Sections = sections.Select((section, index) => new ReviewSection
                 {
@@ -137,11 +137,11 @@ namespace Application.Services
         }
 
         // reviews the player wrote that the viewer sees, the newest first
-        public async Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId, string guildId)
+        public async Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId)
         {
             var reviews = await _reviewRepository.CustomToListAsync(_reviewRepository
                 .Where(IsVisibleTo(viewerId))
-                .Where(r => r.EventRecord.ToUserId == playerId && (guildId == null || r.EventRecord.Event.GuildId == guildId))
+                .Where(r => r.EventRecord.ToUserId == playerId)
                 .OrderByDescending(r => r.CreatedAt)
                 .ThenBy(r => r.Id)
                 .Select(r => new PlayerReviewObject
@@ -152,7 +152,7 @@ namespace Application.Services
                     GuildIconUrl = r.EventRecord.Event.Guild.AvatarUrl,
                     Game = new GameObject { Id = r.EventRecord.Game.Id, Name = r.EventRecord.Game.Name, ImageUrl = r.EventRecord.Game.ImageUrl },
                     Guesser = new PlayerShortObject { Id = r.EventRecord.Participant.Id, UserName = r.EventRecord.Participant.UserName, AvatarUrl = r.EventRecord.Participant.AvatarUrl },
-                    IsRecommended = r.IsRecommended,
+                    Score = r.Score,
                     Visibility = r.Visibility,
                     PublishedAt = r.CreatedAt,
                     HasReplies = r.RepliesPublishedAt != null,
@@ -205,7 +205,7 @@ namespace Application.Services
                     EventRecordId = r.EventRecordId,
                     Game = new GameObject { Id = r.EventRecord.Game.Id, Name = r.EventRecord.Game.Name, ImageUrl = r.EventRecord.Game.ImageUrl },
                     Author = new PlayerShortObject { Id = r.EventRecord.ToUser.Id, UserName = r.EventRecord.ToUser.UserName, AvatarUrl = r.EventRecord.ToUser.AvatarUrl },
-                    IsRecommended = r.IsRecommended,
+                    Score = r.Score,
                     PublishedAt = r.CreatedAt,
                 })))
                 .ToList();

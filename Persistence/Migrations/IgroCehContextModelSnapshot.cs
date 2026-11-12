@@ -906,11 +906,12 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<bool>("IsRecommended")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTimeOffset?>("RepliesPublishedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
 
                     b.Property<int>("Visibility")
                         .HasColumnType("int");

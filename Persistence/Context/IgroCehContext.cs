@@ -118,6 +118,8 @@ namespace Persistence.Context
                 .WithOne(er => er.Review)
                 .HasForeignKey<Review>(r => r.EventRecordId);
             modelBuilder.Entity<Review>().HasQueryFilter(r => !r.EventRecord.Event.IsDeleted);
+            // 10.0 at most with one digit after the point
+            modelBuilder.Entity<Review>().Property(r => r.Score).HasPrecision(3, 1);
             modelBuilder.Entity<ReviewSection>()
                 .HasOne(s => s.Review)
                 .WithMany(r => r.Sections)

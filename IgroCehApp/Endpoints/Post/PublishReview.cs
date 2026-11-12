@@ -25,7 +25,7 @@ namespace API.Endpoints.Post
         public override async Task<Results<Ok, NotFound, StatusCodeHttpResult, BadRequest<string>>> ExecuteAsync(PublishReviewRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var result = await _reviewApplicationService.PublishReviewAsync(stringId, request.EventRecordId, request.IsRecommended.Value, request.Visibility.Value, request.Sections);
+            var result = await _reviewApplicationService.PublishReviewAsync(stringId, request.EventRecordId, request.Score.Value, request.Visibility.Value, request.Sections);
             switch (result)
             {
                 case PublishReviewResult.NotFound:

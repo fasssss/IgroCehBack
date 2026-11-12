@@ -12,6 +12,7 @@ namespace Application.Services
     public class PlayerApplicationService : IPlayerApplicationService
     {
         private const int HistoryPageSize = 10;
+        private const int GamesPageSize = 6;
         private static readonly int[] RewardValues = { 3, 2, 1, 0 };
 
         private readonly IUserRepository _userRepository;
@@ -105,7 +106,70 @@ namespace Application.Services
             };
         }
 
-        public async Task<PlayerProfileObject> GetPlayerProfileAsync(string viewerId, string playerId, string guildId)
+        // the passed or the guessed games of the player from the guilds shared with the viewer, a page at a time;
+        // the viewer is a member of the guild of every record here, so a review open to the guild is open to them
+        public async Task<PlayerGamesObject> GetPlayerGamesAsync(string viewerId, string playerId, PlayerGamesKind kind, PlayerGamesSort sort, int startFrom)
+        {
+            if (!await CanSeePlayerAsync(viewerId, playerId))
+            {
+                return null;
+            }
+
+            var sharedRecords = _eventRepository
+                .Where(e => e.Guild.UserGuilds.Any(ug => ug.UserId == viewerId))
+                .SelectMany(e => e.EventRecords)
+                .Where(er => er.GameId != null);
+
+            var games = kind == PlayerGamesKind.Passed
+                ? sharedRecords
+                    .Where(er => er.ToUserId == playerId && er.SucceededAt != null)
+                    .Select(er => new
+                    {
+                        Record = er,
+                        IsReviewVisible = er.Review != null && (er.ToUserId == viewerId
+                            || er.Review.Visibility >= ReviewVisibility.Guild
+                            || (er.Review.Visibility == ReviewVisibility.AuthorAndGuesser && er.ParticipantId == viewerId)),
+                    })
+                    .Select(row => new PlayerGameObject
+                    {
+                        EventRecordId = row.Record.Id,
+                        Game = new GameObject { Id = row.Record.GameId, Name = row.Record.Game.Name, ImageUrl = row.Record.Game.ImageUrl, SteamUrl = row.Record.Game.SteamUrl },
+                        Partner = new PlayerShortObject { Id = row.Record.ParticipantId, UserName = row.Record.Participant.UserName, AvatarUrl = row.Record.Participant.AvatarUrl },
+                        EventId = row.Record.EventId,
+                        EventName = row.Record.Event.Name,
+                        Date = row.Record.SucceededAt,
+                        ReviewId = row.IsReviewVisible ? row.Record.Review.Id : null,
+                        Score = row.IsReviewVisible ? row.Record.Review.Score : null,
+                    })
+                : sharedRecords
+                    // the game of the pool that dropped to a newcomer isn't a guess of the player
+                    .Where(er => er.ParticipantId == playerId && er.NewcomerPoolGameId == null)
+                    .Select(er => new PlayerGameObject
+                    {
+                        EventRecordId = er.Id,
+                        Game = new GameObject { Id = er.GameId, Name = er.Game.Name, ImageUrl = er.Game.ImageUrl, SteamUrl = er.Game.SteamUrl },
+                        Partner = er.ToUserId == null ? null : new PlayerShortObject { Id = er.ToUserId, UserName = er.ToUser.UserName, AvatarUrl = er.ToUser.AvatarUrl },
+                        EventId = er.EventId,
+                        EventName = er.Event.Name,
+                        Date = er.CreatedAt,
+                    });
+
+            // MySQL puts the games without a score after the others in a descending order
+            var ordered = kind == PlayerGamesKind.Passed && sort == PlayerGamesSort.Score
+                ? games.OrderByDescending(g => g.Score).ThenByDescending(g => g.Date).ThenBy(g => g.EventRecordId)
+                : games.OrderByDescending(g => g.Date).ThenBy(g => g.EventRecordId);
+
+            // one more game is taken to know whether the next page exists
+            var page = await _eventRepository.CustomToListAsync(ordered.Skip(Math.Max(startFrom, 0)).Take(GamesPageSize + 1));
+
+            return new PlayerGamesObject
+            {
+                Games = page.Take(GamesPageSize).ToList(),
+                HasMore = page.Count > GamesPageSize,
+            };
+        }
+
+        public async Task<PlayerProfileObject> GetPlayerProfileAsync(string viewerId, string playerId)
         {
             var player = await _userRepository.FirstOrDefaultAsync(u => u.Id == playerId);
             if (player == null)
@@ -141,7 +205,7 @@ namespace Application.Services
 
             // any shared guild opens the profile, even if the player hasn't played yet
             var sharedGuilds = playerGuilds.Where(g => g.IsShared).ToList();
-            if (sharedGuilds.Count == 0 || (guildId != null && !sharedGuilds.Any(g => g.Guild.Id == guildId)))
+            if (sharedGuilds.Count == 0)
             {
                 return null;
             }
@@ -153,11 +217,8 @@ namespace Application.Services
                 .OrderByDescending(g => g.Score)
                 .ThenBy(g => g.Name)
                 .ToList();
-            var selectedGuilds = guildId == null
-                ? playerGuilds.Select(g => g.Guild).ToList()
-                : playedGuilds.Where(g => g.Id == guildId).ToList();
 
-            // records of every guild of the player, favorite platforms don't depend on the selected guild
+            // records of every guild of the player
             var records = await _eventRepository.CustomToListAsync(_eventRepository
                 .Where(e => e.EventRecords.Any(er => er.ParticipantId == playerId || er.ToUserId == playerId))
                 .SelectMany(e => e.EventRecords)
@@ -200,20 +261,18 @@ namespace Application.Services
                 PsnOnlineId = player.PsnOnlineId,
                 Guilds = playedGuilds,
                 OtherGuildsCount = playerGuilds.Count(g => g.HasPlayed && !g.IsShared),
-                Statistics = CalculateStatistics(playerId, selectedGuilds,
-                    guildId == null ? records : records.Where(r => r.GuildId == guildId).ToList()),
+                Statistics = CalculateStatistics(playerId, playerGuilds.Select(g => g.Guild).ToList(), records),
                 FavoritePlatforms = CalculateFavoritePlatforms(playerId, records),
                 Badges = badges.ToList(),
             };
         }
 
-        public async Task<PlayerHistoryObject> GetPlayerHistoryAsync(string viewerId, string playerId, string guildId, int startFrom)
+        public async Task<PlayerHistoryObject> GetPlayerHistoryAsync(string viewerId, string playerId, int startFrom)
         {
             // one more event is taken to know whether the next page exists
             var events = (await _eventRepository.CustomToListAsync(_eventRepository
                 .Where(e => e.EventRecords.Any(er => er.ParticipantId == playerId || er.ToUserId == playerId)
-                    && e.Guild.UserGuilds.Any(ug => ug.UserId == viewerId)
-                    && (guildId == null || e.GuildId == guildId))
+                    && e.Guild.UserGuilds.Any(ug => ug.UserId == viewerId))
                 .OrderByDescending(e => e.StartDate)
                 .ThenByDescending(e => e.CreatedAt)
                 .ThenBy(e => e.Id)

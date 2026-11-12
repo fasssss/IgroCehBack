@@ -26,8 +26,7 @@ namespace API.Endpoints.Get
         public override async Task<Results<Ok<GetPlayerProfileResponse>, NotFound>> ExecuteAsync(GetPlayerProfileRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var guildId = string.IsNullOrEmpty(request.GuildId) ? null : request.GuildId;
-            var playerProfile = await _playerApplicationService.GetPlayerProfileAsync(stringId, request.UserId, guildId);
+            var playerProfile = await _playerApplicationService.GetPlayerProfileAsync(stringId, request.UserId);
             if (playerProfile == null)
             {
                 return TypedResults.NotFound();

@@ -25,8 +25,7 @@ namespace API.Endpoints.Get
         public override async Task<Ok<GetPlayerHistoryResponse>> ExecuteAsync(GetPlayerHistoryRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var guildId = string.IsNullOrEmpty(request.GuildId) ? null : request.GuildId;
-            var history = await _playerApplicationService.GetPlayerHistoryAsync(stringId, request.UserId, guildId, request.StartFrom);
+            var history = await _playerApplicationService.GetPlayerHistoryAsync(stringId, request.UserId, request.StartFrom);
 
             return TypedResults.Ok(new GetPlayerHistoryResponse
             {

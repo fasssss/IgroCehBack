@@ -7,10 +7,10 @@ namespace Application.ApplicationInterfaces
     public interface IReviewApplicationService
     {
         public Task<ReviewPageObject> GetReviewPageAsync(string viewerId, string eventRecordId);
-        public Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, bool isRecommended, ReviewVisibility visibility, List<NewReviewSectionObject> sections);
+        public Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, decimal score, ReviewVisibility visibility, List<NewReviewSectionObject> sections);
         public Task<SetReviewVisibilityResult> SetVisibilityAsync(string userId, string eventRecordId, ReviewVisibility visibility);
         public Task<PublishReviewResult> PublishRepliesAsync(string userId, string eventRecordId, List<ReviewReplyObject> replies);
-        public Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId, string guildId);
+        public Task<List<PlayerReviewObject>> GetPlayerReviewsAsync(string viewerId, string playerId);
         public Task<ReviewSuggestionsObject> GetReviewSuggestionsAsync(string userId);
         public Task<CommunityReviewsObject> GetCommunityReviewsAsync(string viewerId, int count);
     }
