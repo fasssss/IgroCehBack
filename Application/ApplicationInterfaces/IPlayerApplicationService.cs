@@ -9,6 +9,8 @@ namespace Application.ApplicationInterfaces
         // the requested guild may be one where the player hasn't played yet, its statistics are empty then
         public Task<PlayerProfileObject> GetPlayerProfileAsync(string viewerId, string playerId, string guildId);
         public Task<PlayerHistoryObject> GetPlayerHistoryAsync(string viewerId, string playerId, string guildId, int startFrom);
+        // null when the viewer can't see the profile of the player
+        public Task<PlayerLadderObject> GetPlayerLadderAsync(string viewerId, string playerId);
         public Task<List<PreferenceTagObject>> GetPreferenceTagsAsync();
         // null when the viewer can't see the profile of the player
         public Task<PlayerPreferencesObject> GetPlayerPreferencesAsync(string viewerId, string playerId);

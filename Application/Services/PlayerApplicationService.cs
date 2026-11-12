@@ -36,9 +36,7 @@ namespace Application.Services
         // seen by the same players as the profile
         public async Task<PlayerPreferencesObject> GetPlayerPreferencesAsync(string viewerId, string playerId)
         {
-            var canSee = await _userRepository.CustomAnyAsync(_userRepository.Where(u => u.Id == playerId
-                && (u.Id == viewerId || u.UserGuilds.Any(ug => ug.Guild.UserGuilds.Any(viewerGuild => viewerGuild.UserId == viewerId)))));
-            if (!canSee)
+            if (!await CanSeePlayerAsync(viewerId, playerId))
             {
                 return null;
             }
@@ -67,6 +65,44 @@ namespace Application.Services
                 .ToList());
 
             return SetPreferencesResult.Saved;
+        }
+
+        // the Igrofest games of the player, seen by the same players as the profile;
+        // the global events are common for the site, so the guilds don't narrow them
+        public async Task<PlayerLadderObject> GetPlayerLadderAsync(string viewerId, string playerId)
+        {
+            if (!await CanSeePlayerAsync(viewerId, playerId))
+            {
+                return null;
+            }
+
+            // a passed game of any event or the game picked in the active one (an active event isn't finished, as in GlobalEventApplicationService)
+            var games = await _participantRepository.CustomToListAsync(_participantRepository
+                .Where(p => p.UserId == playerId && p.PickedGameId != null && (p.PassedAt != null || p.GlobalEvent.FinishedAt == null))
+                .Select(p => new PlayerFestGameObject
+                {
+                    Game = new GameObject
+                    {
+                        Id = p.PickedGame.GameId,
+                        Name = p.PickedGame.Game.Name,
+                        ImageUrl = p.PickedGame.Game.ImageUrl,
+                        SteamUrl = p.PickedGame.Game.SteamUrl,
+                    },
+                    GlobalEventId = p.GlobalEventId,
+                    GlobalEventName = p.GlobalEvent.Name,
+                    PickedAt = p.PickedAt,
+                    PassedAt = p.PassedAt,
+                    PassedPlatform = (AchievementPlatform?)p.PassedPlatform,
+                }));
+
+            return new PlayerLadderObject
+            {
+                Fest = new PlayerFestObject
+                {
+                    Current = games.Where(g => g.PassedAt == null).OrderByDescending(g => g.PickedAt).FirstOrDefault(),
+                    Passed = games.Where(g => g.PassedAt != null).OrderByDescending(g => g.PassedAt).ToList(),
+                },
+            };
         }
 
         public async Task<PlayerProfileObject> GetPlayerProfileAsync(string viewerId, string playerId, string guildId)
@@ -258,6 +294,13 @@ namespace Application.Services
 
         private static PreferenceTagObject ToTagObject(PreferenceTag tag) => new() { Id = tag.Id, Name = tag.Name, NameRu = tag.NameRu };
 
+        // the own profile and the players of a shared guild
+        private Task<bool> CanSeePlayerAsync(string viewerId, string playerId)
+        {
+            return _userRepository.CustomAnyAsync(_userRepository.Where(u => u.Id == playerId
+                && (u.Id == viewerId || u.UserGuilds.Any(ug => ug.Guild.UserGuilds.Any(viewerGuild => viewerGuild.UserId == viewerId)))));
+        }
+
         // platforms of games the player completed
         private static List<PlatformCountObject> CalculateFavoritePlatforms(string playerId, ICollection<PlayerRecordRow> records)
         {
@@ -310,59 +353,6 @@ namespace Application.Services
                 Reward = record.Reward,
                 SucceededAt = record.SucceededAt,
             };
-        }
-
-        private class PlayerGuildRow
-        {
-            public PlayerGuildObject Guild { get; set; }
-            public bool HasPlayed { get; set; }
-            public bool IsShared { get; set; }
-        }
-
-        private class PlayerRecordRow
-        {
-            public string EventId { get; set; }
-            public string GuildId { get; set; }
-            public EventStatusId EventStatusId { get; set; }
-            public DateTime EventStartDate { get; set; }
-            public string ParticipantId { get; set; }
-            public string ToUserId { get; set; }
-            public string GameId { get; set; }
-            public List<string> GamePlatforms { get; set; }
-            public int? Reward { get; set; }
-            public DateTimeOffset? SucceededAt { get; set; }
-            public bool IsNewcomer { get; set; }
-            public bool IsEventFinished => EventStatusId == EventStatusId.Finished;
-        }
-
-        private class HistoryEventRow
-        {
-            public string EventId { get; set; }
-            public string EventName { get; set; }
-            public string GuildId { get; set; }
-            public string GuildName { get; set; }
-            public string GuildIconUrl { get; set; }
-            public EventStatusId StatusId { get; set; }
-            public DateTime StartDate { get; set; }
-            public DateTime EndDate { get; set; }
-            public List<HistoryRecordRow> Records { get; set; }
-        }
-
-        private class HistoryRecordRow
-        {
-            public string ParticipantId { get; set; }
-            public string ParticipantUserName { get; set; }
-            public string ParticipantAvatarUrl { get; set; }
-            public string ToUserId { get; set; }
-            public string ToUserName { get; set; }
-            public string ToUserAvatarUrl { get; set; }
-            public string GameId { get; set; }
-            public string GameName { get; set; }
-            public string GameImageUrl { get; set; }
-            public string GameSteamUrl { get; set; }
-            public int? Reward { get; set; }
-            public DateTimeOffset? SucceededAt { get; set; }
-            public bool IsNewcomer { get; set; }
         }
     }
 }
