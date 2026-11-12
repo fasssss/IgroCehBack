@@ -39,6 +39,11 @@ namespace Persistence.Context
         public DbSet<GlobalEventClaim> GlobalEventClaims { get; set; }
         public DbSet<GlobalEventPassingCheck> GlobalEventPassingChecks { get; set; }
         public DbSet<Badge> Badges { get; set; }
+        public DbSet<Survey> Surveys { get; set; }
+        public DbSet<SurveyQuestion> SurveyQuestions { get; set; }
+        public DbSet<SurveyOption> SurveyOptions { get; set; }
+        public DbSet<SurveyResponse> SurveyResponses { get; set; }
+        public DbSet<SurveyAnswer> SurveyAnswers { get; set; }
 
         public IgroCehContext(DbContextOptions options) : base(options)
         {
@@ -258,6 +263,60 @@ namespace Persistence.Context
             modelBuilder.Entity<Badge>().Property(b => b.Name).HasMaxLength(BadgeLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<Badge>().Property(b => b.Content).IsRequired();
             modelBuilder.Entity<Badge>().Property(b => b.ContentType).HasMaxLength(BadgeLimits.ContentTypeMaxLength).IsRequired();
+            modelBuilder.Entity<Survey>()
+                .HasOne(s => s.CreatedBy)
+                .WithMany()
+                .HasForeignKey(s => s.CreatedById);
+            modelBuilder.Entity<Survey>().Property(s => s.Title).HasMaxLength(SurveyLimits.TitleMaxLength).IsRequired();
+            modelBuilder.Entity<Survey>().Property(s => s.Description).HasMaxLength(SurveyLimits.DescriptionMaxLength);
+            // one active survey: IsActive is true or empty, and MySQL lets any number of empty values into a unique index
+            modelBuilder.Entity<Survey>().HasIndex(s => s.IsActive).IsUnique();
+            // of two administrators closing a survey at once, by a new one or by hand, the second fails to save
+            modelBuilder.Entity<Survey>().Property(s => s.IsActive).IsConcurrencyToken();
+            // deleted surveys are left out of every query with their questions and answers, like the events
+            modelBuilder.Entity<Survey>().HasQueryFilter(s => !s.IsDeleted);
+            modelBuilder.Entity<SurveyQuestion>()
+                .HasOne(q => q.Survey)
+                .WithMany(s => s.Questions)
+                .HasForeignKey(q => q.SurveyId);
+            modelBuilder.Entity<SurveyQuestion>().Property(q => q.Text).HasMaxLength(SurveyLimits.QuestionTextMaxLength).IsRequired();
+            modelBuilder.Entity<SurveyQuestion>().HasQueryFilter(q => !q.Survey.IsDeleted);
+            modelBuilder.Entity<SurveyOption>()
+                .HasOne(o => o.Question)
+                .WithMany(q => q.Options)
+                .HasForeignKey(o => o.QuestionId);
+            modelBuilder.Entity<SurveyOption>().Property(o => o.Text).HasMaxLength(SurveyLimits.OptionTextMaxLength).IsRequired();
+            modelBuilder.Entity<SurveyOption>().HasQueryFilter(o => !o.Question.Survey.IsDeleted);
+            modelBuilder.Entity<SurveyResponse>()
+                .HasOne(r => r.Survey)
+                .WithMany(s => s.Responses)
+                .HasForeignKey(r => r.SurveyId);
+            modelBuilder.Entity<SurveyResponse>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId);
+            // a user answers a survey once: of two answers at once the second fails on the index
+            modelBuilder.Entity<SurveyResponse>().HasIndex(r => new { r.SurveyId, r.UserId }).IsUnique();
+            modelBuilder.Entity<SurveyResponse>().HasQueryFilter(r => !r.Survey.IsDeleted);
+            modelBuilder.Entity<SurveyAnswer>()
+                .HasOne(a => a.Response)
+                .WithMany(r => r.Answers)
+                .HasForeignKey(a => a.ResponseId);
+            // the questions of a survey with answers don't change, so an answered question or option is never removed
+            modelBuilder.Entity<SurveyAnswer>()
+                .HasOne(a => a.Question)
+                .WithMany()
+                .HasForeignKey(a => a.QuestionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<SurveyAnswer>()
+                .HasOne(a => a.Option)
+                .WithMany()
+                .HasForeignKey(a => a.OptionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<SurveyAnswer>().Property(a => a.Text).HasMaxLength(SurveyLimits.AnswerTextMaxLength);
+            // the results count the answers of a question by its options
+            modelBuilder.Entity<SurveyAnswer>().HasIndex(a => new { a.QuestionId, a.OptionId });
+            modelBuilder.Entity<SurveyAnswer>().HasQueryFilter(a => !a.Response.Survey.IsDeleted);
             modelBuilder.Entity<PreferenceTag>().Property(t => t.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().Property(t => t.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
             modelBuilder.Entity<PreferenceTag>().HasIndex(t => t.Name).IsUnique();

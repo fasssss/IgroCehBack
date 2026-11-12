@@ -959,6 +959,185 @@ namespace Persistence.Migrations
                     b.ToTable("ReviewSections");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Survey", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ClosedById")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DeletedById")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<bool?>("IsActive")
+                        .IsConcurrencyToken()
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("ShowsResultsToRespondents")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("IsActive")
+                        .IsUnique();
+
+                    b.ToTable("Surveys");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyAnswer", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("OptionId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("QuestionId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("ResponseId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Text")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OptionId");
+
+                    b.HasIndex("ResponseId");
+
+                    b.HasIndex("QuestionId", "OptionId");
+
+                    b.ToTable("SurveyAnswers");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyOption", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("QuestionId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("SurveyOptions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyQuestion", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<bool>("AllowsOther")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int?>("MaxSelections")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SurveyId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SurveyId");
+
+                    b.ToTable("SurveyQuestions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyResponse", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("SurveyId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("SurveyId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyResponses");
+                });
+
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Property<string>("Id")
@@ -1313,6 +1492,84 @@ namespace Persistence.Migrations
                     b.Navigation("Review");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Survey", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyAnswer", b =>
+                {
+                    b.HasOne("Domain.Entities.SurveyOption", "Option")
+                        .WithMany()
+                        .HasForeignKey("OptionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.SurveyQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.SurveyResponse", "Response")
+                        .WithMany("Answers")
+                        .HasForeignKey("ResponseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Option");
+
+                    b.Navigation("Question");
+
+                    b.Navigation("Response");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyOption", b =>
+                {
+                    b.HasOne("Domain.Entities.SurveyQuestion", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyQuestion", b =>
+                {
+                    b.HasOne("Domain.Entities.Survey", "Survey")
+                        .WithMany("Questions")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Survey");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyResponse", b =>
+                {
+                    b.HasOne("Domain.Entities.Survey", "Survey")
+                        .WithMany("Responses")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Survey");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
                 {
                     b.HasOne("Domain.Entities.Guild", "Guild")
@@ -1405,6 +1662,23 @@ namespace Persistence.Migrations
             modelBuilder.Entity("Domain.Entities.Review", b =>
                 {
                     b.Navigation("Sections");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Survey", b =>
+                {
+                    b.Navigation("Questions");
+
+                    b.Navigation("Responses");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyQuestion", b =>
+                {
+                    b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SurveyResponse", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>

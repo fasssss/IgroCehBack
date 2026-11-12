@@ -27,6 +27,7 @@ namespace API.Configurations
             services.AddTransient<IAchievementPlatformCatalog, PsnAchievementCatalog>();
             services.AddTransient<IGlobalEventClaimApplicationService, GlobalEventClaimApplicationService>();
             services.AddTransient<IBadgeApplicationService, BadgeApplicationService>();
+            services.AddTransient<ISurveyAdminApplicationService, SurveyAdminApplicationService>();
             services.AddTransient<ISteamLinkApplicationService, SteamLinkApplicationService>();
             services.AddTransient<IXboxLinkApplicationService, XboxLinkApplicationService>();
             services.AddTransient<IPsnLinkApplicationService, PsnLinkApplicationService>();
