@@ -31,6 +31,7 @@ namespace Persistence.Context
         public DbSet<UserPreference> UserPreferences { get; set; }
         public DbSet<GameAspect> GameAspects { get; set; }
         public DbSet<UserGameAspect> UserGameAspects { get; set; }
+        public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
         public DbSet<NewcomerPoolGame> NewcomerPoolGames { get; set; }
         public DbSet<GlobalEvent> GlobalEvents { get; set; }
         public DbSet<GlobalEventGame> GlobalEventGames { get; set; }
@@ -294,6 +295,17 @@ namespace Persistence.Context
                 .HasOne(a => a.GameAspect)
                 .WithMany()
                 .HasForeignKey(a => a.GameAspectId);
+            // neither User nor Game has a navigation to the favorites
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasKey(f => new { f.UserId, f.GameId });
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId);
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasOne(f => f.Game)
+                .WithMany()
+                .HasForeignKey(f => f.GameId);
             modelBuilder.Entity<EventStatus>()
                 .Property(e => e.Id)
                 .HasConversion<int>();

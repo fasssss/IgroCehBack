@@ -20,5 +20,8 @@ namespace Application.ApplicationInterfaces
         public Task<List<GameAspectObject>> GetGameAspectsAsync();
         // UnknownTag for an id out of the catalog of aspects
         public Task<SetPreferencesResult> SetLikedAspectsAsync(string userId, List<int> aspectIds);
+        // null when the viewer can't see the profile of the player
+        public Task<List<FavoriteGameObject>> GetFavoriteGamesAsync(string viewerId, string playerId);
+        public Task<SetFavoriteGamesResult> SetFavoriteGamesAsync(string userId, List<string> gameIds);
     }
 }

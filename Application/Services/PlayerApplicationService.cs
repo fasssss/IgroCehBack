@@ -19,14 +19,16 @@ namespace Application.Services
         private readonly IGlobalEventParticipantRepository _participantRepository;
         private readonly IEventRepository _eventRepository;
         private readonly IPreferenceRepository _preferenceRepository;
+        private readonly IGameRepository _gameRepository;
 
         public PlayerApplicationService(IUserRepository userRepository, IEventRepository eventRepository, IPreferenceRepository preferenceRepository,
-            IGlobalEventParticipantRepository participantRepository)
+            IGlobalEventParticipantRepository participantRepository, IGameRepository gameRepository)
         {
             _userRepository = userRepository;
             _participantRepository = participantRepository;
             _eventRepository = eventRepository;
             _preferenceRepository = preferenceRepository;
+            _gameRepository = gameRepository;
         }
 
         public async Task<List<PreferenceTagObject>> GetPreferenceTagsAsync()
@@ -50,6 +52,45 @@ namespace Application.Services
                 Avoided = preferences.Where(p => p.IsAvoided).Select(p => ToTagObject(p.PreferenceTag)).ToList(),
                 LikedAspects = aspects.Select(a => ToAspectObject(a.GameAspect)).ToList(),
             };
+        }
+
+        // seen by the same players as the profile
+        public async Task<List<FavoriteGameObject>> GetFavoriteGamesAsync(string viewerId, string playerId)
+        {
+            if (!await CanSeePlayerAsync(viewerId, playerId))
+            {
+                return null;
+            }
+
+            return (await _gameRepository.GetUserFavoritesAsync(playerId))
+                .Select(f => new FavoriteGameObject
+                {
+                    Game = new GameObject
+                    {
+                        Id = f.Game.Id,
+                        Name = f.Game.Name,
+                        ImageUrl = f.Game.ImageUrl,
+                        SteamUrl = f.Game.SteamUrl,
+                    },
+                    ReleaseDate = f.Game.ReleaseDate,
+                })
+                .ToList();
+        }
+
+        // the list is saved whole; the request validation keeps it short and without repeats
+        public async Task<SetFavoriteGamesResult> SetFavoriteGamesAsync(string userId, List<string> gameIds)
+        {
+            var savedIds = await _gameRepository.CustomToListAsync(_gameRepository.Where(g => gameIds.Contains(g.Id)).Select(g => g.Id));
+            if (savedIds.Count != gameIds.Count)
+            {
+                return SetFavoriteGamesResult.UnknownGame;
+            }
+
+            await _gameRepository.SetUserFavoritesAsync(userId, gameIds
+                .Select((id, index) => new UserFavoriteGame { UserId = userId, GameId = id, Order = index })
+                .ToList());
+
+            return SetFavoriteGamesResult.Saved;
         }
 
         public async Task<List<GameAspectObject>> GetGameAspectsAsync()
