@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace API.Endpoints.Post
 {
-    // the creator moves the event from guessing to active once every participant has guessed a game
+    // the creator moves the event from guessing to active once every participant has guessed a game and the season of the event has started
     public class ActivateEvent : Endpoint<ActivateEventRequest, Results<Ok, NotFound, StatusCodeHttpResult, BadRequest<string>>>
     {
         private readonly IEventApplicationService _eventApplicationService;
@@ -39,6 +39,8 @@ namespace API.Endpoints.Post
                     return TypedResults.StatusCode(StatusCodes.Status403Forbidden);
                 case ActivateEventResult.Unavailable:
                     return TypedResults.BadRequest("The event can be activated only when every participant has guessed a game");
+                case ActivateEventResult.SeasonNotStarted:
+                    return TypedResults.BadRequest("The season of the event hasn't started yet");
             }
 
             await _webSocketHelper.SendToRoomAsync(WebSocketRooms.Event(request.EventId), EventRoomMessages.UpdateEventStage,

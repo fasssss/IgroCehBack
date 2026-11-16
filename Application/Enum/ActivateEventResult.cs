@@ -8,5 +8,7 @@ namespace Application.Enum
         Forbidden,
         // the event isn't at the guessing stage or not every participant has guessed a game yet
         Unavailable,
+        // the event is planned for a season that hasn't started, it waits at the guessing stage until then
+        SeasonNotStarted,
     }
 }

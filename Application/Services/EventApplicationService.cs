@@ -277,12 +277,6 @@ namespace Application.Services
                 return MoveEventToNextStageResult.Unavailable;
             }
 
-            // an event planned for the next season gathers players until its season starts
-            if (eventEntity.StatusId == EventStatusId.PlayersRegistration && DateTime.UtcNow < eventEntity.StartDate)
-            {
-                return MoveEventToNextStageResult.SeasonNotStarted;
-            }
-
             var records = await _eventRepository.GetEventRecordsAsync(eventId);
             // the shuffle needs someone to guess a game for and, if newcomers will join, a pool to roll from;
             // games are guessed for the players the shuffle gave
@@ -373,7 +367,8 @@ namespace Application.Services
             return (SuggestGameResult.Suggested, _mapper.Map<EventRecordObject>(eventRecord));
         }
 
-        // the creator starts the event once every participant has guessed a game, after that the games can't be changed
+        // the creator starts the event once every participant has guessed a game and its season has started,
+        // after that the games can't be changed
         public async Task<ActivateEventResult> ActivateEventAsync(string userId, string eventId)
         {
             var eventEntity = await _eventRepository.FirstOrDefaultAsync(e => e.Id == eventId);
@@ -391,6 +386,13 @@ namespace Application.Services
             if (eventEntity.StatusId != EventStatusId.GamesGuessing || eventRecords.Count == 0 || eventRecords.Any(er => er.GameId == null))
             {
                 return ActivateEventResult.Unavailable;
+            }
+
+            // an event planned for the next season goes through the registration, the shuffle and guessing before it,
+            // but its games are played only from the start of the season
+            if (DateTime.UtcNow < eventEntity.StartDate)
+            {
+                return ActivateEventResult.SeasonNotStarted;
             }
 
             eventEntity.StatusId = EventStatusId.Active;

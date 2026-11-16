@@ -15,7 +15,7 @@ namespace Application.DTO
         public EventStatusId StatusId { get; set; }
         // participants fill a pool of games for newcomers who join after the start
         public bool AllowsNewcomers { get; set; }
-        // the registration can't end before it
+        // the event can't be activated before it
         public DateTimeOffset SeasonStartsAt { get; set; }
         public List<EventRecordObject> EventRecordObjects { get; set; }
     }
