@@ -9,8 +9,8 @@ namespace Domain.Entities
         public string Id { get; set; }
         public string EventRecordId { get; set; }
         public EventRecord EventRecord { get; set; }
-        // the thumb up or down of the player who passed the game
-        public bool IsRecommended { get; set; }
+        // the thumb up or down of the player who passed the game, empty for a neutral review
+        public bool? IsRecommended { get; set; }
         // the author changes it at any time, the texts stay as published
         public ReviewVisibility Visibility { get; set; }
         public List<ReviewSection> Sections { get; set; }

@@ -9,7 +9,7 @@ namespace API.RepR.Request
     public class PublishReviewRequest
     {
         public string EventRecordId { get; set; }
-        // the thumb has to be chosen, so it can't fall back to false
+        // empty when neither thumb is chosen, the review is neutral then
         public bool? IsRecommended { get; set; }
         public ReviewVisibility? Visibility { get; set; }
         public List<NewReviewSectionObject> Sections { get; set; }
@@ -19,7 +19,6 @@ namespace API.RepR.Request
     {
         public PublishReviewValidator()
         {
-            RuleFor(r => r.IsRecommended).NotNull().WithMessage("Choose whether you recommend the game");
             RuleFor(r => r.Visibility).NotNull().IsInEnum();
             RuleFor(r => r.Sections).NotEmpty().WithMessage("A review needs at least one section")
                 .Must(sections => sections.Count <= ReviewLimits.MaxSections).WithMessage($"A review can have up to {ReviewLimits.MaxSections} sections");

@@ -906,7 +906,7 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<bool>("IsRecommended")
+                    b.Property<bool?>("IsRecommended")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("RepliesPublishedAt")

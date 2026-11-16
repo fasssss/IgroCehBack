@@ -55,8 +55,9 @@ namespace Application.Services
             };
         }
 
-        // the player who passed the game publishes the whole review at once, there are no drafts
-        public async Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, bool isRecommended, ReviewVisibility visibility, List<NewReviewSectionObject> sections)
+        // the player who passed the game publishes the whole review at once, there are no drafts;
+        // without a thumb up or down the review is neutral
+        public async Task<PublishReviewResult> PublishReviewAsync(string userId, string eventRecordId, bool? isRecommended, ReviewVisibility visibility, List<NewReviewSectionObject> sections)
         {
             var record = await _reviewRepository.GetEventRecordWithReviewAsync(eventRecordId);
             if (record == null)
