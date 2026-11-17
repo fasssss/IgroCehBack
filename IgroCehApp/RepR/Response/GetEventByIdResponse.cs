@@ -11,6 +11,7 @@ namespace API.RepR.Response
         public EventStatusId StatusId { get; set; }
         public bool AllowsNewcomers { get; set; }
         public DateTimeOffset SeasonStartsAt { get; set; }
+        public bool IsSeason { get; set; }
         public List<EventRecordObject> EventRecords { get; set; }
     }
 }

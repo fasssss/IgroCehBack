@@ -44,8 +44,10 @@ namespace IgroCehApp.Tests.Infrastructure
         };
 
         public static Event Event(string id, string guildId, string creatorId, EventStatusId status = EventStatusId.PlayersRegistration,
-            DateTime? start = null, bool allowsNewcomers = false, string? name = null, DateTimeOffset? createdAt = null, bool isDeleted = false)
+            DateTime? start = null, bool allowsNewcomers = false, string? name = null, DateTimeOffset? createdAt = null, bool isDeleted = false,
+            DateTime? end = null)
         {
+            // a season by default, the own dates of the advanced options with an end
             var startDate = start ?? Seasons.CurrentStart();
             return new Event
             {
@@ -55,7 +57,7 @@ namespace IgroCehApp.Tests.Infrastructure
                 CreatorId = creatorId,
                 StatusId = status,
                 StartDate = startDate,
-                EndDate = startDate.AddMonths(3),
+                EndDate = end ?? startDate.AddMonths(3),
                 AllowsNewcomers = allowsNewcomers,
                 CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
                 IsDeleted = isDeleted,

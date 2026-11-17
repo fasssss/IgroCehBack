@@ -42,8 +42,9 @@ namespace Application.Services
             _mapper = mapper;
         }
 
-        // the creator picks the current season or the next one; without a choice the last month of a season gives the next one
-        public async Task<EventShortObject> CreateEventAsync(EventShortObject eventObject, bool? isNextSeason)
+        // the creator picks the current season or the next one; without a choice the last month of a season gives the next one.
+        // Own dates of the advanced options replace the season, the validator of the request keeps them in EventPeriodLimits
+        public async Task<EventShortObject> CreateEventAsync(EventShortObject eventObject, bool? isNextSeason, DateOnly? startDate, DateOnly? endDate)
         {
             var userHasRight = await _userRepository
                 .CustomAnyAsync(_userRepository
@@ -56,16 +57,23 @@ namespace Application.Services
             if (userHasRight) // TODO use this statement instead "userHasRight && !userAlreadyHasEvent"
             {
                 var currentSeasonStart = GetSeasonStart(DateTime.UtcNow);
-                var startSeasonDate = isNextSeason ?? IsLastSeasonMonth(DateTime.UtcNow)
+                var start = isNextSeason ?? IsLastSeasonMonth(DateTime.UtcNow)
                     ? currentSeasonStart.AddMonths(SeasonMonths)
                     : currentSeasonStart;
+                var end = start.AddMonths(SeasonMonths);
+                if (startDate != null && endDate != null)
+                {
+                    start = startDate.Value.ToDateTime(TimeOnly.MinValue);
+                    end = endDate.Value.ToDateTime(TimeOnly.MinValue);
+                }
+
                 var createdEvent = await _eventRepository.AddAsync(new Event()
                 {
                     Id = Guid.NewGuid().ToString(),
                     Name = eventObject.Name,
                     CreatorId = eventObject.CreatorId,
-                    StartDate = startSeasonDate,
-                    EndDate = startSeasonDate.AddMonths(SeasonMonths),
+                    StartDate = start,
+                    EndDate = end,
                     GuildId = eventObject.GuildId,
                     StatusId = EventStatusId.PlayersRegistration,
                     AllowsNewcomers = eventObject.AllowsNewcomers,
@@ -421,10 +429,11 @@ namespace Application.Services
                 return (SubmitPassingResult.Unavailable, null);
             }
 
-            // months are counted from the start of the season the event belongs to (Event.StartDate)
-            var countFrom = new DateTimeOffset(eventRecord.Event.StartDate, TimeSpan.Zero);
+            // the time is counted from the start of the event (Event.StartDate), the start of its season unless it has its own dates
+            var start = new DateTimeOffset(eventRecord.Event.StartDate, TimeSpan.Zero);
+            var end = new DateTimeOffset(eventRecord.Event.EndDate, TimeSpan.Zero);
             eventRecord.SucceededAt = DateTimeOffset.UtcNow;
-            eventRecord.Reward = CalculatePassingReward(countFrom, eventRecord.SucceededAt.Value);
+            eventRecord.Reward = CalculatePassingReward(start, end, eventRecord.SucceededAt.Value);
 
             await _eventRepository.SaveAsync();
 
@@ -498,6 +507,35 @@ namespace Application.Services
             };
         }
 
+        // a period of exactly three months is counted by the full months as above: every season, and every event made before the own dates.
+        // Another period is split into three equal parts for 3, 2 and 1 point, after its end the passing gives 0
+        public static int CalculatePassingReward(DateTimeOffset start, DateTimeOffset end, DateTimeOffset passedAt)
+        {
+            if (start.AddMonths(SeasonMonths) == end)
+            {
+                return CalculatePassingReward(start, passedAt);
+            }
+
+            var third = (end - start) / 3;
+            if (passedAt < start + third)
+            {
+                return 3;
+            }
+
+            if (passedAt < start + third * 2)
+            {
+                return 2;
+            }
+
+            return passedAt < end ? 1 : 0;
+        }
+
+        // the event takes a whole season, not its own dates
+        public static bool IsSeason(DateTime start, DateTime end)
+        {
+            return start == GetSeasonStart(start) && end == start.AddMonths(SeasonMonths);
+        }
+
         public EventSeasonsObject GetEventSeasons()
         {
             var utcNow = DateTime.UtcNow;
@@ -508,6 +546,25 @@ namespace Application.Services
                 Current = ToSeasonObject(currentSeasonStart),
                 Next = ToSeasonObject(currentSeasonStart.AddMonths(SeasonMonths)),
                 IsNextByDefault = IsLastSeasonMonth(utcNow),
+            };
+        }
+
+        // the bounds of the own dates for the date fields of the front; without a start, the end is counted from today
+        public EventPeriodLimitsObject GetEventPeriodLimits(DateOnly? startDate)
+        {
+            var today = EventPeriodLimits.Today();
+            var start = startDate ?? today;
+
+            return new EventPeriodLimitsObject
+            {
+                EarliestStart = today,
+                LatestStart = EventPeriodLimits.LatestStart(today),
+                StartDate = start,
+                EarliestEnd = EventPeriodLimits.EarliestEnd(start),
+                LatestEnd = EventPeriodLimits.LatestEnd(start),
+                MinDays = EventPeriodLimits.MinDays,
+                MaxMonths = EventPeriodLimits.MaxMonths,
+                MaxStartMonths = EventPeriodLimits.MaxStartMonths,
             };
         }
 

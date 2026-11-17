@@ -17,6 +17,8 @@ namespace Application.DTO
         public bool AllowsNewcomers { get; set; }
         // the event can't be activated before it
         public DateTimeOffset SeasonStartsAt { get; set; }
+        // the event takes a whole season; otherwise SeasonStartsAt is the start of its own dates
+        public bool IsSeason { get; set; }
         public List<EventRecordObject> EventRecordObjects { get; set; }
     }
 }

@@ -126,6 +126,48 @@ namespace IgroCehApp.Tests
             Assert.Equal(reward, EventApplicationService.CalculatePassingReward(DateTimeOffset.Parse(countFrom), DateTimeOffset.Parse(passedAt)));
         }
 
+        [Theory]
+        [InlineData(5, 30, 3)]
+        [InlineData(15, 30, 2)]
+        [InlineData(25, 30, 1)]
+        [InlineData(31, 30, 0)]
+        [InlineData(50, 180, 3)]
+        [InlineData(70, 180, 2)]
+        public async Task Passing_WithOwnDates_TheRewardFallsByThirdsOfThePeriod(int daysPassed, int periodDays, int reward)
+        {
+            var start = DateTime.UtcNow.Date.AddDays(-daysPassed);
+            await SeedEvent("e1", EventStatusId.Active, new[] { Sliva, Dayt }, new[] { Elden, Hollow }, start: start, end: start.AddDays(periodDays));
+
+            var answer = (await As(Sliva).Post("/api/submitPassing", new { eventId = "e1", eventRecordId = "e1-r0" })).Ok();
+
+            Assert.Equal(reward, answer.Int("eventRecordObject.reward"));
+        }
+
+        // a period of 30 days has thirds of 10 days; a period of exactly three months counts the months as a season does
+        [Theory]
+        [InlineData("2026-03-10T00:00:00Z", "2026-04-09T00:00:00Z", "2026-03-19T23:59:59Z", 3)]
+        [InlineData("2026-03-10T00:00:00Z", "2026-04-09T00:00:00Z", "2026-03-20T00:00:00Z", 2)]
+        [InlineData("2026-03-10T00:00:00Z", "2026-04-09T00:00:00Z", "2026-03-30T00:00:00Z", 1)]
+        [InlineData("2026-03-10T00:00:00Z", "2026-04-09T00:00:00Z", "2026-04-08T23:59:59Z", 1)]
+        [InlineData("2026-03-10T00:00:00Z", "2026-04-09T00:00:00Z", "2026-04-09T00:00:00Z", 0)]
+        [InlineData("2026-03-15T00:00:00Z", "2026-06-15T00:00:00Z", "2026-04-15T00:00:00Z", 2)]
+        [InlineData("2026-03-01T00:00:00Z", "2026-06-01T00:00:00Z", "2026-05-31T23:59:59Z", 1)]
+        [InlineData("2026-03-01T00:00:00Z", "2026-06-01T00:00:00Z", "2026-06-01T00:00:00Z", 0)]
+        public void PassingReward_OfAPeriod(string start, string end, string passedAt, int reward)
+        {
+            Assert.Equal(reward, EventApplicationService.CalculatePassingReward(DateTimeOffset.Parse(start), DateTimeOffset.Parse(end), DateTimeOffset.Parse(passedAt)));
+        }
+
+        [Fact]
+        public async Task Activate_BeforeItsOwnStart_IsRefused()
+        {
+            var start = DateTime.UtcNow.Date.AddDays(5);
+            await SeedEvent("e1", EventStatusId.GamesGuessing, new[] { Sliva, Dayt }, new[] { Elden, Hollow }, start: start, end: start.AddDays(30));
+
+            Assert.Equal("The season of the event hasn't started yet",
+                (await As(Sliva).Post("/api/activateEvent", new { eventId = "e1" })).Is(HttpStatusCode.BadRequest).Text);
+        }
+
         [Fact]
         public async Task Passing_IsSubmittedOnce_ByTheOneWhoGuessed_OrAnAdminOfTheGuild()
         {

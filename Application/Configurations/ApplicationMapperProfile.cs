@@ -21,6 +21,7 @@ namespace Application.Configurations
                 .ForMember(dest => dest.EventCreatorId, opt => opt.MapFrom(src => src.CreatorId))
                 // Event.StartDate is kept in UTC without the kind
                 .ForMember(dest => dest.SeasonStartsAt, opt => opt.MapFrom(src => new DateTimeOffset(src.StartDate.Ticks, TimeSpan.Zero)))
+                .ForMember(dest => dest.IsSeason, opt => opt.MapFrom(src => Services.EventApplicationService.IsSeason(src.StartDate, src.EndDate)))
                 .ReverseMap();
 
             CreateMap<EventRecord, EventRecordObject>()

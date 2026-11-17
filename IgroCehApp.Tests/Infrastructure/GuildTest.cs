@@ -39,10 +39,10 @@ namespace IgroCehApp.Tests.Infrastructure
         // an event at the given stage: every player has a record, the shuffle and the guessed games come in the order of the players
         // (each one guesses for the next, the last for the first)
         protected async Task SeedEvent(string eventId, EventStatusId status, string[] players, string[]? games = null, DateTime? start = null,
-            bool allowsNewcomers = false, string guildId = G1, string? creator = null)
+            bool allowsNewcomers = false, string guildId = G1, string? creator = null, DateTime? end = null)
         {
             var isShuffled = status != EventStatusId.PlayersRegistration;
-            var rows = new List<object> { Make.Event(eventId, guildId, creator ?? players[0], status, start, allowsNewcomers) };
+            var rows = new List<object> { Make.Event(eventId, guildId, creator ?? players[0], status, start, allowsNewcomers, end: end) };
             rows.AddRange(players.Select((player, index) => Make.Record($"{eventId}-r{index}", eventId, player,
                 isShuffled && status != EventStatusId.PlayersShuffle ? players[(index + 1) % players.Length] : null,
                 games?.ElementAtOrDefault(index))));

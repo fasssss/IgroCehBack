@@ -41,6 +41,7 @@ namespace API.Endpoints.Get
                 StatusId = eventObject.StatusId,
                 AllowsNewcomers = eventObject.AllowsNewcomers,
                 SeasonStartsAt = eventObject.SeasonStartsAt,
+                IsSeason = eventObject.IsSeason,
                 EventRecords = eventObject.EventRecordObjects
             };
 

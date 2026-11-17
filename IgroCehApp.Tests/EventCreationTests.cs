@@ -14,6 +14,20 @@ namespace IgroCehApp.Tests
 
         private static string Offset(DateTime date) => new DateTimeOffset(date, TimeSpan.Zero).ToString("yyyy-MM-ddTHH:mm:sszzz");
 
+        private static DateTime Today => DateTime.UtcNow.Date;
+
+        // the own dates of the advanced options are days
+        private Task<ApiResult> CreateWithDates(DateTime? start, DateTime? end, bool? isNextSeason = null) =>
+            As(Sliva).Post("/api/postNewEvent", new
+            {
+                eventName = "Own dates",
+                guildId = G1,
+                allowsNewcomers = false,
+                isNextSeason,
+                startDate = start?.ToString("yyyy-MM-dd"),
+                endDate = end?.ToString("yyyy-MM-dd"),
+            });
+
         [Fact]
         public async Task Seasons_AreTheCurrentAndTheNextOne()
         {
@@ -38,6 +52,7 @@ namespace IgroCehApp.Tests
             Assert.Equal((int)EventStatusId.PlayersRegistration, page.Int("statusId"));
             Assert.False(page.Bool("allowsNewcomers"));
             Assert.Equal(Offset(Seasons.CurrentStart()), page.Str("seasonStartsAt"));
+            Assert.True(page.Bool("isSeason"));
             var record = Assert.Single(page.Arr("eventRecords"));
             Assert.Equal(Sliva, record.Str("participant.id"));
             Assert.Equal("Sliva", record.Str("participant.userName"));
@@ -64,6 +79,76 @@ namespace IgroCehApp.Tests
 
             var expected = Seasons.IsLastMonth() ? Seasons.NextStart() : Seasons.CurrentStart();
             Assert.Equal(Offset(expected), (await GetEvent(eventId)).Str("seasonStartsAt"));
+        }
+
+        // the front gets the bounds of the own dates as days and doesn't count them
+        [Fact]
+        public async Task PeriodLimits_GiveTheBoundsAsDays_ForTheStart()
+        {
+            static string Day(DateTime date) => date.ToString("yyyy-MM-dd");
+            var start = Today.AddDays(3);
+
+            var limits = (await As(Sliva).Get($"/api/getEventPeriodLimits?startDate={Day(start)}")).Ok().At("periodLimits");
+            var fromToday = (await As(Sliva).Get("/api/getEventPeriodLimits")).Ok().At("periodLimits");
+
+            Assert.Equal((Day(Today), Day(Today.AddMonths(12))), (limits.Str("earliestStart"), limits.Str("latestStart")));
+            Assert.Equal((Day(start), Day(start.AddDays(14)), Day(start.AddMonths(6))),
+                (limits.Str("startDate"), limits.Str("earliestEnd"), limits.Str("latestEnd")));
+            Assert.Equal((14, 6, 12), (limits.Int("minDays"), limits.Int("maxMonths"), limits.Int("maxStartMonths")));
+            Assert.Equal((Day(Today), Day(Today.AddDays(14))), (fromToday.Str("startDate"), fromToday.Str("earliestEnd")));
+            (await Anonymous.Get("/api/getEventPeriodLimits")).Is(HttpStatusCode.Unauthorized);
+        }
+
+        [Fact]
+        public async Task Create_WithOwnDates_InsteadOfTheSeason()
+        {
+            var start = Today.AddDays(3);
+            var end = start.AddDays(30);
+
+            // the switch of the season doesn't count with own dates
+            var eventId = (await CreateWithDates(start, end, isNextSeason: true)).Ok().Str("eventId")!;
+
+            var saved = await Db(db => db.Events.SingleAsync(e => e.Id == eventId));
+            Assert.Equal((start, end), (saved.StartDate, saved.EndDate));
+            var page = await GetEvent(eventId);
+            Assert.Equal(Offset(start), page.Str("seasonStartsAt"));
+            Assert.False(page.Bool("isSeason"));
+            var tile = Assert.Single((await As(Sliva).Get($"/api/getEventsByGuildId?guildId={G1}&startFrom=0")).Ok().Arr("eventsList"));
+            Assert.Equal((start, end), (DateTime.Parse(tile.Str("startDate")!), DateTime.Parse(tile.Str("endDate")!)));
+        }
+
+        [Fact]
+        public async Task Create_WithOwnDatesOfASeason_IsASeason()
+        {
+            var eventId = (await CreateWithDates(Seasons.NextStart(), Seasons.NextStart().AddMonths(3))).Ok().Str("eventId")!;
+
+            Assert.True((await GetEvent(eventId)).Bool("isSeason"));
+        }
+
+        [Fact]
+        public async Task Create_WithOwnDates_KeepsThemInTheLimits()
+        {
+            async Task Refused(DateTime? start, DateTime? end, string message)
+            {
+                var answer = await CreateWithDates(start, end);
+                answer.Is(HttpStatusCode.BadRequest);
+                Assert.Contains(message, answer.Body);
+            }
+
+            await Refused(Today.AddDays(3), null, "An event with its own dates needs both the start and the end");
+            await Refused(null, Today.AddDays(30), "An event with its own dates needs both the start and the end");
+            await Refused(Today.AddDays(-2), Today.AddDays(30), "The event can't start in the past");
+            await Refused(Today.AddMonths(12).AddDays(1), Today.AddMonths(13), "The start can be planned up to 12 months ahead");
+            await Refused(Today.AddDays(3), Today.AddDays(3 + 13), "An event lasts at least 14 days");
+            await Refused(Today.AddDays(3), Today.AddDays(3).AddMonths(6).AddDays(1), "An event lasts up to 6 months");
+            await Refused(Today.AddDays(30), Today.AddDays(3), "An event lasts at least 14 days");
+            Assert.Equal(0, await Factory.ScalarAsync("SELECT COUNT(*) FROM Events"));
+
+            // the bounds themselves; yesterday is allowed for the time zones behind UTC
+            (await CreateWithDates(Today.AddDays(-1), Today.AddDays(13))).Ok();
+            (await CreateWithDates(Today.AddMonths(12), Today.AddMonths(12).AddDays(14))).Ok();
+            (await CreateWithDates(Today.AddDays(3), Today.AddDays(3).AddMonths(6))).Ok();
+            Assert.Equal(3, await Factory.ScalarAsync("SELECT COUNT(*) FROM Events"));
         }
 
         [Fact]
