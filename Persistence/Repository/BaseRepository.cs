@@ -52,12 +52,14 @@ namespace Persistence.Repository
                 var existingEntity = await _context.FindAsync<T>(entityModel.Id);
                 if (existingEntity != null)
                 {
-                    _context.Remove(existingEntity);
+                    // the saved row is updated in place: removing it would delete in cascade everything the context has loaded with it,
+                    // for a guild that is the memberships of all its players and its events
+                    entityModel.CreatedAt = existingEntity.CreatedAt;
+                    _context.Entry(existingEntity).CurrentValues.SetValues(entityModel);
+                    return existingEntity;
                 }
-                else
-                {
-                    entityModel.CreatedAt = DateTimeOffset.UtcNow;
-                }
+
+                entityModel.CreatedAt = DateTimeOffset.UtcNow;
             }
 
             return (await _context.AddAsync(entityModel)).Entity;
