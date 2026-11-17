@@ -562,6 +562,10 @@ namespace Application.Services
                 StartDate = start,
                 EarliestEnd = EventPeriodLimits.EarliestEnd(start),
                 LatestEnd = EventPeriodLimits.LatestEnd(start),
+                QuickEnds = new[] { new EventPeriodQuickEndObject { Days = EventPeriodLimits.MinDays, End = EventPeriodLimits.EarliestEnd(start) } }
+                    .Concat(EventPeriodLimits.QuickMonths.Select(months => new EventPeriodQuickEndObject { Months = months, End = start.AddMonths(months) }))
+                    .Append(new EventPeriodQuickEndObject { Months = EventPeriodLimits.MaxMonths, End = EventPeriodLimits.LatestEnd(start) })
+                    .ToList(),
                 MinDays = EventPeriodLimits.MinDays,
                 MaxMonths = EventPeriodLimits.MaxMonths,
                 MaxStartMonths = EventPeriodLimits.MaxStartMonths,

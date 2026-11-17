@@ -95,6 +95,11 @@ namespace IgroCehApp.Tests
             Assert.Equal((Day(start), Day(start.AddDays(14)), Day(start.AddMonths(6))),
                 (limits.Str("startDate"), limits.Str("earliestEnd"), limits.Str("latestEnd")));
             Assert.Equal((14, 6, 12), (limits.Int("minDays"), limits.Int("maxMonths"), limits.Int("maxStartMonths")));
+            Assert.Equal(new (int?, int?, string?)[]
+                {
+                    (14, null, Day(start.AddDays(14))), (null, 1, Day(start.AddMonths(1))), (null, 3, Day(start.AddMonths(3))), (null, 6, Day(start.AddMonths(6))),
+                },
+                limits.Arr("quickEnds").Select(q => (q.IntOrNull("days"), q.IntOrNull("months"), q.Str("end"))));
             Assert.Equal((Day(Today), Day(Today.AddDays(14))), (fromToday.Str("startDate"), fromToday.Str("earliestEnd")));
             (await Anonymous.Get("/api/getEventPeriodLimits")).Is(HttpStatusCode.Unauthorized);
         }

@@ -8,6 +8,8 @@ namespace Application.Consts
         public const int MaxMonths = 6;
         // how far ahead the start can be planned
         public const int MaxStartMonths = 12;
+        // the quick lengths offered between MinDays and MaxMonths
+        public static readonly int[] QuickMonths = { 1, 3 };
 
         // the days are counted in UTC, as the seasons
         public static DateOnly Today() => DateOnly.FromDateTime(DateTime.UtcNow);

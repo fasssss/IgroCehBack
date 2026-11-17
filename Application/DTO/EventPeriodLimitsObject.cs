@@ -11,6 +11,8 @@ namespace Application.DTO
         public DateOnly StartDate { get; set; }
         public DateOnly EarliestEnd { get; set; }
         public DateOnly LatestEnd { get; set; }
+        // the quick lengths from the start, the shortest and the longest among them
+        public List<EventPeriodQuickEndObject> QuickEnds { get; set; }
         // for the texts of the front
         public int MinDays { get; set; }
         public int MaxMonths { get; set; }
