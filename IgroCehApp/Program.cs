@@ -84,3 +84,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+
+// the API tests start the app through WebApplicationFactory<Program>, it needs the class to be public
+public partial class Program { }

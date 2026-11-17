@@ -32,6 +32,6 @@ ENTRYPOINT ["dotnet", "API.dll"]
 
 # Local stage: the local certificate for https on 8081
 FROM production AS final
-COPY ["IgroCehApp/gamews-quest.pfx", "/app/gamews-quest.pfx"]
-COPY ["IgroCehApp/gamews-quest.crt", "/usr/local/share/ca-certificates/gamews-quest.crt"]
+COPY ["IgroCehApp/localhost.pfx", "/app/localhost.pfx"]
+COPY ["IgroCehApp/localhost.crt", "/usr/local/share/ca-certificates/localhost.crt"]
 RUN update-ca-certificates
