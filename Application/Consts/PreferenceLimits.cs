@@ -5,5 +5,7 @@ namespace Application.Consts
     {
         public const int NameMaxLength = 50;
         public const int MaxTagsPerList = 20;
+        // "Что нравится в играх" of the profile
+        public const int MaxLikedAspects = 6;
     }
 }

@@ -87,12 +87,12 @@ namespace IgroCehApp.Tests.Infrastructure
             CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
         };
 
-        public static Review Review(string id, string eventRecordId, bool? isRecommended = true, ReviewVisibility visibility = ReviewVisibility.Guild,
+        public static Review Review(string id, string eventRecordId, decimal score = 8m, ReviewVisibility visibility = ReviewVisibility.Guild,
             DateTimeOffset? createdAt = null, DateTimeOffset? repliesPublishedAt = null, params (string Title, string Text, string? Reply)[] sections) => new()
         {
             Id = id,
             EventRecordId = eventRecordId,
-            IsRecommended = isRecommended,
+            Score = score,
             Visibility = visibility,
             CreatedAt = createdAt ?? DateTimeOffset.UtcNow,
             RepliesPublishedAt = repliesPublishedAt,

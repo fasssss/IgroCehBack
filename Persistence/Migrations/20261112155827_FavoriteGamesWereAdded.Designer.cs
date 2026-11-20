@@ -12,8 +12,8 @@ using Persistence.Context;
 namespace Persistence.Migrations
 {
     [DbContext(typeof(IgroCehContext))]
-    [Migration("20261116181955_NeutralReviewsWereAllowed")]
-    partial class NeutralReviewsWereAllowed
+    [Migration("20261112155827_FavoriteGamesWereAdded")]
+    partial class FavoriteGamesWereAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -248,6 +248,9 @@ namespace Persistence.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
+                    b.Property<DateOnly?>("ReleaseDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("SteamUrl")
                         .HasColumnType("longtext");
 
@@ -262,6 +265,97 @@ namespace Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Games");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GameAspect", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("NameRu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("NameRu")
+                        .IsUnique();
+
+                    b.ToTable("GameAspects");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Story",
+                            NameRu = "Сюжет"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Gameplay",
+                            NameRu = "Геймплей"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "Visuals",
+                            NameRu = "Визуал"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "Music",
+                            NameRu = "Музыка"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "Atmosphere",
+                            NameRu = "Атмосфера"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Name = "Difficulty",
+                            NameRu = "Сложность"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            Name = "Achievements",
+                            NameRu = "Ачивки"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            Name = "Exploration",
+                            NameRu = "Исследование"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            Name = "Multiplayer",
+                            NameRu = "Мультиплеер"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            Name = "Co-op",
+                            NameRu = "Кооператив"
+                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.GlobalEvent", b =>
@@ -909,11 +1003,12 @@ namespace Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<bool?>("IsRecommended")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<DateTimeOffset?>("RepliesPublishedAt")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(3, 1)
+                        .HasColumnType("decimal(3,1)");
 
                     b.Property<int>("Visibility")
                         .HasColumnType("int");
@@ -1008,6 +1103,42 @@ namespace Persistence.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserFavoriteGame", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("GameId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "GameId");
+
+                    b.HasIndex("GameId");
+
+                    b.ToTable("UserFavoriteGames");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserGameAspect", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<int>("GameAspectId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "GameAspectId");
+
+                    b.HasIndex("GameAspectId");
+
+                    b.ToTable("UserGameAspects");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>
@@ -1314,6 +1445,44 @@ namespace Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Review");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserFavoriteGame", b =>
+                {
+                    b.HasOne("Domain.Entities.Game", "Game")
+                        .WithMany()
+                        .HasForeignKey("GameId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Game");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserGameAspect", b =>
+                {
+                    b.HasOne("Domain.Entities.GameAspect", "GameAspect")
+                        .WithMany()
+                        .HasForeignKey("GameAspectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GameAspect");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserGuild", b =>

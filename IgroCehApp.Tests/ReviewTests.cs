@@ -21,10 +21,10 @@ namespace IgroCehApp.Tests
                 Make.Record("e1-r1", "e1", Dayt, Sliva, Hollow));
         }
 
-        private static object Review(bool? isRecommended = true, int? visibility = 2, params (string Title, string Text)[] sections) => new
+        private static object Review(decimal? score = 8m, int? visibility = 2, params (string Title, string Text)[] sections) => new
         {
             eventRecordId = "e1-r0",
-            isRecommended,
+            score,
             visibility,
             sections = (sections.Length == 0 ? new[] { (Title: "Story", Text: "Good") } : sections).Select(s => new { title = s.Title, text = s.Text }).ToArray(),
         };
@@ -55,13 +55,13 @@ namespace IgroCehApp.Tests
         [Fact]
         public async Task Publish_TheAuthorPublishesOnce_TheTextsAreTrimmed()
         {
-            (await As(Dayt).Post("/api/publishReview", Review(true, 2, (" Story ", " Line one\r\nLine two "), ("Music", "Great")))).Ok();
+            (await As(Dayt).Post("/api/publishReview", Review(7.5m, 2, (" Story ", " Line one\r\nLine two "), ("Music", "Great")))).Ok();
             var again = await As(Dayt).Post("/api/publishReview", Review());
 
             again.Is(HttpStatusCode.BadRequest);
             Assert.Equal("It can't be published now", again.Text);
             var review = (await As(Dayt).Get("/api/getReview?eventRecordId=e1-r0")).Ok().At("review");
-            Assert.True(review.Bool("isRecommended"));
+            Assert.Equal(7.5, review.Num("score"));
             Assert.Equal(2, review.Int("visibility"));
             Assert.True(review.Date("publishedAt") > DateTimeOffset.UtcNow.AddMinutes(-1));
             Assert.Null(review.At("repliesPublishedAt"));
@@ -70,22 +70,26 @@ namespace IgroCehApp.Tests
         }
 
         [Fact]
-        public async Task Publish_WithoutAThumb_TheReviewIsNeutral()
+        public async Task Publish_TheScoreIsRequired_FromOneToTenInHalves()
         {
-            (await As(Dayt).Post("/api/publishReview", new { eventRecordId = "e1-r0", visibility = 2, sections = new[] { new { title = "T", text = "X" } } })).Ok();
-            (await As(Dayt).Post("/api/publishReview", Review(false))).Is(HttpStatusCode.BadRequest);
+            Assert.Contains("Score the game", (await As(Dayt).Post("/api/publishReview", Review(null))).Is(HttpStatusCode.BadRequest).Body);
+            (await As(Dayt).Post("/api/publishReview", Review(0.5m))).Is(HttpStatusCode.BadRequest);
+            (await As(Dayt).Post("/api/publishReview", Review(10.5m))).Is(HttpStatusCode.BadRequest);
+            Assert.Contains("The score goes in steps of 0.5", (await As(Dayt).Post("/api/publishReview", Review(7.3m))).Is(HttpStatusCode.BadRequest).Body);
+            Assert.Equal(0, await Factory.ScalarAsync("SELECT COUNT(*) FROM Reviews"));
 
-            Assert.Null((await As(Dayt).Get("/api/getReview?eventRecordId=e1-r0")).Ok().At("review.isRecommended"));
-            Assert.Null((await Db(db => db.Reviews.SingleAsync())).IsRecommended);
+            (await As(Dayt).Post("/api/publishReview", Review(1m))).Ok();
+
+            Assert.Equal(1m, (await Db(db => db.Reviews.SingleAsync())).Score);
         }
 
         [Fact]
         public async Task Publish_OnlyByThePlayerWhoPassedTheGame()
         {
             (await As(Sliva).Post("/api/publishReview", Review())).Is(HttpStatusCode.Forbidden);
-            (await As(Sliva).Post("/api/publishReview", new { eventRecordId = "e1-r1", isRecommended = true, visibility = 2, sections = new[] { new { title = "T", text = "X" } } }))
+            (await As(Sliva).Post("/api/publishReview", new { eventRecordId = "e1-r1", score = 8, visibility = 2, sections = new[] { new { title = "T", text = "X" } } }))
                 .Is(HttpStatusCode.BadRequest);
-            (await As(Sliva).Post("/api/publishReview", new { eventRecordId = "unknown", isRecommended = true, visibility = 2, sections = new[] { new { title = "T", text = "X" } } }))
+            (await As(Sliva).Post("/api/publishReview", new { eventRecordId = "unknown", score = 8, visibility = 2, sections = new[] { new { title = "T", text = "X" } } }))
                 .Is(HttpStatusCode.NotFound);
         }
 
@@ -95,15 +99,15 @@ namespace IgroCehApp.Tests
             Assert.Contains("A review needs at least one section",
                 (await As(Dayt).Post("/api/publishReview", new { eventRecordId = "e1-r0", visibility = 2, sections = Array.Empty<object>() })).Is(HttpStatusCode.BadRequest).Body);
             Assert.Contains("A review can have up to 20 sections",
-                (await As(Dayt).Post("/api/publishReview", Review(true, 2, Enumerable.Range(0, 21).Select(i => ($"T{i}", "X")).ToArray()))).Is(HttpStatusCode.BadRequest).Body);
+                (await As(Dayt).Post("/api/publishReview", Review(8m, 2, Enumerable.Range(0, 21).Select(i => ($"T{i}", "X")).ToArray()))).Is(HttpStatusCode.BadRequest).Body);
             Assert.Contains("Every section needs a topic",
-                (await As(Dayt).Post("/api/publishReview", Review(true, 2, ("  ", "X")))).Is(HttpStatusCode.BadRequest).Body);
+                (await As(Dayt).Post("/api/publishReview", Review(8m, 2, ("  ", "X")))).Is(HttpStatusCode.BadRequest).Body);
             Assert.Contains("Every section needs a text",
-                (await As(Dayt).Post("/api/publishReview", Review(true, 2, ("T", "")))).Is(HttpStatusCode.BadRequest).Body);
-            (await As(Dayt).Post("/api/publishReview", Review(true, 2, (new string('t', 101), "X")))).Is(HttpStatusCode.BadRequest);
-            (await As(Dayt).Post("/api/publishReview", Review(true, 2, ("T", new string('x', 5001))))).Is(HttpStatusCode.BadRequest);
-            (await As(Dayt).Post("/api/publishReview", Review(true, null))).Is(HttpStatusCode.BadRequest);
-            (await As(Dayt).Post("/api/publishReview", Review(true, 7))).Is(HttpStatusCode.BadRequest);
+                (await As(Dayt).Post("/api/publishReview", Review(8m, 2, ("T", "")))).Is(HttpStatusCode.BadRequest).Body);
+            (await As(Dayt).Post("/api/publishReview", Review(8m, 2, (new string('t', 101), "X")))).Is(HttpStatusCode.BadRequest);
+            (await As(Dayt).Post("/api/publishReview", Review(8m, 2, ("T", new string('x', 5001))))).Is(HttpStatusCode.BadRequest);
+            (await As(Dayt).Post("/api/publishReview", Review(8m, null))).Is(HttpStatusCode.BadRequest);
+            (await As(Dayt).Post("/api/publishReview", Review(8m, 7))).Is(HttpStatusCode.BadRequest);
             Assert.Equal(0, await Factory.ScalarAsync("SELECT COUNT(*) FROM Reviews"));
         }
 
@@ -182,27 +186,25 @@ namespace IgroCehApp.Tests
         }
 
         [Fact]
-        public async Task PlayerReviews_TheNewestFirst_OfTheGivenGuild()
+        public async Task PlayerReviews_TheNewestFirst_FromAllGuilds()
         {
             await Seed(Make.Guild("g3"), Make.Member(Dayt, "g3"), Make.Member(Sliva, "g3"),
                 Make.Event("e3", "g3", Sliva, EventStatusId.Finished), Make.Record("e3-r0", "e3", Sliva, Dayt, Sekiro, 2, DateTimeOffset.UtcNow.AddDays(-30)),
-                Make.Review("old", "e3-r0", false, ReviewVisibility.Guild, DateTimeOffset.UtcNow.AddDays(-20)),
-                Make.Review("new", "e1-r0", null, ReviewVisibility.AuthorAndGuesser, DateTimeOffset.UtcNow.AddDays(-1),
+                Make.Review("old", "e3-r0", 3m, ReviewVisibility.Guild, DateTimeOffset.UtcNow.AddDays(-20)),
+                Make.Review("new", "e1-r0", 9.5m, ReviewVisibility.AuthorAndGuesser, DateTimeOffset.UtcNow.AddDays(-1),
                     DateTimeOffset.UtcNow, ("Story", "Good", "Thanks")));
 
             var all = (await As(Sliva).Get($"/api/getPlayerReviews?userId={Dayt}")).Ok().Arr("reviews");
-            var ofG3 = (await As(Sliva).Get($"/api/getPlayerReviews?userId={Dayt}&guildId=g3")).Ok().Arr("reviews");
             var forNico = (await As(Nico).Get($"/api/getPlayerReviews?userId={Dayt}")).Ok().Arr("reviews");
 
             Assert.Equal(new[] { "e1-r0", "e3-r0" }, all.Select(r => r.Str("eventRecordId")));
             var first = all[0];
             Assert.Equal(("Spring", "Guild One", "Elden Ring", Sliva), (first.Str("eventName"), first.Str("guildName"), first.Str("game.name"), first.Str("guesser.id")));
-            Assert.Null(first.At("isRecommended"));
+            Assert.Equal(9.5, first.Num("score"));
             Assert.Equal(1, first.Int("visibility"));
             Assert.True(first.Bool("hasReplies"));
-            Assert.False(all[1].Bool("isRecommended"));
+            Assert.Equal(3, all[1].Num("score"));
             Assert.False(all[1].Bool("hasReplies"));
-            Assert.Equal(new[] { "e3-r0" }, ofG3.Select(r => r.Str("eventRecordId")));
             Assert.Empty(forNico);
         }
 
@@ -233,7 +235,7 @@ namespace IgroCehApp.Tests
             for (var i = 0; i < 5; i++)
             {
                 rows.Add(Make.Record($"e5-r{i}", "e5", Sliva, Dayt, Elden, 3));
-                rows.Add(Make.Review($"rev{i}", $"e5-r{i}", i % 2 == 0, ReviewVisibility.Guild, DateTimeOffset.UtcNow.AddDays(-i)));
+                rows.Add(Make.Review($"rev{i}", $"e5-r{i}", i % 2 == 0 ? 8m : 3m, ReviewVisibility.Guild, DateTimeOffset.UtcNow.AddDays(-i)));
             }
 
             await Seed(rows.ToArray());
@@ -248,7 +250,7 @@ namespace IgroCehApp.Tests
             Assert.False(all.Bool("hasMore"));
             Assert.Single(atLeastOne.Arr("reviews"));
             var first = two.At("reviews[0]");
-            Assert.Equal(("Elden Ring", Dayt, true), (first.Str("game.name"), first.Str("author.id"), first.Bool("isRecommended")));
+            Assert.Equal(("Elden Ring", Dayt, (double?)8), (first.Str("game.name"), first.Str("author.id"), first.Num("score")));
         }
 
         [Fact]

@@ -29,6 +29,9 @@ namespace Persistence.Context
         public DbSet<EventStatus> EventStatuses { get; set; }
         public DbSet<PreferenceTag> PreferenceTags { get; set; }
         public DbSet<UserPreference> UserPreferences { get; set; }
+        public DbSet<GameAspect> GameAspects { get; set; }
+        public DbSet<UserGameAspect> UserGameAspects { get; set; }
+        public DbSet<UserFavoriteGame> UserFavoriteGames { get; set; }
         public DbSet<NewcomerPoolGame> NewcomerPoolGames { get; set; }
         public DbSet<GlobalEvent> GlobalEvents { get; set; }
         public DbSet<GlobalEventGame> GlobalEventGames { get; set; }
@@ -118,6 +121,8 @@ namespace Persistence.Context
                 .WithOne(er => er.Review)
                 .HasForeignKey<Review>(r => r.EventRecordId);
             modelBuilder.Entity<Review>().HasQueryFilter(r => !r.EventRecord.Event.IsDeleted);
+            // 10.0 at most with one digit after the point
+            modelBuilder.Entity<Review>().Property(r => r.Score).HasPrecision(3, 1);
             modelBuilder.Entity<ReviewSection>()
                 .HasOne(s => s.Review)
                 .WithMany(r => r.Sections)
@@ -274,6 +279,33 @@ namespace Persistence.Context
                 .HasOne(p => p.PreferenceTag)
                 .WithMany()
                 .HasForeignKey(p => p.PreferenceTagId);
+            modelBuilder.Entity<GameAspect>().Property(a => a.Name).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<GameAspect>().Property(a => a.NameRu).HasMaxLength(PreferenceLimits.NameMaxLength).IsRequired();
+            modelBuilder.Entity<GameAspect>().HasIndex(a => a.Name).IsUnique();
+            modelBuilder.Entity<GameAspect>().HasIndex(a => a.NameRu).IsUnique();
+            modelBuilder.Entity<GameAspect>().HasData(GameAspectSeed.Aspects);
+            // like the preferences, User has no navigation to its aspects
+            modelBuilder.Entity<UserGameAspect>()
+                .HasKey(a => new { a.UserId, a.GameAspectId });
+            modelBuilder.Entity<UserGameAspect>()
+                .HasOne(a => a.User)
+                .WithMany()
+                .HasForeignKey(a => a.UserId);
+            modelBuilder.Entity<UserGameAspect>()
+                .HasOne(a => a.GameAspect)
+                .WithMany()
+                .HasForeignKey(a => a.GameAspectId);
+            // neither User nor Game has a navigation to the favorites
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasKey(f => new { f.UserId, f.GameId });
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasOne(f => f.User)
+                .WithMany()
+                .HasForeignKey(f => f.UserId);
+            modelBuilder.Entity<UserFavoriteGame>()
+                .HasOne(f => f.Game)
+                .WithMany()
+                .HasForeignKey(f => f.GameId);
             modelBuilder.Entity<EventStatus>()
                 .Property(e => e.Id)
                 .HasConversion<int>();

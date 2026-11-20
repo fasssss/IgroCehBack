@@ -68,22 +68,10 @@ namespace IgroCehApp.Tests
         }
 
         [Fact]
-        public async Task Profile_OfOneGuild()
-        {
-            await SeedHistory();
-
-            var statistics = (await As(Sliva).Get($"/api/getPlayerProfile?userId={Dayt}&guildId={G1}")).Ok().At("playerProfile.statistics");
-
-            Assert.Equal((4, 2, 1, 2, 0), (statistics.Int("score"), statistics.Int("eventsPlayed"), statistics.Int("eventsInProgress"), statistics.Int("gamesCompleted"), statistics.Int("gamesFailed")));
-            Assert.Equal((2, 0, 1), (statistics.Int("gamesSuggested"), statistics.Int("suggestedGamesCompleted"), statistics.Int("suggestedGamesFailed")));
-        }
-
-        [Fact]
         public async Task Profile_IsOpenedOnlyThroughASharedGuild()
         {
             await SeedHistory();
 
-            (await As(Sliva).Get($"/api/getPlayerProfile?userId={Dayt}&guildId={G3}")).Is(HttpStatusCode.NotFound);
             (await As(Stranger).Get($"/api/getPlayerProfile?userId={Dayt}")).Is(HttpStatusCode.NotFound);
             (await As(Sliva).Get("/api/getPlayerProfile?userId=unknown")).Is(HttpStatusCode.NotFound);
             // a shared guild opens it even if the player hasn't played

@@ -25,8 +25,7 @@ namespace API.Endpoints.Get
         public override async Task<Ok<GetPlayerReviewsResponse>> ExecuteAsync(GetPlayerReviewsRequest request, CancellationToken ct)
         {
             var stringId = HttpContext.User.Claims.Single(c => c.Type == ClaimTypes.NameIdentifier).Value;
-            var guildId = string.IsNullOrEmpty(request.GuildId) ? null : request.GuildId;
-            var reviews = await _reviewApplicationService.GetPlayerReviewsAsync(stringId, request.UserId, guildId);
+            var reviews = await _reviewApplicationService.GetPlayerReviewsAsync(stringId, request.UserId);
 
             return TypedResults.Ok(new GetPlayerReviewsResponse { Reviews = reviews });
         }

@@ -6,6 +6,7 @@ using AutoMapper;
 using Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -76,7 +77,7 @@ namespace Application.Services
             var existingGame = await _gameRepository.FirstOrDefaultAsync(g => g.VgcId == vgcId);
             if (existingGame != null)
             {
-                await FillMissingPlatformsAsync(existingGame, ct);
+                await FillMissingCatalogDataAsync(existingGame, ct);
                 return existingGame.Id;
             }
 
@@ -94,6 +95,7 @@ namespace Application.Services
                 SteamUrl = catalogGame.SteamUrl,
                 VgcId = vgcId,
                 Platforms = catalogGame.Platforms,
+                ReleaseDate = ParseReleaseDate(catalogGame.ReleaseDate),
                 CreatorId = userId,
             });
 
@@ -116,11 +118,11 @@ namespace Application.Services
             return addedGame.Id;
         }
 
-        // games saved before platforms were stored get them on the next pick,
+        // games saved before platforms or release dates were stored get them on the next pick,
         // the game was just found by search, so the catalog answers from its cache
-        private async Task FillMissingPlatformsAsync(Game game, CancellationToken ct)
+        private async Task FillMissingCatalogDataAsync(Game game, CancellationToken ct)
         {
-            if (game.Platforms.Count > 0)
+            if (game.Platforms.Count > 0 && game.ReleaseDate != null)
             {
                 return;
             }
@@ -128,16 +130,48 @@ namespace Application.Services
             try
             {
                 var catalogGame = await _gameCatalogService.GetGameAsync(game.VgcId.Value, ct);
-                if (catalogGame?.Platforms.Count > 0)
+                if (catalogGame == null)
+                {
+                    return;
+                }
+
+                var isChanged = false;
+                if (game.Platforms.Count == 0 && catalogGame.Platforms.Count > 0)
                 {
                     game.Platforms = catalogGame.Platforms;
+                    isChanged = true;
+                }
+
+                var releaseDate = ParseReleaseDate(catalogGame.ReleaseDate);
+                if (game.ReleaseDate == null && releaseDate != null)
+                {
+                    game.ReleaseDate = releaseDate;
+                    isChanged = true;
+                }
+
+                if (isChanged)
+                {
                     await _gameRepository.SaveAsync();
                 }
             }
             catch (GameCatalogUnavailableException)
             {
-                // platforms are optional, the game can be suggested without them
+                // platforms and the date are optional, the game can be suggested without them
             }
+        }
+
+        // the catalog gives the date as yyyy-MM-dd, maybe with the time after it; anything else is no date
+        private static DateOnly? ParseReleaseDate(string releaseDate)
+        {
+            const string DateFormat = "yyyy-MM-dd";
+            if (releaseDate == null || releaseDate.Length < DateFormat.Length)
+            {
+                return null;
+            }
+
+            return DateOnly.TryParseExact(releaseDate[..DateFormat.Length], DateFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date)
+                ? date
+                : null;
         }
     }
 }

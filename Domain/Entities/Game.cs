@@ -13,6 +13,8 @@ namespace Domain.Entities
         public int? VgcId { get; set; }
         // platforms from VideoGamesCritic catalog, empty for games added by hand
         public List<string> Platforms { get; set; } = new List<string>();
+        // from VideoGamesCritic catalog when it knows the date, null for games added by hand
+        public DateOnly? ReleaseDate { get; set; }
         public List<EventRecord> EventRecords { get; set; }
         public string CreatorId { get; set; }
         public User Creator { get; set; }
